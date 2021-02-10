@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.util.Locale;
 
 /**
- * This class provides methods for printing strings and numbers to standard output.
+ * The {@code StdOut} class provides numerous methods for printing strings and numbers to standard output.
  * <p>
  * Here is an example program that uses {@code StdOut}:
  * <pre>

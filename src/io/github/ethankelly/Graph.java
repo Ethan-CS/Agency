@@ -5,8 +5,9 @@ import java.util.Random;
 
 
 /**
- * A graph is a collection of vertices connected by edges in some configuration. While the basis for the model is
- * agency, this agency is represented as interactions of vertices of a graph.
+ * The {@code Graph} class represents a graph - a collection of vertices connected by edges in some meaningful
+ * configuration. While the basis for the model is agency, this agency is represented as interactions of vertices of a
+ * graph.
  * <p>
  * Using a graph to represent and examine allows the use of many excellent existing results in graph theory, plus the
  * use of a graph is not an unusual choice of visualisation in models of contagion even intuitively. The graphs to be

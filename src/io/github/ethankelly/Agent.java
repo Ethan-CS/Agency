@@ -2,8 +2,10 @@ package io.github.ethankelly;
 
 
 /**
- * Agency is the basis and purpose of the model we are developing. Each agent has certain attributes that need to be
- * determined initially and updated at each time-step in the model, which are:
+ * The {@code Agency} class represents agents and instantiates their attributes for use in compartmental graph models
+ * of contagion. This class is significant since agency is the basis and purpose of the model we are developing. Each
+ * agent has certain attributes that need to be determined initially and updated at each time-step in the model, which
+ * are:
  * <ul>
  *     <li> The vertex the agent is located at
  *     <li> The peril rating, based on the agent's proximity to infected vertices

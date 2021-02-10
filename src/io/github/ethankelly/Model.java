@@ -8,17 +8,17 @@ import java.util.List;
 
 
 /**
- * The model class contains all methods involved in storing and updating the state of play. For instance, a method for
- * getting the currently burning vertices (based on a given probability of propagation) and for updating the state
- * (stored as a matrix) of the graph. This matrix keeping information about how the contagion has progressed and begins
- * with one column of all zeros, where each row represents the vertex corresponding to the row index. Another column
- * will represent a defensive move - if any vertices have been influenced to the level required to deem them immune to
- * the disease (perhaps by a vaccine), then they move to the protected state. Then, another column is added to represent
- * any transmissions that occur based on the probability of transmission and the protection rating of the agents the
- * contagion is currently adjacent to. Then, another defence turn is played and so on, until no more moves can be made.
- * This class needs to contain methods that check for this instance after every turn and thereby end the simulation. The
- * methods here are used to pass probabilities which dictate infection dynamics, depending on the particular context we
- * want to consider.
+ * The {@code Model} class contains all methods involved in storing and updating the state of play. For instance, a
+ * method for getting the currently burning vertices (based on a given probability of propagation) and for updating the
+ * state (stored as a matrix) of the graph. This matrix keeping information about how the contagion has progressed and
+ * begins with one column of all zeros, where each row represents the vertex corresponding to the row index. Another
+ * column will represent a defensive move - if any vertices have been influenced to the level required to deem them
+ * immune to the disease (perhaps by a vaccine), then they move to the protected state. Then, another column is added to
+ * represent any transmissions that occur based on the probability of transmission and the protection rating of the
+ * agents the contagion is currently adjacent to. Then, another defence turn is played and so on, until no more moves
+ * can be made. This class needs to contain methods that check for this instance after every turn and thereby end the
+ * simulation. The methods here are used to pass probabilities which dictate infection dynamics, depending on the
+ * particular context we want to consider.
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
@@ -31,7 +31,7 @@ public class Model {
      * Class constructor.
      *
      * @param numVertices the number of vertices in the graph the model is based on.
-     * @param graph the graph we use in the model we are creating.
+     * @param graph       the graph we use in the model we are creating.
      */
     public Model(int numVertices, Graph graph) {
         this.numVertices = numVertices;
@@ -75,9 +75,9 @@ public class Model {
         double peril = agent.getPeril();
         double baseline = Math.random();
         if (baseline * (1 / peril) > 1) {
-            return  1;
+            return 1;
         } else {
-            return peril ==0 ? baseline : baseline *(1/peril);
+            return peril == 0 ? baseline : baseline * (1 / peril);
         }
     }
 
@@ -242,7 +242,7 @@ public class Model {
                 }
             }
         }
-        if(!toInfect.isEmpty()) {
+        if (!toInfect.isEmpty()) {
             System.out.println();
             StdOut.print("INFECTING: ");
             for (Agent agent : toInfect) {
@@ -444,28 +444,30 @@ public class Model {
     /**
      * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
      * method and verify that the model runs as expected.
+     *
+     * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
+     *                               vertices each defensive turn.
+     * @param probabilityOfInfection the probability with which the infection propagates.
      */
-    private void runTestModel() {
+    private void runTestModel(double totalDefence, double probabilityOfInfection) {
         this.printSIRP();
         int turn = 0;
         while (true) {
             //this.printSIRP();
             if (!this.getSusceptible().isEmpty()) {
-                this.nextDefence(1);
+                this.nextDefence(totalDefence);
                 this.printSIRP();
                 turn++;
             } else {
-                StdOut.println("No susceptible vertices to protect; ending model after turn " + turn);
-                StdOut.println();
+                StdOut.println("No susceptible vertices to protect; ending model after turn " + turn + "\n");
                 break;
             }
             if (!this.getSusceptible().isEmpty()) {
-                this.nextBurning(1.0);
+                this.nextBurning(probabilityOfInfection);
                 this.printSIRP();
                 turn++;
             } else {
-                StdOut.println("Nothing more to infect; ending model after turn " + turn);
-                StdOut.println();
+                StdOut.println("Nothing more to infect; ending model after turn " + turn + "\n");
                 break;
             }
         }
@@ -483,10 +485,12 @@ public class Model {
         // Probabilities for testing Erdős–Rényi and Erdős–Rényi bipartite graphs
         double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
         double q = (double) numEdges / (numVertices1 * numVertices2);
-        StdOut.println(" *** Model: Tree on "
-                + numVertices + " vertices. ***");// and probability "
-                //+ p + "  ***");
-        StdOut.println();
+
+        // Total defence (improvement in protection ratings) that can be deployed each turn
+        double totalDefence = 1.0;
+
+        // Probability with which the infection transmits
+        double probabilityOfInfection = 1.0;
 
         // New graph for use in the model
         Graph g = GraphGenerator.tree(numVertices);
@@ -500,8 +504,7 @@ public class Model {
 
         // Cycle through all vertices to test the model using each vertex as a source
         for (int i = 0; i < m.getNumVertices(); i++) {
-            StdOut.println(" * Outbreak: " + i + " * ");
-            StdOut.println();
+            StdOut.println(" * Outbreak: " + i + " * \n");
 
             // Initialise a list of agents given the starting state of the graph
             List<Agent> agents = m.getAgents();
@@ -510,16 +513,12 @@ public class Model {
                 agents.get(j).setPeril(m.perilRating(agents.get(j), new int[]{i}, m.getGraph()));
                 agents.get(j).setProtection(m.protectionRating(agents.get(j)));
                 agents.get(j).setState(m.findState(agents.get(j), new int[]{i}));
-
-//                agents.get(j).setPeril(m.perilRating(agents.get(j), new int[]{i}, m.getGraph()));
-//                agents.get(j).setProtection(m.protectionRating(agents.get(j)));
-//                agents.get(j).setState(m.findState(agents.get(j), new int[]{i}));
             }
             // Print the agents we initialised
             m.printAgents();
 
             // Runs the model until either nothing can be infected or nothing can be protected
-            m.runTestModel();
+            m.runTestModel(totalDefence, probabilityOfInfection);
         }
         StdOut.close();
     }
