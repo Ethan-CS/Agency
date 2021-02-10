@@ -8,9 +8,9 @@ import java.util.Random;
  * Cauchy. It also provides method for shuffling an array or sub-array and generating random permutations.
  * <p>
  * By convention, all intervals are half open. For example, <code>uniform(-1.0, 1.0)</code> returns a random number
- * between <code>-1.0</code> (inclusive) and <code>1.0</code> (exclusive). Similarly, <code>shuffle(a, lo, hi)</code>
- * shuffles the <code>hi - lo</code> elements in the array <code>a[]</code>, starting at index <code>lo</code>
- * (inclusive) and ending at index <code>hi</code> (exclusive).
+ * between <code>-1.0</code> (inclusive) and <code>1.0</code> (exclusive). Similarly, <code>shuffle(a, low, high)</code>
+ * shuffles the <code>high - low</code> elements in the array <code>a[]</code>, starting at index <code>low</code>
+ * (inclusive) and ending at index <code>high</code> (exclusive).
  * <pre>
  *  %  java StdRandom 5
  *  seed = 1316600602069
