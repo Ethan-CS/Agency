@@ -27,6 +27,11 @@ public class Graph {
     private int numEdges;
     private boolean[][] adjMatrix;
 
+    /**
+     * Class constructor.
+     *
+     * @param numVertices the number of vertices to create in the graph.
+     */
     public Graph(int numVertices) {
         this.numVertices = numVertices;
         this.adjMatrix = new boolean[numVertices][numVertices];
@@ -199,17 +204,25 @@ public class Graph {
     /**
      * Selects a random vertex from the set of vertices to begin the setOutbreak.
      *
-     * @param numVertices the number of vertices (indexed 0, 1, ..., numVertices) to choose from
-     * @return a pseudo-randomly selected vertex between 0 and numVertices to be the source node
+     * @param numVertices the number of vertices (indexed 0, 1, ..., numVertices) to choose from.
+     * @return a pseudo-randomly selected vertex between 0 and numVertices to be the source node.
      */
     public int randomVertex(int numVertices) {
         return new Random().nextInt(numVertices);
     }
 
+    /**
+     * @return the number of edges in the given graph.
+     */
     public int getNumEdges() {
-        return numEdges;
+        return this.numEdges;
     }
 
+    /**
+     * Given a number of edges to associate with a given graph, updates the associated attribute.
+     *
+     * @param numEdges the number of edges to associate with the given graph.
+     */
     public void setNumEdges(int numEdges) {
         this.numEdges = numEdges;
     }

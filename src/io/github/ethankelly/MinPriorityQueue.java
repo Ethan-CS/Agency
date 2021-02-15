@@ -169,9 +169,10 @@ public class MinPriorityQueue<Key> implements Iterable<Key> {
         }
     }
 
-    /***************************************************************************
-     * Helper functions for compares and swaps.
-     ***************************************************************************/
+    ///////////////////////////////////////////////////////////////////////////
+    //  HELPER FUNCTIONS FOR COMPARES AND SWAPS.                             //
+    ///////////////////////////////////////////////////////////////////////////
+
 
     @SuppressWarnings("unchecked")
     private boolean greater(int i, int j) {
@@ -212,8 +213,6 @@ public class MinPriorityQueue<Key> implements Iterable<Key> {
 
 
     /**
-     * Returns an iterator that iterates over the keys on this priority queue in ascending order.
-     *
      * @return an iterator that iterates over the keys in ascending order
      */
     public Iterator<Key> iterator() {

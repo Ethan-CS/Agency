@@ -1,0 +1,606 @@
+Seed: 1613415173108
+
+0: 0 1 1 1 0 1 0 0 
+1: 1 0 0 1 1 0 1 1 
+2: 1 0 0 1 1 1 0 1 
+3: 1 1 1 0 1 1 1 0 
+4: 0 1 1 1 0 1 1 0 
+5: 1 0 1 1 1 0 1 1 
+6: 0 1 0 1 1 1 0 1 
+7: 0 1 1 0 0 1 1 0 
+
+0: 0 1 1 1 0 1 0 0 
+1: 1 0 0 1 1 0 1 1 
+2: 1 0 0 1 1 1 0 1 
+3: 1 1 1 0 1 1 1 0 
+4: 0 1 1 1 0 1 1 0 
+5: 1 0 1 1 1 0 1 1 
+6: 0 1 0 1 1 1 0 1 
+7: 0 1 1 0 0 1 1 0 
+
+
+ *** Outbreak: 0 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.48 and state INFECTED.
+Agent at vertex 1: peril 1.00, protection 0.19 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.56 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.23 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 5: peril 1.00, protection 0.77 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 0.50, protection 0.18 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [1, 2, 3, 5, 6]
+I: [0]
+R: []
+P: [4, 7]
+Strategy: [0.0, 0.44, 0.19, 0.19, 0.0, 0.19, 0.0, 0.0]
+
+S: [1, 2, 3, 5, 6]
+I: [0]
+R: []
+P: [4, 7]
+INFECTING: 1 2 3 5 
+
+S: [6]
+I: [0, 1, 2, 3, 5]
+R: []
+P: [4, 7]
+Strategy: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.82, 0.0]
+
+S: []
+I: [0, 1, 2, 3, 5]
+R: []
+P: [4, 6, 7]
+
+Nothing more to infect.
+Ending model with 3 protected and 5 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.48 and state INFECTED.
+Agent at vertex 1: peril 1.00, protection 0.19 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.56 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.23 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 5: peril 1.00, protection 0.77 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 0.50, protection 0.18 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [1, 2, 3, 5, 6]
+I: [0]
+R: []
+P: [4, 7]
+Strategy: [0.0, 0.26, 0.26, 0.26, 0.0, 0.23, 0.0, 0.0]
+
+S: [1, 2, 3, 6]
+I: [0]
+R: []
+P: [4, 5, 7]
+INFECTING: 1 2 3 
+
+S: [6]
+I: [0, 1, 2, 3]
+R: []
+P: [4, 5, 7]
+Strategy: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.82, 0.0]
+
+S: []
+I: [0, 1, 2, 3]
+R: []
+P: [4, 5, 6, 7]
+
+Nothing more to protect.
+Ending model with 4 protected and 4 infected vertices in 3 turns.
+
+ *** Outbreak: 1 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.14 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.52 and state INFECTED.
+Agent at vertex 2: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 3: peril 1.00, protection 0.04 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.55 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 6: peril 1.00, protection 0.46 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.26 and state SUSCEPTIBLE.
+
+S: [0, 3, 4, 6, 7]
+I: [1]
+R: []
+P: [2, 5]
+Strategy: [0.36, 0.0, 0.0, 0.16, 0.16, 0.0, 0.16, 0.16]
+
+S: [0, 3, 4, 6, 7]
+I: [1]
+R: []
+P: [2, 5]
+INFECTING: 0 3 4 6 7 
+
+S: []
+I: [0, 1, 3, 4, 6, 7]
+R: []
+P: [2, 5]
+
+Nothing more to protect.
+Ending model with 2 protected and 6 infected vertices in 2 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.14 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.52 and state INFECTED.
+Agent at vertex 2: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 3: peril 1.00, protection 0.04 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.55 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 6: peril 1.00, protection 0.46 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.26 and state SUSCEPTIBLE.
+
+S: [0, 3, 4, 6, 7]
+I: [1]
+R: []
+P: [2, 5]
+Strategy: [0.14, 0.0, 0.0, 0.14, 0.45, 0.0, 0.14, 0.14]
+
+S: [0, 3, 6, 7]
+I: [1]
+R: []
+P: [2, 4, 5]
+INFECTING: 0 3 6 7 
+
+S: []
+I: [0, 1, 3, 6, 7]
+R: []
+P: [2, 4, 5]
+
+Nothing more to protect.
+Ending model with 3 protected and 5 infected vertices in 2 turns.
+
+ *** Outbreak: 2 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.33 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 0.50, protection 0.48 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.73 and state INFECTED.
+Agent at vertex 3: peril 1.00, protection 0.65 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.38 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.23 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 7: peril 1.00, protection 0.37 and state SUSCEPTIBLE.
+
+S: [0, 1, 3, 4, 5, 7]
+I: [2]
+R: []
+P: [6]
+Strategy: [0.36, 0.0, 0.0, 0.16, 0.16, 0.16, 0.0, 0.16]
+
+S: [0, 1, 3, 4, 5, 7]
+I: [2]
+R: []
+P: [6]
+INFECTING: 0 3 4 5 7 
+
+S: [1]
+I: [0, 2, 3, 4, 5, 7]
+R: []
+P: [6]
+Strategy: [0.0, 0.52, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [0, 2, 3, 4, 5, 7]
+R: []
+P: [1, 6]
+
+Nothing more to infect.
+Ending model with 2 protected and 6 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.33 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 0.50, protection 0.48 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.73 and state INFECTED.
+Agent at vertex 3: peril 1.00, protection 0.65 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.38 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.23 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 7: peril 1.00, protection 0.37 and state SUSCEPTIBLE.
+
+S: [0, 1, 3, 4, 5, 7]
+I: [2]
+R: []
+P: [6]
+Strategy: [0.16, 0.0, 0.0, 0.35, 0.16, 0.16, 0.0, 0.16]
+
+S: [0, 1, 4, 5, 7]
+I: [2]
+R: []
+P: [3, 6]
+INFECTING: 0 4 5 7 
+
+S: [1]
+I: [0, 2, 4, 5, 7]
+R: []
+P: [3, 6]
+Strategy: [0.0, 0.52, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [0, 2, 4, 5, 7]
+R: []
+P: [1, 3, 6]
+
+Nothing more to protect.
+Ending model with 3 protected and 5 infected vertices in 3 turns.
+
+ *** Outbreak: 3 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.63 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.17 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.47 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.44 and state INFECTED.
+Agent at vertex 4: peril 1.00, protection 0.69 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.71 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.83 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [0, 1, 2, 4, 5, 6]
+I: [3]
+R: []
+P: [7]
+Strategy: [0.31, 0.14, 0.14, 0.0, 0.14, 0.14, 0.14, 0.0]
+
+S: [0, 1, 2, 4, 5, 6]
+I: [3]
+R: []
+P: [7]
+INFECTING: 0 1 2 4 5 6 
+
+S: []
+I: [0, 1, 2, 3, 4, 5, 6]
+R: []
+P: [7]
+
+Nothing more to protect.
+Ending model with 1 protected and 7 infected vertices in 2 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.63 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.17 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.47 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.44 and state INFECTED.
+Agent at vertex 4: peril 1.00, protection 0.69 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.71 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.83 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [0, 1, 2, 4, 5, 6]
+I: [3]
+R: []
+P: [7]
+Strategy: [0.17, 0.17, 0.17, 0.0, 0.17, 0.17, 0.17, 0.0]
+
+S: [0, 1, 2, 4, 5]
+I: [3]
+R: []
+P: [6, 7]
+INFECTING: 0 1 2 4 5 
+
+S: []
+I: [0, 1, 2, 3, 4, 5]
+R: []
+P: [6, 7]
+
+Nothing more to protect.
+Ending model with 2 protected and 6 infected vertices in 2 turns.
+
+ *** Outbreak: 4 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.45 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.53 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.60 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.80 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.79 and state INFECTED.
+Agent at vertex 5: peril 1.00, protection 0.06 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.07 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [0, 1, 2, 3, 5, 6]
+I: [4]
+R: []
+P: [7]
+Strategy: [0.0, 0.36, 0.16, 0.16, 0.0, 0.16, 0.16, 0.0]
+
+S: [0, 1, 2, 3, 5, 6]
+I: [4]
+R: []
+P: [7]
+INFECTING: 1 2 3 5 6 
+
+S: [0]
+I: [1, 2, 3, 4, 5, 6]
+R: []
+P: [7]
+Strategy: [0.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [1, 2, 3, 4, 5, 6]
+R: []
+P: [0, 7]
+
+Nothing more to infect.
+Ending model with 2 protected and 6 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.45 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.53 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.60 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.80 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.79 and state INFECTED.
+Agent at vertex 5: peril 1.00, protection 0.06 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.07 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 0.50, protection 1.00 and state PROTECTED.
+
+S: [0, 1, 2, 3, 5, 6]
+I: [4]
+R: []
+P: [7]
+Strategy: [0.0, 0.2, 0.2, 0.2, 0.0, 0.2, 0.2, 0.0]
+
+S: [0, 1, 2, 5, 6]
+I: [4]
+R: []
+P: [3, 7]
+INFECTING: 1 2 5 6 
+
+S: [0]
+I: [1, 2, 4, 5, 6]
+R: []
+P: [3, 7]
+Strategy: [0.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [1, 2, 4, 5, 6]
+R: []
+P: [0, 3, 7]
+
+Nothing more to protect.
+Ending model with 3 protected and 5 infected vertices in 3 turns.
+
+ *** Outbreak: 5 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.49 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 0.50, protection 0.34 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.81 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.06 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.86 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.53 and state INFECTED.
+Agent at vertex 6: peril 1.00, protection 0.91 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.56 and state SUSCEPTIBLE.
+
+S: [0, 1, 2, 3, 4, 6, 7]
+I: [5]
+R: []
+P: []
+Strategy: [0.31, 0.0, 0.15, 0.15, 0.14, 0.0, 0.06, 0.06]
+
+S: [0, 1, 2, 3, 6, 7]
+I: [5]
+R: []
+P: [4]
+INFECTING: 0 2 3 6 7 
+
+S: [1]
+I: [0, 2, 3, 5, 6, 7]
+R: []
+P: [4]
+Strategy: [0.0, 0.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [0, 2, 3, 5, 6, 7]
+R: []
+P: [1, 4]
+
+Nothing more to infect.
+Ending model with 2 protected and 6 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 1.00, protection 0.49 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 0.50, protection 0.34 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.81 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 1.00, protection 0.06 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.86 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.53 and state INFECTED.
+Agent at vertex 6: peril 1.00, protection 0.91 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.56 and state SUSCEPTIBLE.
+
+S: [0, 1, 2, 3, 4, 6, 7]
+I: [5]
+R: []
+P: []
+Strategy: [0.18, 0.0, 0.18, 0.18, 0.14, 0.0, 0.09, 0.19]
+
+S: [0, 1, 2, 3, 7]
+I: [5]
+R: []
+P: [4, 6]
+INFECTING: 0 2 3 7 
+
+S: [1]
+I: [0, 2, 3, 5, 7]
+R: []
+P: [4, 6]
+Strategy: [0.0, 0.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [0, 2, 3, 5, 7]
+R: []
+P: [1, 4, 6]
+
+Nothing more to protect.
+Ending model with 3 protected and 5 infected vertices in 3 turns.
+
+ *** Outbreak: 6 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.54 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.76 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 3: peril 1.00, protection 0.51 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.84 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.83 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.98 and state INFECTED.
+Agent at vertex 7: peril 1.00, protection 0.30 and state SUSCEPTIBLE.
+
+S: [0, 1, 3, 4, 5, 7]
+I: [6]
+R: []
+P: [2]
+Strategy: [0.0, 0.36, 0.0, 0.16, 0.16, 0.06, 0.0, 0.06]
+
+S: [0, 3, 5, 7]
+I: [6]
+R: []
+P: [1, 2, 4]
+INFECTING: 3 5 7 
+
+S: [0]
+I: [3, 5, 6, 7]
+R: []
+P: [1, 2, 4]
+Strategy: [0.46, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [3, 5, 6, 7]
+R: []
+P: [0, 1, 2, 4]
+
+Nothing more to infect.
+Ending model with 4 protected and 4 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.54 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.76 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 3: peril 1.00, protection 0.51 and state SUSCEPTIBLE.
+Agent at vertex 4: peril 1.00, protection 0.84 and state SUSCEPTIBLE.
+Agent at vertex 5: peril 1.00, protection 0.83 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.98 and state INFECTED.
+Agent at vertex 7: peril 1.00, protection 0.30 and state SUSCEPTIBLE.
+
+S: [0, 1, 3, 4, 5, 7]
+I: [6]
+R: []
+P: [2]
+Strategy: [0.0, 0.21, 0.0, 0.21, 0.16, 0.17, 0.0, 0.13]
+
+S: [0, 1, 3, 7]
+I: [6]
+R: []
+P: [2, 4, 5]
+INFECTING: 1 3 7 
+
+S: [0]
+I: [1, 3, 6, 7]
+R: []
+P: [2, 4, 5]
+Strategy: [0.46, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [1, 3, 6, 7]
+R: []
+P: [0, 2, 4, 5]
+
+Nothing more to protect.
+Ending model with 4 protected and 4 infected vertices in 3 turns.
+
+ *** Outbreak: 7 *** 
+
+
+ ----- NAIVE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.99 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.70 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.26 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 4: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 5: peril 1.00, protection 0.66 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.39 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.42 and state INFECTED.
+
+S: [0, 1, 2, 5, 6]
+I: [7]
+R: []
+P: [3, 4]
+Strategy: [0.0, 0.44, 0.19, 0.0, 0.0, 0.19, 0.19, 0.0]
+
+S: [0, 2, 5, 6]
+I: [7]
+R: []
+P: [1, 3, 4]
+INFECTING: 2 5 6 
+
+S: [0]
+I: [2, 5, 6, 7]
+R: []
+P: [1, 3, 4]
+Strategy: [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+S: []
+I: [2, 5, 6, 7]
+R: []
+P: [0, 1, 3, 4]
+
+Nothing more to infect.
+Ending model with 4 protected and 4 infected vertices in 3 turns.
+
+ ----- CHEAPEST INCREASE DEFENCE STRATEGY -----
+
+Agent at vertex 0: peril 0.50, protection 0.99 and state SUSCEPTIBLE.
+Agent at vertex 1: peril 1.00, protection 0.70 and state SUSCEPTIBLE.
+Agent at vertex 2: peril 1.00, protection 0.26 and state SUSCEPTIBLE.
+Agent at vertex 3: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 4: peril 0.50, protection 1.00 and state PROTECTED.
+Agent at vertex 5: peril 1.00, protection 0.66 and state SUSCEPTIBLE.
+Agent at vertex 6: peril 1.00, protection 0.39 and state SUSCEPTIBLE.
+Agent at vertex 7: peril 1.00, protection 0.42 and state INFECTED.
+
+S: [0, 1, 2, 5, 6]
+I: [7]
+R: []
+P: [3, 4]
+Strategy: [0.01, 0.25, 0.25, 0.0, 0.0, 0.25, 0.25, 0.0]
+
+S: [1, 2, 5, 6]
+I: [7]
+R: []
+P: [0, 3, 4]
+INFECTING: 1 2 5 6 
+
+S: []
+I: [1, 2, 5, 6, 7]
+R: []
+P: [0, 3, 4]
+
+Nothing more to protect.
+Ending model with 3 protected and 5 infected vertices in 2 turns.
