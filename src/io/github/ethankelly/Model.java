@@ -245,7 +245,6 @@ public class Model {
         }
 
         // Get the currently infected vertices, so we can re-calculate peril and assign states.
-        // TODO is anything now protected (CAN'T BE ACCESSED BY FIRE)?
         int[] fires = new int[this.getNumVertices()];
         List<Agent> onFire = this.getInfected();
         int k = 0;
