@@ -24,9 +24,12 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Model {
+    public final int PROXIMITY = 0;
+    public final int DEGREE = 1;
+    public final int PROTECTION = 2;
+    private final int numVertices;
     private Graph graph;
     private List<Agent> agents;
-    private final int numVertices;
 
     /**
      * Class constructor.
@@ -38,6 +41,79 @@ public class Model {
         this.numVertices = numVertices;
         this.graph = graph;
 
+    }
+
+    /**
+     * Used to test methods involved in running the agency-based SIRP model.
+     *
+     * @param args the command-line arguments.
+     */
+    @SuppressWarnings("unused")
+    public static void main(String[] args) {
+        // Numbers of vertices and edges for testing on random graphs
+        int numVertices = 8;
+        int numEdges = 16;
+
+        // Split vertices into two partitions for bipartite graphs
+        int numVertices1 = numVertices / 2;
+        int numVertices2 = numVertices - numVertices1;
+
+        // Probability for Erdős–Rényi graphs
+        double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
+
+        // Total defence (improvement in protection ratings) that can be deployed each turn
+        double totalDefence = 1.0;
+        // Probability with which the infection transmits
+        double probInfection = 1.0;
+
+        // New graph for use in the model
+        Graph g = GraphGenerator.erdosRenyi(numVertices, p);
+        StdOut.println("Seed: " + GraphGenerator.getSeed());
+        StdOut.println();
+
+        // Initialise the model
+        Model m = new Model(numVertices, g);
+        Model n = new Model(numVertices, g);
+        Model o = new Model(numVertices, g);
+        StdOut.println(m.getGraph());
+
+        // Cycle through all vertices to test the model using each vertex as a source
+        for (int i = 0; i < m.getNumVertices(); i++) {
+            StdOut.println("\n *** Outbreak: " + i + " *** \n");
+            // Initialise a list of agents given the starting state of the graph
+            for (int j = 0; j < m.getNumVertices(); j++) {
+                m.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                m.getAgents().get(j).setPeril(m.perilRating(m.getAgents().get(j), new int[]{i}, m.getGraph()));
+                m.getAgents().get(j).setProtection(m.protectionRating(m.getAgents().get(j)));
+                m.getAgents().get(j).setState(m.findState(m.getAgents().get(j), new int[]{i}));
+
+                // Set the n and o agents to the same peril and protection ratings as m agents
+                // so that we can directly compare the results we obtain when running the models.
+                n.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                n.getAgents().get(j).setPeril(m.getAgents().get(j).getPeril());
+                n.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
+                n.getAgents().get(j).setState(n.findState(n.getAgents().get(j), new int[]{i}));
+
+                o.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                o.getAgents().get(j).setPeril(m.getAgents().get(j).getPeril());
+                o.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
+                o.getAgents().get(j).setState(o.findState(o.getAgents().get(j), new int[]{i}));
+            }
+            // Print the agents we initialised, run the model until
+            // either nothing can be infected or nothing can be protected.
+            StdOut.println("\n ----- PROXIMITY TO INFECTION DEFENCE STRATEGY -----\n");
+            m.printAgents();
+            m.runTest(totalDefence, probInfection, m.PROXIMITY);
+
+            StdOut.println("\n ----- GREATEST DEGREE DEFENCE STRATEGY -----\n");
+            n.printAgents();
+            n.runTest(totalDefence, probInfection, n.DEGREE);
+
+            StdOut.println("\n ----- CHEAPEST INCREASE DEFENCE STRATEGY -----\n");
+            o.printAgents();
+            o.runTest(totalDefence, probInfection, o.PROTECTION);
+        }
+        StdOut.close();
     }
 
     /**
@@ -54,9 +130,8 @@ public class Model {
         double peril;
 
         int[] leastDistancePath = g.shortestPath(agent.getVertex());
-        double
-                leastDist =
-                leastDistancePath[fires[0]]; //TODO make this work for more than one fire location - find closest fire, find shortest path to it
+        double leastDist = leastDistancePath[fires[0]];
+        //TODO make this work for more than one fire location - find closest fire, find shortest path to it
 
         if (leastDist == 0) peril = 1.0;
         else peril = leastDist == Integer.MAX_VALUE ? 0.0 : 1 / leastDist;
@@ -114,22 +189,42 @@ public class Model {
     }
 
     /**
-     * The next defence to implement in the model is determined by first finding the vertex or vertices with the highest
-     * peril. Then, the total defence available is shared evenly (for now) between these vertices (or given entirely to
-     * one vertex) and then their protection ratings are increased by this evenly split amount. For instance, if we have
-     * a defence quota of 1.0 and two vertices with the same highest peril rating, we would increase each of their
-     * protection ratings by (up to) 0.5 or 50%. Of course, if their protection rating plus this proposed increase is
-     * greater than one, we only need to increase by some fraction of the proposed amount, using the remainder on the
-     * next vertex. When a vertex has a protection rating of 1.0, it moves to the protected state and cannot contract
-     * the infection. The higher the protection up to this point, the smaller the likelihood of contraction.
+     * We have several (heuristic) defence approaches to the stochastic model that this class instantiates. We choose
+     * one of the defence strategies currently available:
+     * <ul>
+     *      <li> Defend based on proximity to fire, breaking ties by choosing the highest degree vertex;
+     *      <li> Defend based on highest degree vertices, breaking ties with greatest proximity to fire; and
+     *      <li> Defend the agents with the highest protection ratings.
+     * </ul>
+     * <p>
+     * In the proximity approach, we find the vertex closest to fire (if there is more than one candidate, we break ties
+     * by greatest degree) and begin by defending that. We recurse until the total allocated defence is spent. Each
+     * agent has their protection ratings accordingly. When a vertex has a protection rating of 1.0, it moves to the
+     * protected state and cannot contract the infection.
+     * <p>
+     * In the degree based approach, we find the agent which inhabits the highest degree vertex in the graph
+     * underpinning the model (breaking ties this time by proximity to fire) and increase its protection as much as
+     * possible. If there is remaining defence quota after this, we recurse until this allocation is spent. We again
+     * set protection ratings to reflect the strategy to implement and where appropriate re-assign states.
+     * <p>
+     * In the highest protection defence strategy, we find the vertex (or vertices) with highest protection, that is the
+     * vertex (vertices) that would be cheapest to increase their protection rating to 1.0 and move to the protected
+     * state of the model. Then, for as long as there is remaining defence allowance, the strategy reallocates the
+     * remaining quota to the next highest protection rated vertex.
      *
      * @param totalDefence the total defence quota that we can implement per turn.
+     * @param whichDefence a value corresponding to the defence strategy to use.
      */
-    public void runNaiveNextDefence(double totalDefence) {
+    public void runDefence(double totalDefence, int whichDefence) {
         // Find the susceptible agents (the only agents we are interested in defending).
         List<Agent> susceptibleAgents = this.getSusceptible();
         double[] strategy = new double[this.getNumVertices()];
-        List<Agent> toDefend = findHighestPeril();
+        List<Agent> toDefend = switch (whichDefence) {
+            case PROXIMITY -> findHighestPeril();
+            case DEGREE -> findHighestDegree();
+            case PROTECTION -> findHighestProtection();
+            default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
+        };
 
         // Split the defence quota evenly among the total vertices we have determined should be defended.
         double eachDefence = totalDefence / toDefend.size();
@@ -143,13 +238,18 @@ public class Model {
                     agents.get(i).setState(State.PROTECTED);
                     // Remove any fully defended agents from the susceptible list
                     susceptibleAgents.remove(agents.get(i));
-                } else strategy[i] = eachDefence;
+                } else strategy[i] += eachDefence;
 
                 double sum = 0;
                 for (double v : strategy) sum += v;
-                // If we still have defence to use, find the next highest peril agent(s) and defend them
+                // If we still have defence to use, find the next most appropriate agent(s) and defend them
                 while (sum < totalDefence && !susceptibleAgents.isEmpty()) {
-                    List<Agent> nextToDefend = findHighestPeril();
+                    List<Agent> nextToDefend = switch (whichDefence) {
+                        case PROXIMITY -> findHighestPeril();
+                        case DEGREE -> findHighestDegree();
+                        case PROTECTION -> findHighestProtection();
+                        default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
+                    };
                     toDefend.addAll(nextToDefend);
                     totalDefence = 1 - sum;
                     eachDefence = totalDefence / nextToDefend.size();
@@ -197,88 +297,66 @@ public class Model {
 
     }
 
-    public void runHighestProtectionDefence(double totalDefence) {
-        // Find the susceptible agents (the only agents we are interested in defending).
-        List<Agent> susceptibleAgents = this.getSusceptible();
-        double[] strategy = new double[this.getNumVertices()];
-        List<Agent> toDefend = findHighestDefence();
+    @SuppressWarnings("CommentedOutCode")
+    private List<Agent> findHighestDegree() {
+        List<Agent> susceptibleAgents =
+                this.getAgents().stream().filter(
+                        agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
 
-        // Split the defence quota evenly among the total vertices we have determined should be defended.
-        double eachDefence = totalDefence / toDefend.size();
-        for (int i = 0; i < this.getNumVertices(); i++) {
-            if (toDefend.contains(agents.get(i))) {
-                if (agents.get(i).getProtection() + eachDefence > 1) {
-                    // If increasing protection by the calculated amount will take protection over 1, take the defence
-                    // up to 1.0 and then redistribute the remaining defence quota amongst the other agents to protect.
-                    strategy[i] = 1 - agents.get(i).getProtection();
-                    eachDefence = (totalDefence - strategy[i]) / toDefend.size();
-                    agents.get(i).setState(State.PROTECTED);
-                    // Remove any fully defended agents from the susceptible list
-                    susceptibleAgents.remove(agents.get(i));
-                } else strategy[i] = eachDefence;
+        List<Agent> highestDegrees = new ArrayList<>();
 
-                double sum = 0;
-                for (double v : strategy) sum += v;
-                // If we still have defence to use, find the next highest peril agent(s) and defend them
-                while (sum < totalDefence && !susceptibleAgents.isEmpty()) {
-                    List<Agent> nextToDefend = findHighestPeril();
-                    toDefend.addAll(nextToDefend);
-                    totalDefence = 1 - sum;
-                    eachDefence = totalDefence / nextToDefend.size();
-                    for (Agent nextDefence : nextToDefend) {
-                        if (nextDefence.getProtection() + eachDefence >= 1) {
-                            // Again, if increasing protection by the calculated amount will take protection over 1,
-                            // take the defence up to 1.0 and then redistribute remaining quota.
-                            strategy[nextDefence.getVertex()] = 1 - nextDefence.getProtection();
-                            eachDefence =
-                                    (totalDefence - strategy[nextDefence.getVertex()]) / (nextToDefend.size() - 1);
-                            agents.get(nextDefence.getVertex()).setState(State.PROTECTED);
-                            // Remove any fully defended agents from the susceptible list
-                            susceptibleAgents.remove(nextDefence);
-                        } else strategy[nextDefence.getVertex()] += eachDefence;
-                    }
-                    // Recalculate the sum of the strategy elements to see if we've played entire defence quota
-                    sum = 0;
-                    for (double v : strategy) sum += v;
-                }
+        int highestDegree = 0;
+        for (Agent agent : susceptibleAgents) {
+            int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+            if (thisDegree > highestDegree) {
+                highestDegree = thisDegree;
+            }
+        }
+        for (Agent agent : susceptibleAgents) {
+            int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+            if (thisDegree == highestDegree) {
+                highestDegrees.add(agent);
             }
         }
 
-        // Get the currently infected vertices, so we can re-calculate peril and assign states.
-        int[] fires = new int[this.getNumVertices()];
-        List<Agent> onFire = this.getInfected();
-        int k = 0;
-        for (Agent infected : onFire) {
-            fires[k++] = infected.getVertex();
+        // Tie-breaker: if we have more than one vertex with highest degree in the graph,
+        // Choose the agent with greatest peril rating and defend that one.
+        if (highestDegrees.size() > 1) {
+//            StdOut.println("\nMultiple agents with highest degree:");
+            double greatestPeril = 0.0;
+            for (Agent agent : highestDegrees) {
+//                StdOut.println("Agent at " + agent.getVertex()
+//                  + " with peril " + agent.getPeril()
+//                  + " has degree " + Graph.findDegree(this.graph, agent.getVertex()));
+                if (agent.getPeril() > greatestPeril) greatestPeril = agent.getPeril();
+            }
+            for (Agent agent : highestDegrees) {
+                if (agent.getPeril() == greatestPeril) {
+                    // There may be more than one suitable candidate - select the
+                    // lexicographically first vertex to defend relative agent.
+                    highestDegrees.clear();
+                    highestDegrees.add(agent);
+//                    StdOut.println("\nDefending agent at " + agent.getVertex() + " with peril " + agent.getPeril());
+                    break;
+                }
+            }
         }
-        fires = Arrays.copyOf(fires, k);
-
-        for (int j = 0; j < this.getNumVertices(); j++) {
-            agents.get(j).setProtection(agents.get(j).getProtection() + strategy[j]);
-            agents.get(j).setState(this.findState(agents.get(j), fires));
-        }
-        // Print the strategy we performed (for testing purposes).
-        // Each increase is to 2 dp when printed, but maintains full length in usage
-        DecimalFormat df = new DecimalFormat("0.00");
-        int i = 0;
-        double[] strategyToPrint = new double[strategy.length];
-        for (double d : strategy) {
-            strategyToPrint[i++] = Double.parseDouble(df.format(d));
-        }
-        StdOut.println("Strategy: " + Arrays.toString(strategyToPrint));
+        return highestDegrees;
     }
 
     /**
      * In order to determine a reasonable defence, we need to find the agent at highest peril currently. There may be
      * more than one at this same peril value (e.g. 1.0 is quite a common peril, when an agent is directly adjacent to
-     * an infected agent), so we find all agents with the highest peril in order to increase their defence.
+     * an infected agent), so we find all agents with the highest peril and choose which one to return as the agent to
+     * defend by determining which of the choices has the highest degree. If there is more than one such candidate, we
+     * select the lexicographically first agent.
      *
      * @return the agent or agents with highest peril from the given list of susceptible agents.
      */
     private List<Agent> findHighestPeril() {
-        List<Agent> agents = this.getAgents();
         List<Agent> susceptibleAgents =
-                agents.stream().filter(agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+                this.getAgents().stream().filter(
+                        agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
         List<Agent> toDefend = new ArrayList<>();
         // Find the agent or agents with highest peril rating(s) in order to increase their protection.
         double highestPeril = 0.0;
@@ -292,6 +370,29 @@ public class Model {
                 toDefend.add(agent);
             }
         }
+
+        // Tie-breaker: if we have more than one vertex with highest peril rating in the model,
+        // Choose the agent at vertex with greatest degree and defend that one.
+        if (toDefend.size() > 1) {
+//            StdOut.println("\nMultiple agents with highest peril:");
+            int highestDegree = 0;
+            for (Agent agent : toDefend) {
+                int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+//                StdOut.println("Agent at " + agent.getVertex() + " with peril " + agent.getPeril() + " has degree " + thisDegree);
+                if (thisDegree > highestDegree) highestDegree = thisDegree;
+            }
+            for (Agent agent : toDefend) {
+                int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+                if (thisDegree == highestDegree) {
+                    // There may be more than one suitable candidate - select the
+                    // lexicographically first vertex to defend relative agent.
+                    toDefend.clear();
+                    toDefend.add(agent);
+//                    StdOut.println("\nDefending agent at " + agent.getVertex() + " with degree " + thisDegree);
+                    break;
+                }
+            }
+        }
         return toDefend;
     }
 
@@ -301,10 +402,10 @@ public class Model {
      *
      * @return the agent or agents with highest protection rating from the currently susceptible agents.
      */
-    private List<Agent> findHighestDefence() {
-        List<Agent> agents = this.getAgents();
+    private List<Agent> findHighestProtection() {
         List<Agent> susceptibleAgents =
-                agents.stream().filter(agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+                this.getAgents().stream().filter(
+                        agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
 
         List<Agent> highestProtection = new ArrayList<>();
         // Cycle through all agents, reassign highest protection value everytime we find a greater protection rating
@@ -385,6 +486,7 @@ public class Model {
      *
      * @param graph the graph to associate as an attribute to the current model.
      */
+    @SuppressWarnings("unused")
     public void setGraph(Graph graph) {
         this.graph = graph;
     }
@@ -549,19 +651,20 @@ public class Model {
      * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
      *                               vertices each defensive turn.
      * @param probabilityOfInfection the probability with which the infection propagates.
+     * @param whichDefence           the choice of defence strategy.
      */
-    private void runNaiveTest(double totalDefence, double probabilityOfInfection) {
+    private void runTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
         this.printSIRP();
         int turn = 0;
         while (true) {
             if (!this.getSusceptible().isEmpty()) {
-                this.runNaiveNextDefence(totalDefence);
+                this.runDefence(totalDefence, whichDefence);
                 this.printSIRP();
                 turn++;
             } else {
                 StdOut.print("\nNothing more to protect.\nEnding model with "
-                        + this.getProtected().size()   + " protected and "
-                        + this.getInfected().size()    + " infected vertices in "
+                        + this.getProtected().size() + " protected and "
+                        + this.getInfected().size() + " infected vertices in "
                         + turn);
                 StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
                 break;
@@ -572,8 +675,8 @@ public class Model {
                 turn++;
             } else {
                 StdOut.print("\nNothing more to infect.\nEnding model with "
-                        + this.getProtected().size()   + " protected and "
-                        + this.getInfected().size()    + " infected vertices in "
+                        + this.getProtected().size() + " protected and "
+                        + this.getInfected().size() + " infected vertices in "
                         + turn);
                 StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
                 break;
@@ -581,109 +684,5 @@ public class Model {
         }
     }
 
-    /**
-     * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
-     * method and verify that the model runs as expected based on the cheapest defence strategy (defend vertices with
-     * the highest protection ratings in descending order to defend as many as possible).
-     *
-     * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
-     *                               vertices each defensive turn.
-     * @param probabilityOfInfection the probability with which the infection propagates.
-     */
-    private void runCheapestDefenceTest(double totalDefence, double probabilityOfInfection) {
-        this.printSIRP();
-        int turn = 0;
-        while (true) {
-            if (!this.getSusceptible().isEmpty()) {
-                this.runHighestProtectionDefence(totalDefence);
-                this.printSIRP();
-                turn++;
-            } else {
-                StdOut.print("\nNothing more to protect.\nEnding model with "
-                        + this.getProtected().size()   + " protected and "
-                        + this.getInfected().size()    + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
-                break;
-            }
-            if (!this.getSusceptible().isEmpty()) {
-                this.nextBurning(probabilityOfInfection);
-                this.printSIRP();
-                turn++;
-            } else {
-                StdOut.print("\nNothing more to protect.\nEnding model with "
-                        + this.getProtected().size()   + " protected and "
-                        + this.getInfected().size()    + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
-                break;
-            }
-        }
-    }
 
-    /**
-     * Used to test methods involved in running the agency-based SIRP model.
-     *
-     * @param args the command-line arguments.
-     */
-    public static void main(String[] args) {
-        // Numbers of vertices and edges for testing on random graphs
-        int numVertices = 8;
-        int numEdges = 16;
-
-        // Split vertices into two partitions for bipartite graphs
-        int numVertices1 = numVertices / 2;
-        int numVertices2 = numVertices - numVertices1;
-
-        // Probability for Erdős–Rényi graphs
-        double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
-
-        // Total defence (improvement in protection ratings) that can be deployed each turn
-        double totalDefence = 1.0;
-
-        // Probability with which the infection transmits
-        double probabilityOfInfection = 1.0;
-
-        // New graph for use in the model
-        Graph g = GraphGenerator.erdosRenyi(numVertices, p);
-        StdOut.println("Seed: " + GraphGenerator.getSeed());
-        StdOut.println();
-
-        // Initialise the model
-        Model m = new Model(numVertices, g);
-        StdOut.println(m.getGraph());
-
-        Model n = new Model(numVertices, g);
-        StdOut.println(n.getGraph());
-
-
-        // Cycle through all vertices to test the model using each vertex as a source
-        for (int i = 0; i < m.getNumVertices(); i++) {
-            StdOut.println("\n *** Outbreak: " + i + " *** \n");
-            // Initialise a list of agents given the starting state of the graph
-            for (int j = 0; j < m.getNumVertices(); j++) {
-                m.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                m.getAgents().get(j).setPeril(m.perilRating(m.getAgents().get(j), new int[]{i}, m.getGraph()));
-                m.getAgents().get(j).setProtection(m.protectionRating(m.getAgents().get(j)));
-                m.getAgents().get(j).setState(m.findState(m.getAgents().get(j), new int[]{i}));
-
-                // Set the n agents to the same peril and protection ratings as m agents
-                // so that we can directly compare the results we obtain when running the models.
-                n.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                n.getAgents().get(j).setPeril(m.getAgents().get(j).getPeril());
-                n.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
-                n.getAgents().get(j).setState(n.findState(n.getAgents().get(j), new int[]{i}));
-            }
-            // Print the agents we initialised, run the model until
-            // either nothing can be infected or nothing can be protected.
-            StdOut.println("\n ----- NAIVE DEFENCE STRATEGY -----\n");
-            m.printAgents();
-            m.runNaiveTest(totalDefence, probabilityOfInfection);
-
-            StdOut.println("\n ----- CHEAPEST INCREASE DEFENCE STRATEGY -----\n");
-            n.printAgents();
-            n.runCheapestDefenceTest(totalDefence, probabilityOfInfection);
-        }
-        StdOut.close();
-    }
 }

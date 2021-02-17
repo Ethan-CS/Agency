@@ -201,6 +201,16 @@ public class Graph {
         return s.toString();
     }
 
+    public static int findDegree(Graph g, int vertex) {
+        boolean[][] adjMatrix = g.getAdjMatrix();
+
+        int degree = 0;
+        for (int i = 0; i < g.getNumVertices(); i++) {
+            if (g.isEdge(vertex, i)) degree++;
+        }
+        return degree;
+    }
+
     /**
      * Selects a random vertex from the set of vertices to begin the setOutbreak.
      *
