@@ -1,6 +1,5 @@
 package io.github.ethankelly;
 
-import java.io.FileNotFoundException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -51,10 +50,10 @@ public final class StdOut {
           out = new PrintWriter(new OutputStreamWriter(System.out, CHARSET_NAME), true);
 
             // Print to a new file, with the given name
-           out = new PrintWriter("out/TestData.txt");
+//           out = new PrintWriter("out/TestData.txt");
 
             // OSW throws UnsupportedEncodingException, File throws FileNotFound
-        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException e) {
             System.out.println("Unsupported encoding " + e);
         }
     }

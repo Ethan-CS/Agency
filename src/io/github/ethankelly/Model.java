@@ -14,22 +14,21 @@ import java.util.stream.Collectors;
 /**
  * The {@code Model} class contains all methods involved in storing and updating the state of play. For instance, a
  * method for getting the currently burning vertices (based on a given probability of propagation) and for updating the
- * state (stored as a matrix) of the graph. This matrix keeping information about how the contagion has progressed and
- * begins with one column of all zeros, where each row represents the vertex corresponding to the row index. Another
- * column will represent a defensive move - if any vertices have been influenced to the level required to deem them
- * immune to the disease (perhaps by a vaccine), then they move to the protected state. Then, another column is added to
- * represent any transmissions that occur based on the probability of transmission and the protection rating of the
- * agents the contagion is currently adjacent to. Then, another defence turn is played and so on, until no more moves
- * can be made. This class needs to contain methods that check for this instance after every turn and thereby end the
- * simulation. The methods here are used to pass probabilities which dictate infection dynamics, depending on the
- * particular context we want to consider.
+ * state of the graph. The model starts with only the source node as infected, any vertices that do not have a path to
+ * the source node as protected and any others as susceptible. As the model progresses, if any vertices have been
+ * influenced to the level required to deem them immune to the disease (perhaps by a vaccine), then they move to the
+ * protected state. Further, any transmissions that occur based on the probability of transmission and the protection
+ * rating of the agents the contagion is currently adjacent to have their states updated accordingly. Then, another
+ * defence turn is played and so on, until no more moves can be made. This class contains methods that check for this
+ * instance after every turn and thereby end the simulation. The methods here are passed probabilities which dictate
+ * infection dynamics, depending on the particular context we want to consider.
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Model {
-    public final int PROXIMITY = 0;
-    public final int DEGREE = 1;
-    public final int PROTECTION = 2;
+    public static final int PROXIMITY = 0;
+    public static final int DEGREE = 1;
+    public static final int PROTECTION = 2;
     private final int numVertices;
     private Graph graph;
     private List<Agent> agents;
@@ -43,6 +42,9 @@ public class Model {
     public Model(int numVertices, Graph graph) {
         this.numVertices = numVertices;
         this.graph = graph;
+        // This ensures only one instance is created, which we then update,
+        // rather than creating multiple instances and so on.
+        this.agents = assignAgents(numVertices);
     }
 
     /**
@@ -50,20 +52,19 @@ public class Model {
      *
      * @param args the command-line arguments.
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused"})
     public static void main(String[] args) throws FileNotFoundException {
-        File readableFile = new File("out/TestReadable.txt");
+        File readableFile = new File("out/TestReadable.md");
         PrintWriter readable = new PrintWriter(readableFile);
-        StdOut.setOut(readable);
+        File dataFile = new File("out/TestData.csv");
+        PrintWriter data = new PrintWriter(dataFile);
 
         // Numbers of vertices and edges for testing on random graphs
-        int numVertices = 8;
-        int numEdges = 16;
-
+        int numVertices = 10;
+        int numEdges = 18;
         // Split vertices into two partitions for bipartite graphs
         int numVertices1 = numVertices / 2;
         int numVertices2 = numVertices - numVertices1;
-
         // Probability for Erdős–Rényi graphs
         double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
 
@@ -72,79 +73,70 @@ public class Model {
         // Probability with which the infection transmits
         double probInfection = 1.0;
 
+        StdOut.setOut(readable);
+
+        StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
+
         // New graph for use in the model
+        StdOut.println("## Generating Erdős–Rényi Graph:");
         Graph g = GraphGenerator.erdosRenyi(numVertices, p);
-        StdOut.println("Seed: " + GraphGenerator.getSeed());
+        StdOut.println("* Number of vertices: " + numVertices
+                + "\n * Number of edges: " + numEdges
+                + "\n * Probability: " + p
+                + "\n * Random generator seed: " + GraphGenerator.getSeed());
         StdOut.println();
 
+        StdOut.setOut(data);
+        StdOut.println(Graph.makeCommaSeparated(g) + "" + GraphGenerator.getSeed());
+
+        StdOut.setOut(readable);
+
         // Initialise the model
-        Model m1 = new Model(numVertices, g);
-        Model n1 = new Model(numVertices, g);
-        Model o1 = new Model(numVertices, g);
-        Model m2 = new Model(numVertices, g);
-        Model n2 = new Model(numVertices, g);
-        Model o2 = new Model(numVertices, g);
-        StdOut.println(m1.getGraph());
+        Model m = new Model(numVertices, g);
+        Model n = new Model(numVertices, g);
+        Model o = new Model(numVertices, g);
+        StdOut.println(m.getGraph());
 
         // Cycle through all vertices to test the model using each vertex as a source
-        for (int i = 0; i < m1.getNumVertices(); i++) {
-            StdOut.println("\n *** Outbreak: " + i + " *** \n");
+        for (int i = 0; i < m.getNumVertices(); i++) {
+            StdOut.setOut(readable);
+            StdOut.println("\n## Outbreak: " + i);
             // Initialise a list of agents given the starting state of the graph
-            for (int j = 0; j < m1.getNumVertices(); j++) {
-                m1.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                m1.getAgents().get(j).setPeril(m1.perilRating(m1.getAgents().get(j), new int[]{i}, m1.getGraph()));
-                m1.getAgents().get(j).setProtection(m1.protectionRating(m1.getAgents().get(j)));
-                m1.getAgents().get(j).setState(m1.findState(m1.getAgents().get(j), new int[]{i}));
+            for (int j = 0; j < m.getNumVertices(); j++) {
+                m.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                m.getAgents().get(j).setPeril(m.perilRating(m.getAgents().get(j), new int[]{i}, m.getGraph()));
+                m.getAgents().get(j).setProtection(m.protectionRating(m.getAgents().get(j)));
+                m.getAgents().get(j).setState(m.findState(m.getAgents().get(j), new int[]{i}));
 
-                // Set the n1 and o1 agents to the same peril and protection ratings as m1 agents
+                // Set the n and o agents to the same peril and protection ratings as m agents
                 // so that we can directly compare the results we obtain when running the models.
-                n1.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                n1.getAgents().get(j).setPeril(m1.getAgents().get(j).getPeril());
-                n1.getAgents().get(j).setProtection(m1.getAgents().get(j).getProtection());
-                n1.getAgents().get(j).setState(n1.findState(n1.getAgents().get(j), new int[]{i}));
+                n.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                n.getAgents().get(j).setPeril(m.getAgents().get(j).getPeril());
+                n.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
+                n.getAgents().get(j).setState(n.findState(n.getAgents().get(j), new int[]{i}));
 
-                o1.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                o1.getAgents().get(j).setPeril(m1.getAgents().get(j).getPeril());
-                o1.getAgents().get(j).setProtection(m1.getAgents().get(j).getProtection());
-                o1.getAgents().get(j).setState(o1.findState(o1.getAgents().get(j), new int[]{i}));
+                o.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+                o.getAgents().get(j).setPeril(m.getAgents().get(j).getPeril());
+                o.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
+                o.getAgents().get(j).setState(o.findState(o.getAgents().get(j), new int[]{i}));
             }
+            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
+
             // Print the agents we initialised, run the model until
             // either nothing can be infected or nothing can be protected.
-            m1.printAgents();
-            m1.runReadableTest(totalDefence, probInfection, m1.PROXIMITY);
-            n1.printAgents();
-            n1.runReadableTest(totalDefence, probInfection, n1.DEGREE);
-            o1.printAgents();
-            o1.runReadableTest(totalDefence, probInfection, o1.PROTECTION);
-        }
+            m.printAgents();
+            String mResult = m.runReadableTest(totalDefence, probInfection, PROXIMITY);
+            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
+            String nResult = n.runReadableTest(totalDefence, probInfection, DEGREE);
+            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
+            String oResult = o.runReadableTest(totalDefence, probInfection, PROTECTION);
 
-        File dataFile = new File("out/TestData.txt");
-        PrintWriter data = new PrintWriter(dataFile);
-        StdOut.setOut(data);
-        StdOut.println(m2.getGraph() + "" + GraphGenerator.getSeed());
-        for (int i = 0; i < m2.getNumVertices(); i++) {
-            StdOut.println("\nOUTBREAK " + i);
-            for (int j = 0; j < m2.getNumVertices(); j++) {
-                m2.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                m2.getAgents().get(j).setPeril(m2.perilRating(m2.getAgents().get(j), new int[]{i}, m2.getGraph()));
-                m2.getAgents().get(j).setProtection(m2.protectionRating(m2.getAgents().get(j)));
-                m2.getAgents().get(j).setState(m2.findState(m2.getAgents().get(j), new int[]{i}));
-
-                // Set the n2 and o2 agents to the same peril and protection ratings as m2 agents
-                // so that we can directly compare the results we obtain when running the models.
-                n2.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                n2.getAgents().get(j).setPeril(m2.perilRating(m2.getAgents().get(j), new int[]{i}, m2.getGraph()));
-                n2.getAgents().get(j).setProtection(m2.protectionRating(m2.getAgents().get(j)));
-                n2.getAgents().get(j).setState(m2.findState(m2.getAgents().get(j), new int[]{i}));
-
-                o2.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-                o2.getAgents().get(j).setPeril(m2.perilRating(m2.getAgents().get(j), new int[]{i}, m2.getGraph()));
-                o2.getAgents().get(j).setProtection(m2.protectionRating(m2.getAgents().get(j)));
-                o2.getAgents().get(j).setState(m2.findState(m2.getAgents().get(j), new int[]{i}));
-            }
-            m2.runDataTest(totalDefence, probInfection, m2.PROXIMITY);
-            n2.runDataTest(totalDefence, probInfection, n2.DEGREE);
-            o2.runDataTest(totalDefence, probInfection, o2.PROTECTION);
+            // Print the results to a more machine-readable file.
+            StdOut.setOut(data);
+            StdOut.println("\nOUTBREAK " + i + "\nSTRATEGY, END TURN, PROTECTED, INFECTED");
+            StdOut.println(mResult);
+            StdOut.println(nResult);
+            StdOut.println(oResult);
         }
         StdOut.close();
     }
@@ -448,7 +440,7 @@ public class Model {
      * @param probabilityOfInfection the probability with which the infection spreads.
      * @return the vertices that the method determines should be burned.
      */
-    public List<Agent> nextBurning(double probabilityOfInfection) {
+    public List<Agent> findNextBurning(double probabilityOfInfection) {
         // Find the currently infected (burning) vertices
         List<Agent> infectedAgents = this.getInfected();
         // Find the susceptible agents (the only agents we could infect).
@@ -465,7 +457,7 @@ public class Model {
             }
         }
         toInfect.forEach(agent -> agent.setState(State.INFECTED));
-        return toInfect;
+        return toInfect.stream().distinct().collect(Collectors.toList());
     }
 
     /**
@@ -510,12 +502,7 @@ public class Model {
      * @return the current list of agents.
      */
     public List<Agent> getAgents() {
-        // This ensures only one instance is created, which we then update, rather than
-        // creating multiple instances and so on.
-        if (agents == null) {
-            agents = setAgents(getNumVertices());
-        }
-        return agents;
+        return this.agents;
     }
 
     /**
@@ -527,13 +514,17 @@ public class Model {
      * @param numVertices the number of vertices in the graph model.
      * @return the list of agents we have created.
      */
-    private List<Agent> setAgents(int numVertices) {
+    private List<Agent> assignAgents(int numVertices) {
         List<Agent> agents = new ArrayList<>();
         for (int i = 0; i < numVertices; i++) {
             agents.add(new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE));
         }
         this.agents = agents;
         return agents;
+    }
+
+    private void setAgents(List<Agent> agents) {
+        this.agents = agents;
     }
 
     /**
@@ -625,7 +616,7 @@ public class Model {
      */
     private void printAgents() {
         List<Agent> agents = this.getAgents();
-        agents.forEach(StdOut::println);
+        agents.stream().map(agent -> "* " + agent).forEach(StdOut::println);
     }
 
     /**
@@ -649,43 +640,53 @@ public class Model {
 
         // Print each array, as found above, to the standard output
         // to monitor progression of the model.
-        StdOut.println("S: " + Arrays.toString(susceptible)
-                + "\nI: " + Arrays.toString(infected)
-                + "\nR: " + Arrays.toString(recovered)
-                + "\nP: " + Arrays.toString(defended));
+        StdOut.println(" * S: " + Arrays.toString(susceptible)
+                + "\n * I: " + Arrays.toString(infected)
+                + "\n * R: " + Arrays.toString(recovered)
+                + "\n * P: " + Arrays.toString(defended));
     }
 
     /**
      * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
-     * method and verify that the model runs as expected.
+     * method and verify that the model runs as expected by printing to a file in a human-readable way.
      *
      * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
      *                               vertices each defensive turn.
      * @param probabilityOfInfection the probability with which the infection propagates.
      * @param whichDefence           the choice of defence strategy.
      */
-    private void runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
+    private String runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
+        StringBuilder s = new StringBuilder();
         switch (whichDefence) {
-            case PROXIMITY -> StdOut.println("\n ----- PROXIMITY TO INFECTION DEFENCE STRATEGY -----\n");
-            case DEGREE -> StdOut.println("\n ----- GREATEST DEGREE DEFENCE STRATEGY -----\n");
-            case PROTECTION -> StdOut.println("\n ----- CHEAPEST INCREASE DEFENCE STRATEGY -----\n");
+            case PROXIMITY -> {
+                StdOut.println("\n#### PROXIMITY TO INFECTION DEFENCE STRATEGY\n");
+                s.append("PROXIMITY, ");
+            }
+            case DEGREE -> {
+                StdOut.println("\n#### GREATEST DEGREE DEFENCE STRATEGY\n");
+                s.append("DEGREE, ");
+            }
+            case PROTECTION -> {
+                StdOut.println("\n#### CHEAPEST INCREASE DEFENCE STRATEGY\n");
+                s.append("PROTECTION, ");
+            }
         }
         this.printSIRP();
         int turn = 0;
         while (true) {
             if (!this.getSusceptible().isEmpty()) {
-                double[] strategy = this.runDefence(totalDefence, whichDefence);
                 // Print the strategy we performed. Each increase is to
                 // 2 dp when printed, but maintains full length in usage.
+                double[] strategy = this.runDefence(totalDefence, whichDefence);
+                double[] strategyToPrint = new double[strategy.length];
                 DecimalFormat df = new DecimalFormat("0.00");
                 int i = 0;
-                double[] strategyToPrint = new double[strategy.length];
                 for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-                StdOut.println("Strategy: " + Arrays.toString(strategyToPrint));
+                StdOut.println("\n\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n\n");
                 this.printSIRP();
                 turn++;
             } else {
-                StdOut.print("\nNothing more to protect.\nEnding model with "
+                StdOut.print("\n__Nothing more to protect.__\nEnding model with "
                         + this.getProtected().size() + " protected and "
                         + this.getInfected().size() + " infected vertices in "
                         + turn);
@@ -693,19 +694,20 @@ public class Model {
                 break;
             }
             if (!this.getSusceptible().isEmpty()) {
-                List<Agent> toInfect = this.nextBurning(probabilityOfInfection);
+                List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
                 if (!toInfect.isEmpty()) {
-                    StdOut.print("\nINFECTING: ");
+                    StdOut.print("\n\n_Infecting:_ ");
                     for (Agent agent : toInfect) {
                         StdOut.print(agent.getVertex() + " ");
-                        agent.setState(State.INFECTED);
                     }
                     StdOut.println();
+                } else {
+                    StdOut.println("\n\n_Nothing infected._");
                 }
                 this.printSIRP();
                 turn++;
             } else {
-                StdOut.print("\nNothing more to infect.\nEnding model with "
+                StdOut.print("\n__Nothing more to infect.__\nEnding model with "
                         + this.getProtected().size() + " protected and "
                         + this.getInfected().size() + " infected vertices in "
                         + turn);
@@ -713,43 +715,8 @@ public class Model {
                 break;
             }
         }
+        s.append(turn).append(", ").append(this.getProtected().size()).append(", ").append(this.getInfected().size());
+        return String.valueOf(s);
     }
-
-    /**
-     * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
-     * method and verify that the model runs as expected.
-     *
-     * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
-     *                               vertices each defensive turn.
-     * @param probabilityOfInfection the probability with which the infection propagates.
-     * @param whichDefence           the choice of defence strategy.
-     */
-    private void runDataTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
-        switch (whichDefence) {
-            case PROXIMITY -> StdOut.print("PROXIMITY, ");
-            case DEGREE -> StdOut.print("DEGREE, ");
-            case PROTECTION -> StdOut.print("PROTECTION, ");
-        }
-        // We return the end result of each strategy as
-        // defence, end turn count, protected, infected
-        int turn = 0;
-        while (true) {
-            if (!this.getSusceptible().isEmpty()) {
-                this.runDefence(totalDefence, whichDefence);
-                turn++;
-            } else {
-                StdOut.println(turn + ", " + this.getProtected().size() + ", " + this.getInfected().size());
-                break;
-            }
-            if (!this.getSusceptible().isEmpty()) {
-                this.nextBurning(probabilityOfInfection);
-                turn++;
-            } else {
-                StdOut.println(turn + ", " + this.getProtected().size() + ", " + this.getInfected().size());
-                break;
-            }
-        }
-    }
-
 
 }

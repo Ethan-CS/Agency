@@ -2,6 +2,7 @@ package io.github.ethankelly;
 
 
 import java.util.Random;
+import java.util.stream.IntStream;
 
 
 /**
@@ -196,9 +197,24 @@ public class Graph {
             for (boolean j : matrix[i]) {
                 s.append(j ? 1 : 0).append(" ");
             }
-            s.append("\n");
+            s.append("\n\n");
         }
         return s.toString();
+    }
+
+    public static String makeCommaSeparated(Graph g) {
+        int n = g.getNumVertices();
+        boolean[][] matrix = g.getAdjMatrix();
+        StringBuilder s = new StringBuilder();
+        IntStream.range(0, n).forEach(k -> s.append(k).append(", "));
+        s.append("\n");
+        for (int i = 0; i < n; i++) {
+            for (boolean j : matrix[i]) {
+                s.append(j ? 1 : 0).append(", ");
+            }
+            s.append("\n");
+        }
+        return String.valueOf(s);
     }
 
     public static int findDegree(Graph g, int vertex) {
