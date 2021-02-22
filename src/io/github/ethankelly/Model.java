@@ -54,11 +54,6 @@ public class Model {
      */
     @SuppressWarnings({"unused"})
     public static void main(String[] args) throws FileNotFoundException {
-        File readableFile = new File("out/TestReadable.md");
-        PrintWriter readable = new PrintWriter(readableFile);
-        File dataFile = new File("out/TestData.csv");
-        PrintWriter data = new PrintWriter(dataFile);
-
         // Numbers of vertices and edges for testing on random graphs
         int numVertices = 10;
         int numEdges = 18;
@@ -73,16 +68,23 @@ public class Model {
         // Probability with which the infection transmits
         double probInfection = 1.0;
 
+        Graph g = GraphGenerator.erdosRenyi(numVertices, p);
+
+        File dir = new File("out/" + String.valueOf(numVertices) + "_vertices/");
+        dir.mkdir();
+        File readableFile = new File(dir + "/" + GraphGenerator.getSeed() + "Readable.md");
+        PrintWriter readable = new PrintWriter(readableFile);
+        File dataFile = new File(dir + "/" + GraphGenerator.getSeed() + "Data.csv");
+        PrintWriter data = new PrintWriter(dataFile);
         StdOut.setOut(readable);
 
         StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
 
         // New graph for use in the model
         StdOut.println("## Generating Erdős–Rényi Graph:");
-        Graph g = GraphGenerator.erdosRenyi(numVertices, p);
         StdOut.println("* Number of vertices: " + numVertices
                 + "\n * Number of edges: " + numEdges
-                + "\n * Probability: " + p
+                + "\n * Probability: " + numEdges + " / " + "(" + numVertices + " * (" + numVertices + " - 1) / 2) = " + p
                 + "\n * Random generator seed: " + GraphGenerator.getSeed());
         StdOut.println();
 
@@ -120,15 +122,11 @@ public class Model {
                 o.getAgents().get(j).setProtection(m.getAgents().get(j).getProtection());
                 o.getAgents().get(j).setState(o.findState(o.getAgents().get(j), new int[]{i}));
             }
-            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
-
             // Print the agents we initialised, run the model until
             // either nothing can be infected or nothing can be protected.
             m.printAgents();
             String mResult = m.runReadableTest(totalDefence, probInfection, PROXIMITY);
-            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
             String nResult = n.runReadableTest(totalDefence, probInfection, DEGREE);
-            StdOut.println("Agents all same: " + (m.getAgents().equals(n.getAgents()) && n.getAgents().equals(o.getAgents())));
             String oResult = o.runReadableTest(totalDefence, probInfection, PROTECTION);
 
             // Print the results to a more machine-readable file.
@@ -659,15 +657,15 @@ public class Model {
         StringBuilder s = new StringBuilder();
         switch (whichDefence) {
             case PROXIMITY -> {
-                StdOut.println("\n#### PROXIMITY TO INFECTION DEFENCE STRATEGY\n");
+                StdOut.println("\n#### Proximity to Infection Defence\n");
                 s.append("PROXIMITY, ");
             }
             case DEGREE -> {
-                StdOut.println("\n#### GREATEST DEGREE DEFENCE STRATEGY\n");
+                StdOut.println("\n#### Greatest Degree Defence\n");
                 s.append("DEGREE, ");
             }
             case PROTECTION -> {
-                StdOut.println("\n#### CHEAPEST INCREASE DEFENCE STRATEGY\n");
+                StdOut.println("\n#### Cheapest Protection Increase Defence\n");
                 s.append("PROTECTION, ");
             }
         }
@@ -682,7 +680,7 @@ public class Model {
                 DecimalFormat df = new DecimalFormat("0.00");
                 int i = 0;
                 for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-                StdOut.println("\n\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n\n");
+                StdOut.println("\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n");
                 this.printSIRP();
                 turn++;
             } else {
@@ -696,13 +694,13 @@ public class Model {
             if (!this.getSusceptible().isEmpty()) {
                 List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
                 if (!toInfect.isEmpty()) {
-                    StdOut.print("\n\n_Infecting:_ ");
+                    StdOut.print("\n_Infecting:_ ");
                     for (Agent agent : toInfect) {
                         StdOut.print(agent.getVertex() + " ");
                     }
                     StdOut.println();
                 } else {
-                    StdOut.println("\n\n_Nothing infected._");
+                    StdOut.println("\n_Nothing infected._");
                 }
                 this.printSIRP();
                 turn++;
