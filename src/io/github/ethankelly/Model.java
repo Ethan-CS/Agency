@@ -1,7 +1,6 @@
 package io.github.ethankelly;
 
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
@@ -52,52 +51,58 @@ public class Model {
      *
      * @param args the command-line arguments.
      */
-    @SuppressWarnings({"unused"})
+    // I know these suppressions look RIDICULOUS but I'm still doing some testing...
+    @SuppressWarnings({"unused", "ResultOfMethodCallIgnored", "CommentedOutCode", "RedundantSuppression"})
     public static void main(String[] args) throws FileNotFoundException {
         // Numbers of vertices and edges for testing on random graphs
-        int numVertices = 10;
-        int numEdges = 18;
+        int numVertices = 20, numEdges = 80;
         // Split vertices into two partitions for bipartite graphs
-        int numVertices1 = numVertices / 2;
-        int numVertices2 = numVertices - numVertices1;
+        int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
         // Probability for Erdős–Rényi graphs
         double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
 
-        // Total defence (improvement in protection ratings) that can be deployed each turn
-        double totalDefence = 0.5;
-        // Probability with which the infection transmits
-        double probInfection = 1.0;
+        // Total defence (improvement in protection ratings) that can be
+        // deployed each turn and probability with which the infection transmits
+        double totalDefence = 1.0, probInfection = 1.0;
 
         Graph g = GraphGenerator.erdosRenyi(numVertices, p);
 
-        File dir = new File("out/" + String.valueOf(numVertices) + "_vertices/");
-        dir.mkdir();
-        File readableFile = new File(dir + "/" + GraphGenerator.getSeed() + "Readable.md");
-        PrintWriter readable = new PrintWriter(readableFile);
-        File dataFile = new File(dir + "/" + GraphGenerator.getSeed() + "Data.csv");
-        PrintWriter data = new PrintWriter(dataFile);
-        StdOut.setOut(readable);
-
-        StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
-
-        // New graph for use in the model
-        StdOut.println("## Generating Erdős–Rényi Graph:");
-        StdOut.println("* Number of vertices: " + numVertices
-                + "\n * Number of edges: " + numEdges
-                + "\n * Probability: " + numEdges + " / " + "(" + numVertices + " * (" + numVertices + " - 1) / 2) = " + p
-                + "\n * Random generator seed: " + GraphGenerator.getSeed());
-        StdOut.println();
-
+//        File dir = new File("out/" + numVertices + "_vertices/");
+//        dir.mkdir();
+//        File readableFile = new File(dir + "/" + GraphGenerator.getSeed() + "Readable.md");
+        PrintWriter readable = new PrintWriter("out/TestReadable.md");
+//        File dataFile = new File(dir + "/" + GraphGenerator.getSeed() + "Data.csv");
+        PrintWriter data = new PrintWriter("out/TestData.csv");
         StdOut.setOut(data);
-        StdOut.println(Graph.makeCommaSeparated(g) + "" + GraphGenerator.getSeed());
+        StdOut.println("OUTBREAK, STRATEGY, END TURN, SUSCEPTIBLE, INFECTED, RECOVERED, PROTECTED");
+//        File graphFile = new File(dir + "/" + GraphGenerator.getSeed() + ".csv");
+        PrintWriter modelGraph = new PrintWriter("out/Test.csv");
+        StdOut.setOut(modelGraph);
+        StdOut.print(Graph.makeCommaSeparated(g));
+        StdOut.print(GraphGenerator.getSeed());
 
-        StdOut.setOut(readable);
-
-        // Initialise the model
+        // Initialise the models
         Model m = new Model(numVertices, g);
         Model n = new Model(numVertices, g);
         Model o = new Model(numVertices, g);
+        StdOut.setOut(readable);
+        StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
+
+        // Print information about the generated graph and modelling values
+        DecimalFormat df = new DecimalFormat("0.00");
+        StdOut.println("## Generating Erdős–Rényi Graph:");
+        StdOut.println("Our graph generator class has generated an Erdős–Rényi graph with the following parameters:\n"
+                + " * Number of vertices: " + numVertices
+                + "\n * Number of edges: " + numEdges
+                + "\n * Probability: " + numEdges + " / " + "(" + numVertices
+                + " * (" + numVertices + " - 1) / 2) = " + Double.parseDouble(df.format(p))
+                + "\n * Random generator seed: " + GraphGenerator.getSeed() + "\n");
+        StdOut.println("The generated graph is represented using the following adjacency matrix:\n");
         StdOut.println(m.getGraph());
+
+        StdOut.println("## Model values");
+        StdOut.println("The values used in the model are:\n * Total defence quota each turn: " + totalDefence
+                + "\n * Probability with which the infection propagates: " + probInfection);
 
         // Cycle through all vertices to test the model using each vertex as a source
         for (int i = 0; i < m.getNumVertices(); i++) {
@@ -131,12 +136,92 @@ public class Model {
 
             // Print the results to a more machine-readable file.
             StdOut.setOut(data);
-            StdOut.println("\nOUTBREAK " + i + "\nSTRATEGY, END TURN, PROTECTED, INFECTED");
             StdOut.println(mResult);
             StdOut.println(nResult);
             StdOut.println(oResult);
         }
         StdOut.close();
+    }
+
+    /**
+     * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
+     * method and verify that the model runs as expected by printing to a file in a human-readable way.
+     *
+     * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
+     *                               vertices each defensive turn.
+     * @param probabilityOfInfection the probability with which the infection propagates.
+     * @param whichDefence           the choice of defence strategy.
+     */
+    private String runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
+        StringBuilder s = new StringBuilder();
+        int outbreak = this.getInfected().get(0).getVertex(); // TODO more than one outbreak?
+        s.append(outbreak).append(", ");
+        switch (whichDefence) {
+            case PROXIMITY -> {
+                StdOut.println("\n#### Proximity to Infection Defence\n");
+                s.append("PROXIMITY, ");
+            }
+            case DEGREE -> {
+                StdOut.println("\n#### Greatest Degree Defence\n");
+                s.append("DEGREE, ");
+            }
+            case PROTECTION -> {
+                StdOut.println("\n#### Highest Protection Defence\n");
+                s.append("PROTECTION, ");
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
+        }
+        this.printSIRP();
+
+        int turn = 0;
+        while (true) {
+            if (!this.getSusceptible().isEmpty()) {
+                // Print the strategy we performed. Each increase is to
+                // 2 dp when printed, but maintains full length in usage.
+                double[] strategy = this.runDefence(totalDefence, whichDefence);
+                double[] strategyToPrint = new double[strategy.length];
+                DecimalFormat df = new DecimalFormat("0.00");
+                int i = 0;
+                for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
+                StdOut.println("\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n");
+                this.printSIRP();
+                turn++;
+            } else {
+                StdOut.print("\n__Nothing more to protect.__\nEnding model with "
+                        + this.getProtected().size() + " protected and "
+                        + this.getInfected().size() + " infected vertices in "
+                        + turn);
+                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                break;
+            }
+            if (!this.getSusceptible().isEmpty()) {
+                List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
+                if (!toInfect.isEmpty()) {
+                    StdOut.print("\n_Infecting:_ ");
+                    for (Agent agent : toInfect) {
+                        StdOut.print(agent.getVertex() + " ");
+                    }
+                    StdOut.println();
+                } else {
+                    StdOut.println("\n_Nothing infected._");
+                }
+                this.printSIRP();
+                turn++;
+            } else {
+                StdOut.print("\n__Nothing more to infect.__\nEnding model with "
+                        + this.getProtected().size() + " protected and "
+                        + this.getInfected().size() + " infected vertices in "
+                        + turn);
+                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                break;
+            }
+        }
+        s.append(turn).append(", ")
+                .append(this.getSusceptible().size()).append(", ")
+                .append(this.getInfected().size()).append(", ")
+                .append(this.getRecovered().size()).append(", ")
+                .append(this.getProtected().size());
+        return String.valueOf(s);
     }
 
     /**
@@ -250,24 +335,28 @@ public class Model {
             default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
         };
 
+        StdOut.println("total defence: " + totalDefence);
+
         // Split the defence quota evenly among the total vertices we have determined should be defended.
         double eachDefence = totalDefence / toDefend.size();
-        for (int i = 0; i < this.getNumVertices(); i++) {
-            if (toDefend.contains(agents.get(i))) {
-                if (agents.get(i).getProtection() + eachDefence > 1) {
-                    // If increasing protection by the calculated amount will take protection over 1, take the defence
-                    // up to 1.0 and then redistribute the remaining defence quota amongst the other agents to protect.
-                    strategy[i] = 1 - agents.get(i).getProtection();
-                    eachDefence = (totalDefence - strategy[i]) / toDefend.size();
-                    agents.get(i).setState(State.PROTECTED);
-                    // Remove any fully defended agents from the susceptible list
-                    susceptibleAgents.remove(agents.get(i));
-                } else strategy[i] += eachDefence;
-
-                double sum = 0;
-                for (double v : strategy) sum += v;
+        loop: for (int i = 0; i < this.getNumVertices(); i++) {
+            if (toDefend.contains(this.getAgents().get(i))) {
+                // If increasing protection by the calculated amount will take protection over 1, take the defence
+                // up to 1.0 and then redistribute the remaining defence quota amongst the other agents to protect.
+                if (this.getAgents().get(i).getProtection() + eachDefence > 1) {
+                    double increase = 1 - this.getAgents().get(i).getProtection();
+                    strategy[i] = increase;
+                    this.getAgents().get(i).setState(State.PROTECTED);
+                    susceptibleAgents.remove(this.getAgents().get(i));
+                    toDefend.remove(this.getAgents().get(i));
+                    // Update the remaining defence.
+                    totalDefence -= strategy[i];
+                } else {
+                    strategy[i] += eachDefence;
+                    break;
+                }
                 // If we still have defence to use, find the next most appropriate agent(s) and defend them
-                while (sum < totalDefence && !susceptibleAgents.isEmpty()) {
+                while (totalDefence > 0 && !susceptibleAgents.isEmpty()) {
                     List<Agent> nextToDefend = switch (whichDefence) {
                         case PROXIMITY -> findHighestPeril();
                         case DEGREE -> findHighestDegree();
@@ -275,23 +364,25 @@ public class Model {
                         default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
                     };
                     toDefend.addAll(nextToDefend);
-                    totalDefence = 1 - sum;
-                    eachDefence = totalDefence / nextToDefend.size();
+                    eachDefence = totalDefence / (toDefend.size());
                     for (Agent nextDefence : nextToDefend) {
-                        if (nextDefence.getProtection() + eachDefence >= 1) {
+                        if (nextDefence.getProtection() + eachDefence > 1) {
                             // Again, if increasing protection by the calculated amount will take protection over 1,
                             // take the defence up to 1.0 and then redistribute remaining quota.
-                            strategy[nextDefence.getVertex()] = 1 - nextDefence.getProtection();
-                            eachDefence =
-                                    (totalDefence - strategy[nextDefence.getVertex()]) / (nextToDefend.size() - 1);
-                            agents.get(nextDefence.getVertex()).setState(State.PROTECTED);
-                            // Remove any fully defended agents from the susceptible list
+                            double previous = strategy[nextDefence.getVertex()];
+                            double increase = 1 - nextDefence.getProtection();
+                            strategy[nextDefence.getVertex()] += increase;
+                            // Remove fully defended agents from the susceptible state and add to protected state.
+                            this.getAgents().get(nextDefence.getVertex()).setState(State.PROTECTED);
                             susceptibleAgents.remove(nextDefence);
-                        } else strategy[nextDefence.getVertex()] += eachDefence;
+                            toDefend.remove(nextDefence);
+                            totalDefence -= (increase - previous);
+
+                        } else {
+                            strategy[nextDefence.getVertex()] += totalDefence;
+                            break loop;
+                        }
                     }
-                    // Recalculate the sum of the strategy elements to see if we've played entire defence quota
-                    sum = 0;
-                    for (double v : strategy) sum += v;
                 }
             }
         }
@@ -644,77 +735,6 @@ public class Model {
                 + "\n * P: " + Arrays.toString(defended));
     }
 
-    /**
-     * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
-     * method and verify that the model runs as expected by printing to a file in a human-readable way.
-     *
-     * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
-     *                               vertices each defensive turn.
-     * @param probabilityOfInfection the probability with which the infection propagates.
-     * @param whichDefence           the choice of defence strategy.
-     */
-    private String runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
-        StringBuilder s = new StringBuilder();
-        switch (whichDefence) {
-            case PROXIMITY -> {
-                StdOut.println("\n#### Proximity to Infection Defence\n");
-                s.append("PROXIMITY, ");
-            }
-            case DEGREE -> {
-                StdOut.println("\n#### Greatest Degree Defence\n");
-                s.append("DEGREE, ");
-            }
-            case PROTECTION -> {
-                StdOut.println("\n#### Cheapest Protection Increase Defence\n");
-                s.append("PROTECTION, ");
-            }
-        }
-        this.printSIRP();
-        int turn = 0;
-        while (true) {
-            if (!this.getSusceptible().isEmpty()) {
-                // Print the strategy we performed. Each increase is to
-                // 2 dp when printed, but maintains full length in usage.
-                double[] strategy = this.runDefence(totalDefence, whichDefence);
-                double[] strategyToPrint = new double[strategy.length];
-                DecimalFormat df = new DecimalFormat("0.00");
-                int i = 0;
-                for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-                StdOut.println("\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n");
-                this.printSIRP();
-                turn++;
-            } else {
-                StdOut.print("\n__Nothing more to protect.__\nEnding model with "
-                        + this.getProtected().size() + " protected and "
-                        + this.getInfected().size() + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
-                break;
-            }
-            if (!this.getSusceptible().isEmpty()) {
-                List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
-                if (!toInfect.isEmpty()) {
-                    StdOut.print("\n_Infecting:_ ");
-                    for (Agent agent : toInfect) {
-                        StdOut.print(agent.getVertex() + " ");
-                    }
-                    StdOut.println();
-                } else {
-                    StdOut.println("\n_Nothing infected._");
-                }
-                this.printSIRP();
-                turn++;
-            } else {
-                StdOut.print("\n__Nothing more to infect.__\nEnding model with "
-                        + this.getProtected().size() + " protected and "
-                        + this.getInfected().size() + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
-                break;
-            }
-        }
-        s.append(turn).append(", ").append(this.getProtected().size()).append(", ").append(this.getInfected().size());
-        return String.valueOf(s);
-    }
+
 
 }
