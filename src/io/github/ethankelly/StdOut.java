@@ -1,6 +1,7 @@
 package io.github.ethankelly;
 
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Locale;

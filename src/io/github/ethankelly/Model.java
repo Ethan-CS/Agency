@@ -1,13 +1,16 @@
 package io.github.ethankelly;
 
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 /**
@@ -53,38 +56,33 @@ public class Model {
      */
     // I know these suppressions look RIDICULOUS but I'm still doing some testing...
     @SuppressWarnings({"unused", "ResultOfMethodCallIgnored", "CommentedOutCode", "RedundantSuppression"})
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException {
         // Numbers of vertices and edges for testing on random graphs
         int numVertices = 20, numEdges = 80;
         // Split vertices into two partitions for bipartite graphs
         int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
         // Probability for Erdős–Rényi graphs
         double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
-
         // Total defence (improvement in protection ratings) that can be
         // deployed each turn and probability with which the infection transmits
         double totalDefence = 1.0, probInfection = 1.0;
-
+        // Initialise graph using random graph generator
         Graph g = GraphGenerator.erdosRenyi(numVertices, p);
-
-//        File dir = new File("out/" + numVertices + "_vertices/");
-//        dir.mkdir();
-//        File readableFile = new File(dir + "/" + GraphGenerator.getSeed() + "Readable.md");
-        PrintWriter readable = new PrintWriter("out/TestReadable.md");
-//        File dataFile = new File(dir + "/" + GraphGenerator.getSeed() + "Data.csv");
-        PrintWriter data = new PrintWriter("out/TestData.csv");
-        StdOut.setOut(data);
-        StdOut.println("OUTBREAK, STRATEGY, END TURN, SUSCEPTIBLE, INFECTED, RECOVERED, PROTECTED");
-//        File graphFile = new File(dir + "/" + GraphGenerator.getSeed() + ".csv");
-        PrintWriter modelGraph = new PrintWriter("out/Test.csv");
-        StdOut.setOut(modelGraph);
-        StdOut.print(Graph.makeCommaSeparated(g));
-        StdOut.print(GraphGenerator.getSeed());
-
         // Initialise the models
         Model m = new Model(numVertices, g);
         Model n = new Model(numVertices, g);
         Model o = new Model(numVertices, g);
+
+        PrintWriter data = new PrintWriter("out/TestData.csv");
+        StdOut.setOut(data);
+        StdOut.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+
+        PrintWriter modelGraph = new PrintWriter("out/TestGraph.csv");
+        StdOut.setOut(modelGraph);
+        StdOut.print(Graph.makeCommaSeparated(g));
+        StdOut.print(GraphGenerator.getSeed());
+
+        PrintWriter readable = new PrintWriter("out/TestReadable.md");
         StdOut.setOut(readable);
         StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
 
@@ -108,7 +106,8 @@ public class Model {
         for (int i = 0; i < m.getNumVertices(); i++) {
             StdOut.setOut(readable);
             StdOut.println("\n## Outbreak: " + i);
-            // Initialise a list of agents given the starting state of the graph
+            // Initialise a list of agents given the starting state of the graph.
+            // Set the n and o agents to the same peril and protection ratings as m agents.
             for (int j = 0; j < m.getNumVertices(); j++) {
                 m.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
                 m.getAgents().get(j).setPeril(m.perilRating(m.getAgents().get(j), new int[]{i}, m.getGraph()));
@@ -155,19 +154,19 @@ public class Model {
     private String runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
         StringBuilder s = new StringBuilder();
         int outbreak = this.getInfected().get(0).getVertex(); // TODO more than one outbreak?
-        s.append(outbreak).append(", ");
+        s.append(outbreak).append(",");
         switch (whichDefence) {
             case PROXIMITY -> {
                 StdOut.println("\n#### Proximity to Infection Defence\n");
-                s.append("PROXIMITY, ");
+                s.append("PROXIMITY,");
             }
             case DEGREE -> {
                 StdOut.println("\n#### Greatest Degree Defence\n");
-                s.append("DEGREE, ");
+                s.append("DEGREE,");
             }
             case PROTECTION -> {
                 StdOut.println("\n#### Highest Protection Defence\n");
-                s.append("PROTECTION, ");
+                s.append("PROTECTION,");
             }
             default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
         }
@@ -216,10 +215,10 @@ public class Model {
                 break;
             }
         }
-        s.append(turn).append(", ")
-                .append(this.getSusceptible().size()).append(", ")
-                .append(this.getInfected().size()).append(", ")
-                .append(this.getRecovered().size()).append(", ")
+        s.append(turn).append(",")
+                .append(this.getSusceptible().size()).append(",")
+                .append(this.getInfected().size()).append(",")
+                .append(this.getRecovered().size()).append(",")
                 .append(this.getProtected().size());
         return String.valueOf(s);
     }
@@ -334,8 +333,6 @@ public class Model {
             case PROTECTION -> findHighestProtection();
             default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
         };
-
-        StdOut.println("total defence: " + totalDefence);
 
         // Split the defence quota evenly among the total vertices we have determined should be defended.
         double eachDefence = totalDefence / toDefend.size();
@@ -604,16 +601,11 @@ public class Model {
      * @return the list of agents we have created.
      */
     private List<Agent> assignAgents(int numVertices) {
-        List<Agent> agents = new ArrayList<>();
-        for (int i = 0; i < numVertices; i++) {
-            agents.add(new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE));
-        }
+        List<Agent> agents = IntStream.range(0, numVertices)
+                .mapToObj(i -> new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE))
+                .collect(Collectors.toList());
         this.agents = agents;
         return agents;
-    }
-
-    private void setAgents(List<Agent> agents) {
-        this.agents = agents;
     }
 
     /**
