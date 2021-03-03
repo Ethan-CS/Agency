@@ -1,9 +1,6 @@
 package io.github.ethankelly;
 
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -55,10 +52,15 @@ public class Model {
      * @param args the command-line arguments.
      */
     // I know these suppressions look RIDICULOUS but I'm still doing some testing...
-    @SuppressWarnings({"unused", "ResultOfMethodCallIgnored", "CommentedOutCode", "RedundantSuppression"})
+    @SuppressWarnings({"unused",
+            "ResultOfMethodCallIgnored",
+            "CommentedOutCode",
+            "RedundantSuppression",
+            "ConstantConditions"})
     public static void main(String[] args) throws IOException {
         // Numbers of vertices and edges for testing on random graphs
-        int numVertices = 20, numEdges = 80;
+        int numVertices = 50, numEdges = 100;
+        boolean printReadable = false; // Should be false if graph is large
         // Split vertices into two partitions for bipartite graphs
         int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
         // Probability for Erdős–Rényi graphs
@@ -83,8 +85,10 @@ public class Model {
         StdOut.print(GraphGenerator.getSeed());
 
         PrintWriter readable = new PrintWriter("out/TestReadable.md");
-        StdOut.setOut(readable);
-        StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
+        if (printReadable) {
+            StdOut.setOut(readable);
+            StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
+        }
 
         // Print information about the generated graph and modelling values
         DecimalFormat df = new DecimalFormat("0.00");
@@ -104,8 +108,10 @@ public class Model {
 
         // Cycle through all vertices to test the model using each vertex as a source
         for (int i = 0; i < m.getNumVertices(); i++) {
-            StdOut.setOut(readable);
-            StdOut.println("\n## Outbreak: " + i);
+            if (printReadable) {
+                StdOut.setOut(readable);
+                StdOut.println("\n## Outbreak: " + i);
+            }
             // Initialise a list of agents given the starting state of the graph.
             // Set the n and o agents to the same peril and protection ratings as m agents.
             for (int j = 0; j < m.getNumVertices(); j++) {
@@ -128,10 +134,11 @@ public class Model {
             }
             // Print the agents we initialised, run the model until
             // either nothing can be infected or nothing can be protected.
-            m.printAgents();
-            String mResult = m.runReadableTest(totalDefence, probInfection, PROXIMITY);
-            String nResult = n.runReadableTest(totalDefence, probInfection, DEGREE);
-            String oResult = o.runReadableTest(totalDefence, probInfection, PROTECTION);
+
+            if (printReadable) m.printAgents();
+            String mResult = m.runTest(totalDefence, probInfection, PROXIMITY, printReadable);
+            String nResult = n.runTest(totalDefence, probInfection, DEGREE, printReadable);
+            String oResult = o.runTest(totalDefence, probInfection, PROTECTION, printReadable);
 
             // Print the results to a more machine-readable file.
             StdOut.setOut(data);
@@ -150,27 +157,29 @@ public class Model {
      *                               vertices each defensive turn.
      * @param probabilityOfInfection the probability with which the infection propagates.
      * @param whichDefence           the choice of defence strategy.
+     * @param printReadable          true if a human-readable output is also required, false otherwise.
      */
-    private String runReadableTest(double totalDefence, double probabilityOfInfection, int whichDefence) {
+    private String runTest(double totalDefence, double probabilityOfInfection,
+                           int whichDefence, boolean printReadable) {
         StringBuilder s = new StringBuilder();
         int outbreak = this.getInfected().get(0).getVertex(); // TODO more than one outbreak?
         s.append(outbreak).append(",");
         switch (whichDefence) {
             case PROXIMITY -> {
-                StdOut.println("\n#### Proximity to Infection Defence\n");
+                if (printReadable) StdOut.println("\n#### Proximity to Infection Defence\n");
                 s.append("PROXIMITY,");
             }
             case DEGREE -> {
-                StdOut.println("\n#### Greatest Degree Defence\n");
+                if (printReadable) StdOut.println("\n#### Greatest Degree Defence\n");
                 s.append("DEGREE,");
             }
             case PROTECTION -> {
-                StdOut.println("\n#### Highest Protection Defence\n");
+                if (printReadable) StdOut.println("\n#### Highest Protection Defence\n");
                 s.append("PROTECTION,");
             }
             default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
         }
-        this.printSIRP();
+        if (printReadable) this.printSIRP();
 
         int turn = 0;
         while (true) {
@@ -178,40 +187,46 @@ public class Model {
                 // Print the strategy we performed. Each increase is to
                 // 2 dp when printed, but maintains full length in usage.
                 double[] strategy = this.runDefence(totalDefence, whichDefence);
-                double[] strategyToPrint = new double[strategy.length];
-                DecimalFormat df = new DecimalFormat("0.00");
-                int i = 0;
-                for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-                StdOut.println("\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n");
-                this.printSIRP();
+                if (printReadable) {
+                    double[] strategyToPrint = new double[strategy.length];
+                    DecimalFormat df = new DecimalFormat("0.00");
+                    int i = 0;
+                    for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
+                    StdOut.println("\n_Strategy:_ " + Arrays.toString(strategyToPrint) + "\n");
+                    this.printSIRP();
+                }
                 turn++;
             } else {
-                StdOut.print("\n__Nothing more to protect.__\nEnding model with "
-                        + this.getProtected().size() + " protected and "
-                        + this.getInfected().size() + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                if (printReadable) {
+                    StdOut.print("\n__Nothing more to protect.__\nEnding model with "
+                            + this.getProtected().size() + " protected and "
+                            + this.getInfected().size() + " infected vertices in "
+                            + turn);
+                    StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                }
                 break;
             }
             if (!this.getSusceptible().isEmpty()) {
                 List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
                 if (!toInfect.isEmpty()) {
-                    StdOut.print("\n_Infecting:_ ");
-                    for (Agent agent : toInfect) {
-                        StdOut.print(agent.getVertex() + " ");
+                    if (printReadable) {
+                        StdOut.print("\n_Infecting:_ ");
+                        toInfect.stream().map(agent -> agent.getVertex() + " ").forEach(StdOut::print);
+                        StdOut.println();
                     }
-                    StdOut.println();
                 } else {
-                    StdOut.println("\n_Nothing infected._");
+                    if (printReadable) StdOut.println("\n_Nothing infected._");
                 }
-                this.printSIRP();
+                if (printReadable) this.printSIRP();
                 turn++;
             } else {
-                StdOut.print("\n__Nothing more to infect.__\nEnding model with "
-                        + this.getProtected().size() + " protected and "
-                        + this.getInfected().size() + " infected vertices in "
-                        + turn);
-                StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                if (printReadable) {
+                    StdOut.print("\n__Nothing more to infect.__\nEnding model with "
+                            + this.getProtected().size() + " protected and "
+                            + this.getInfected().size() + " infected vertices in "
+                            + turn);
+                    StdOut.print(turn == 1 ? " turn.\n" : " turns.\n");
+                }
                 break;
             }
         }
