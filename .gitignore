@@ -1,0 +1,3 @@
+# Project exclude paths
+/out/production/
+/out/TestData.txt
