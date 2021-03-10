@@ -20,11 +20,14 @@ public class Winner {
         // Set the output file
         PrintWriter winner = new PrintWriter("out/TestWinner.md");
         StdOut.setOut(winner);
+
         // Read in the model defence results and associated graph
         Reader in = new FileReader("out/TestData.csv");
         List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
+
         List<CSVRecord> matrix = CSVFormat.DEFAULT.parse(new FileReader("out/TestGraph.csv")).getRecords();
         int numVertices = matrix.get(0).size() - 1; // TODO fix this -  currently because of comma at ends of lines
+
         List<List<CSVRecord>> recordsByOutbreak = byOutbreak(records, numVertices);
 
         // Print the winning defence strategy from each outbreak

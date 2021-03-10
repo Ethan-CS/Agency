@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -52,11 +53,7 @@ public class Model {
      * @param args the command-line arguments.
      */
     // I know these suppressions look RIDICULOUS but I'm still doing some testing...
-    @SuppressWarnings({"unused",
-            "ResultOfMethodCallIgnored",
-            "CommentedOutCode",
-            "RedundantSuppression",
-            "ConstantConditions"})
+    @SuppressWarnings({"unused", "ConstantConditions", "DuplicatedCode"})
     public static void main(String[] args) throws IOException {
         // Numbers of vertices and edges for testing on random graphs
         int numVertices = 20, numEdges = 45;
@@ -87,7 +84,8 @@ public class Model {
         StdOut.print(Graph.makeCommaSeparated(erdosRenyi));
         StdOut.print(GraphGenerator.getSeed());
 
-        PrintWriter readable = new PrintWriter("out/TestReadable.md");
+//        PrintWriter readable = new PrintWriter("out/TestReadable.md");
+        PrintWriter readable = new PrintWriter(System.out);
         if (printReadable) {
             StdOut.setOut(readable);
             StdOut.println("# Readable results of SIRP defence strategies on a random graph\n");
@@ -150,6 +148,18 @@ public class Model {
             StdOut.println(oResult);
         }
         StdOut.close();
+    }
+
+    public static int inputVertices() {
+        Scanner s = new Scanner(System.in);
+        System.out.println("Enter number of vertices:");
+        return s.nextInt();  // Return user input
+    }
+
+    public static int inputEdges() {
+        Scanner s = new Scanner(System.in);
+        System.out.println("Enter number of edges:");
+        return s.nextInt(); // Return user input
     }
 
     private void initialiseIdenticalModel(int outbreak, Model original) {

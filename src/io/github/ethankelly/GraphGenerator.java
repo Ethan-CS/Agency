@@ -1,5 +1,13 @@
 package io.github.ethankelly;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+import java.util.Scanner;
 import java.util.stream.IntStream;
 
 /**
@@ -13,6 +21,159 @@ public class GraphGenerator {
 
     static {
         setSeed();
+    }
+
+    /**
+     * Unit tests the {@code GraphGenerator} library.
+     *
+     * @param args the command-line arguments, ignored.
+     */
+    public static void main(String[] args) throws IOException {
+        // Test the create graph model
+        Graph g = createGraph();
+        System.out.println(g);
+    }
+
+    /**
+     * Prints the current graphs that can be (randomly) generated or allows for loading of another graph (in csv
+     * format). Gets user input as to which graph to create and returns the generated graph.
+     *
+     * @return the specified generated or loaded graph.
+     */
+    public static Graph createGraph() throws IOException {
+        // Scanner object to get user selection
+        Scanner s = new Scanner(System.in);
+        // Initialise the graph
+        Graph g = null;
+
+        // Check to see whether user wants to load an existing graph or generate a new (random) graph
+        System.out.println("Would you like to generate a graph or load a graph from CSV file?" +
+                         "\n Type 'g' for generate or 'l' for load.");
+        String choice = s.nextLine();
+
+        if (choice.equalsIgnoreCase("l")) {
+            System.out.println("You have chosen to load a graph from CSV file. Please enter the file path.");
+            String filePath = s.nextLine();
+            g = readGraphFromFile(filePath);
+
+        } else if (choice.equalsIgnoreCase("g")) {
+            // Get number of vertices and number of edges required
+            int numVertices = Model.inputVertices();
+            int numEdges = Model.inputEdges();
+            // Probability for Erdős–Rényi-style generation
+            double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
+            // Partition number of vertices for bipartite graphs
+            int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
+            g = inputGraphSelection(s, numVertices, numEdges, p, numVertices1, numVertices2);
+        }
+        return g;
+    }
+
+    @NotNull
+    private static Graph inputGraphSelection(Scanner s, int numVertices, int numEdges, double p, int numVertices1, int numVertices2) {
+        Graph g;
+        // Print the menu
+        System.out.println("""
+                The following graphs can be created:
+                   1 * Simple (unweighted, undirected, no loops or multiple edges)
+                   2 * Erdős–Rényi (edge between two vertices exists with given probability)
+                   3 * Complete (every pair of vertices connected by single unique edge)
+                   4 * Bipartite (vertices can be divided into two, disjoint, independent sets)
+                   5 * Complete bipartite (every pair in each set connected by single unique edge)
+                   6 * Path (graph containing a single path through each vertex)
+                   7 * Binary tree (each vertex has at most three children)
+                   8 * Cycle (graph containing only a single cycle through all vertices)
+                   9 * Eulerian Path (graph containing only a single Eulerian path through all vertices)
+                  10 * Eulerian Cycle (graph containing only a single Eulerian cycle through all vertices)
+                  11 * Wheel (a single vertex connected to every other vertex in a cycle)
+                  12 * Star (a tree with a single internal vertex and a given number of leaves)
+                  13 * Regular (regularly uniform k-regular graph)
+                  14 * Tree (uniformly random tree, generated using Prüfer sequence)
+                 Enter the number corresponding to your selected graph to generate it.""");
+        int selection = s.nextInt(); // User selection
+        switch (selection) {
+            case 1 -> { // Simple
+                g = simple(numVertices, numEdges);
+                System.out.println("You have selected a Simple graph.\n" + g);
+            }
+            case 2 -> { // Erdős–Rényi
+                g = erdosRenyi(numVertices, p);
+                System.out.println("You have selected an Erdős–Rényi graph.\n" + g);
+            }
+            case 3 -> { // Complete
+                g = complete(numVertices);
+                System.out.println("You have selected a Complete graph.\n" + g);
+            }
+            case 4 -> { // Bipartite
+                g = bipartite(numVertices1, numVertices2, numEdges);
+                System.out.println("You have selected a Bipartite graph.\n" + g);
+            }
+            case 5 -> { // Complete bipartite
+                g = completeBipartite(numVertices1, numVertices2);
+                System.out.println("You have selected a Complete Bipartite graph.\n" + g);
+            }
+            case 6 -> { // Path
+                g = path(numVertices);
+                System.out.println("You have selected a Path graph.\n" + g);
+            }
+            case 7 -> { // Binary tree
+                g = binaryTree(numVertices);
+                System.out.println("You have selected a Binary Tree graph.\n" + g);
+            }
+            case 8 -> { // Cycle
+                g = cycle(numVertices);
+                System.out.println("You have selected a Cycle graph.\n" + g);
+            }
+            case 9 -> { // Eulerian path
+                g = eulerianPath(numVertices, numEdges);
+                System.out.println("You have selected an Eulerian Path graph.\n" + g);
+            }
+            case 10 -> { // Eulerian cycle
+                g = eulerianCycle(numVertices, numEdges);
+                System.out.println("You have selected an Eulerian Cycle graph.\n" + g);
+            }
+            case 11 -> { // Wheel
+                g = wheel(numVertices);
+                System.out.println("You have selected a Wheel graph.\n" + g);
+            }
+            case 12 -> { // Star
+                g = star(numVertices);
+                System.out.println("You have selected a Star graph.\n" + g);
+            }
+            case 13 -> { // Regular
+                System.out.println("You have selected a k-Regular graph. Please enter your desired value of k:");
+                int k = s.nextInt();
+                g = regular(numVertices, k);
+                System.out.println("You have selected a " + k + "-Regular graph.\n" + g);
+            }
+            case 14 -> { // Tree
+                g = tree(numVertices);
+                System.out.println("You have selected a Tree graph.\n" + g);
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + selection);
+        }
+        return g;
+    }
+
+    private static Graph readGraphFromFile(String filePath) throws IOException {
+        // Load the CSV file (with header indicating vertex numbers)
+        List<CSVRecord> matrix = CSVFormat
+                .DEFAULT
+                .withFirstRecordAsHeader()
+                .parse(new FileReader(filePath))
+                .getRecords();
+        int numVertices = matrix.get(0).size();
+        Graph g = new Graph(numVertices);
+
+        for (CSVRecord record : matrix) {
+            for (String i : record) {
+                int j = Integer.parseInt(record.get(i.trim()).trim());
+                if (i.trim().equals("1")) {
+                    g.addEdge(Integer.parseInt(i.trim()), j);
+                }
+            }
+        }
+        return g;
     }
 
     /**
@@ -420,12 +581,8 @@ public class GraphGenerator {
         seed = StdRandom.getSeed();
     }
 
-    /**
-     * Unit tests the {@code GraphGenerator} library.
-     *
-     * @param args the command-line arguments.
-     */
-    public static void main(String[] args) {
+    // Tests the generator methods
+    private static void testGenerator() {
         // Declare a number of vertices and a number of edges
         int numVertices = 8;
         int numEdges = 5;
