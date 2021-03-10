@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
  *
  * @author Ethan Kelly
  */
+@SuppressWarnings("unused")
 public class GraphGenerator {
     private static long seed;
 
@@ -160,19 +161,14 @@ public class GraphGenerator {
                 .withFirstRecordAsHeader()
                 .parse(new FileReader(filePath))
                 .getRecords();
-        int numVertices = matrix.get(0).size();
+        int numVertices = matrix.size();
         Graph g = new Graph(numVertices);
-
 
         for (int row = 0; row < numVertices; row++) { // Row in matrix
             for (int column = 0; column < numVertices; column++) { // Entry in row
-                if (((matrix.get(row)).get(column)).equals("1") && !g.isEdge(row, column)) {
+                if (Integer.parseInt((matrix.get(row)).get(column)) == 1 && !g.isEdge(row, column))
                     g.addEdge(row, column);
-                    System.out.println(row + " " + column);
-                }
-                column++;
             }
-            row++;
         }
         return g;
     }
@@ -541,7 +537,7 @@ public class GraphGenerator {
 
         // Cayley's theorem: there are numVertices^(numVertices-2) labeled trees on numVertices vertices
         // Prüfer sequence: sequence of numVertices-2 values between 0 and numVertices-1
-        // Prüfer's proof of Cayley's theorem: Prufer sequences are in 1-1 with labeled trees on numVertices vertices
+        // Prüfer's proof of Cayley's theorem: Prüfer sequences are in 1-1 with labeled trees on numVertices vertices
 
         // Fill a new array of size two less than numVertices with uniformly random integers
         int[] prufer = IntStream.range(0, numVertices - 2).map(i -> StdRandom.uniform(numVertices)).toArray();
@@ -584,6 +580,7 @@ public class GraphGenerator {
 
     // Tests the generator methods
     private static void testGenerator() {
+        StdOut.setOut(StdOut.out);
         // Declare a number of vertices and a number of edges
         int numVertices = 8;
         int numEdges = 5;

@@ -28,7 +28,6 @@ import java.io.Serial;
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Chart extends ApplicationFrame {
-
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -36,11 +35,12 @@ public class Chart extends ApplicationFrame {
      * Class constructor.
      *
      * @param title the frame title.
+     * @param filter the value from the results we want to compare.
      */
-    public Chart(String title) throws IOException {
+    public Chart(String title, String filter) throws IOException {
         super(title);
-        CategoryDataset dataset = getResults();
-        JFreeChart chart = createChart(dataset);
+        CategoryDataset dataset = getResults(filter);
+        JFreeChart chart = createChart(dataset, filter);
         ChartPanel chartPanel = new ChartPanel(chart, false);
         chartPanel.setFillZoomRectangle(true);
         chartPanel.setMouseWheelEnabled(true);
@@ -48,34 +48,52 @@ public class Chart extends ApplicationFrame {
         setContentPane(chartPanel);
     }
 
-    private static CategoryDataset getResults() throws IOException {
-        DefaultCategoryDataset data = new DefaultCategoryDataset();
-
-        // Read in the model defence results and associated graph
-        Reader in = new FileReader("out/TestData.csv");
-        java.util.List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
-
-        // Add each result to our dataset
-        records.forEach(record -> data.addValue(Double.parseDouble(record.get("INFECTED")),
-                record.get("STRATEGY"),
-                record.get("OUTBREAK")));
-        return data;
+    /**
+     * Given a value that we want to compare, creates a new chart comparing results as specified.
+     *
+     * @param filter the value in different strategies we want to compare.
+     * @throws IOException if the file to read data from cannot be found.
+     */
+    public static void getChart(String filter) throws IOException {
+        Chart demo = new Chart("Defence Strategy Comparison", filter);
+        demo.pack();
+        UIUtils.centerFrameOnScreen(demo);
+        demo.setVisible(true);
     }
 
     /**
      * Creates the required comparison chart.
      *
      * @param dataset the dataset.
+     * @param filter the value we want to compare across different strategies.
      * @return the chart.
      */
-    private static JFreeChart createChart(CategoryDataset dataset) {
+    private static JFreeChart createChart(CategoryDataset dataset, String filter) {
+        String yAxisLabel;
+        String subTitle;
+        switch(filter) {
+            case "INFECTED" -> {
+                yAxisLabel = "Infected Agents";
+                subTitle = "Number of infected agents for each defence strategy by source node (smaller the better).";
+            }
+            case "END TURN" -> {
+                yAxisLabel = "End turn count";
+                subTitle = "End turn count for each defence strategy by source node (smaller the better).";
+            }
+            case "PROTECTED" -> {
+                yAxisLabel = "Protected Agents";
+                subTitle = "Number of protected agents for each defence strategy by source node (larger the better).";
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + filter);
+        }
+
         JFreeChart chart = ChartFactory.createBarChart(
                 "Defence Strategy Performance",
                 "Source vertex",
-                "Infected Agents",
+                yAxisLabel,
                 dataset);
 
-        chart.addSubtitle(new TextTitle("Number of infected agents for each defence strategy by source node."));
+        chart.addSubtitle(new TextTitle(subTitle));
         chart.setBackgroundPaint(Color.WHITE);
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
 
@@ -87,16 +105,18 @@ public class Chart extends ApplicationFrame {
         return chart;
     }
 
-    /**
-     * Starting point for the demonstration application.
-     *
-     * @param args ignored.
-     */
-    public static void main(String[] args) throws IOException {
-        Chart demo = new Chart("Defence Strategy Comparison");
-        demo.pack();
-        UIUtils.centerFrameOnScreen(demo);
-        demo.setVisible(true);
-    }
+    // Gets the results of a model from a CSV data file
+    private static CategoryDataset getResults(String filter) throws IOException {
+        DefaultCategoryDataset data = new DefaultCategoryDataset();
 
+        // Read in the model defence results and associated graph
+        Reader in = new FileReader(StdOut.dataName);
+        java.util.List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
+
+        // Add each result to our dataset
+        records.forEach(record -> data.addValue(Double.parseDouble(record.get(filter)),
+                record.get("STRATEGY"),
+                record.get("OUTBREAK")));
+        return data;
+    }
 }
