@@ -2,7 +2,6 @@ package io.github.ethankelly;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -69,7 +68,6 @@ public class GraphGenerator {
         return g;
     }
 
-    @NotNull
     private static Graph inputGraphSelection(Scanner s, int numVertices, int numEdges, double p, int numVertices1, int numVertices2) {
         Graph g;
         // Print the menu
@@ -165,13 +163,16 @@ public class GraphGenerator {
         int numVertices = matrix.get(0).size();
         Graph g = new Graph(numVertices);
 
-        for (CSVRecord record : matrix) {
-            for (String i : record) {
-                int j = Integer.parseInt(record.get(i.trim()).trim());
-                if (i.trim().equals("1")) {
-                    g.addEdge(Integer.parseInt(i.trim()), j);
+
+        for (int row = 0; row < numVertices; row++) { // Row in matrix
+            for (int column = 0; column < numVertices; column++) { // Entry in row
+                if (((matrix.get(row)).get(column)).equals("1") && !g.isEdge(row, column)) {
+                    g.addEdge(row, column);
+                    System.out.println(row + " " + column);
                 }
+                column++;
             }
+            row++;
         }
         return g;
     }

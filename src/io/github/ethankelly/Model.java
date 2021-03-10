@@ -82,7 +82,7 @@ public class Model {
         PrintWriter modelGraph = new PrintWriter("out/TestGraph.csv");
         StdOut.setOut(modelGraph);
         StdOut.print(Graph.makeCommaSeparated(erdosRenyi));
-        StdOut.print(GraphGenerator.getSeed());
+//        StdOut.print(GraphGenerator.getSeed());
 
 //        PrintWriter readable = new PrintWriter("out/TestReadable.md");
         PrintWriter readable = new PrintWriter(System.out);

@@ -1,9 +1,7 @@
 package io.github.ethankelly;
 
 
-import java.io.IOException;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 
 /**
@@ -207,12 +205,17 @@ public class Graph {
         int n = g.getNumVertices();
         boolean[][] matrix = g.getAdjMatrix();
         StringBuilder s = new StringBuilder();
-        IntStream.range(0, n).forEach(k -> s.append(k).append(", "));
-        s.append("\n");
-        for (int i = 0; i < n; i++) {
-            for (boolean j : matrix[i]) {
-                s.append(j ? 1 : 0).append(", ");
+        for (int k = 0; k < n-1; k++) {
+            s.append(k).append(",");
+        }
+        s.append(n - 1).append("\n");
+        for (int i = 0; i < n-1; i++) {
+            boolean[] booleans = matrix[i];
+            for (int k = 0; k < booleans.length - 1; k++) {
+                boolean j = booleans[k];
+                s.append(j ? 1 : 0).append(",");
             }
+            s.append(matrix[i][n-1] ? 1 : 0);
             s.append("\n");
         }
         return String.valueOf(s);
