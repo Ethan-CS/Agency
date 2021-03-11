@@ -5,7 +5,6 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,20 +12,19 @@ import java.util.stream.IntStream;
 
 public class Winner {
 
-	public static void getWinners() throws IOException {
-		StdOut.setOut(StdOut.winner);
-		StdOut.print();
+	public static String getWinners(String dataFilePath, String graphFile) throws IOException {
+		StringBuilder s = new StringBuilder();
 		// Read in the model defence results
 		List<CSVRecord> records = CSVFormat
 				.DEFAULT
 				.withFirstRecordAsHeader()
-				.parse(new FileReader(StdOut.dataName))
+				.parse(new FileReader(dataFilePath))
 				.getRecords();
 		// Read in the graph associated with the model
 		List<CSVRecord> matrix = CSVFormat
 				.DEFAULT
 				.withFirstRecordAsHeader()
-				.parse(new FileReader(StdOut.graphName))
+				.parse(new FileReader(graphFile))
 				.getRecords();
 
 		int numVertices = matrix.size();
@@ -34,12 +32,16 @@ public class Winner {
 		List<List<CSVRecord>> recordsByOutbreak = byOutbreak(records, numVertices);
 
 		// Print the winning defence strategy from each outbreak
-		StdOut.winner.println("# Winning Strategies\n");
+		s.append("# Winning Strategies\n");
 		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
-		winners.stream()
-				.map(strings -> "\n* _" + strings.get("OUTBREAK") + ":_ " + strings.get("STRATEGY") + " with "
-				                + strings.get("INFECTED") + " infected, " + strings.get("PROTECTED") + " protected in "
-				                + strings.get("END TURN") + " turns.\n\n").forEach(StdOut.winner::print);
+		for (CSVRecord strings : winners) {
+			s.append("\n* _").append(strings.get("OUTBREAK")).append(":_ ")
+					.append(strings.get("STRATEGY")).append(" with ")
+					.append(strings.get("INFECTED")).append(" infected, ")
+					.append(strings.get("PROTECTED")).append(" protected in ")
+					.append(strings.get("END TURN")).append(" turns.\n\n");
+		}
+		return String.valueOf(s);
 	}
 
 	/**

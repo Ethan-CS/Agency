@@ -25,6 +25,8 @@ import java.util.stream.IntStream;
  */
 @SuppressWarnings("unused")
 public class Graph {
+
+	private String name;
 	private int numVertices;
 	private int numEdges;
 	private boolean[][] adjMatrix;
@@ -33,19 +35,21 @@ public class Graph {
 	 * Class constructor.
 	 *
 	 * @param numVertices the number of vertices to create in the graph.
+	 * @param name a string representing the type of graph the object is.
 	 */
-	public Graph(int numVertices) {
+	public Graph(int numVertices, String name) {
 		this.numVertices = numVertices;
 		this.adjMatrix = new boolean[numVertices][numVertices];
+		this.name = name;
 	}
 
-    /**
-     * Returns a string (via a string builder) to print a graph as comma separated values, with the first line being a
-     * header, to parse in other files.
-     *
-     * @param g the graph to represent in a csv file.
-     * @return a csv representation of the given graph, to be printed to a file.
-     */
+	/**
+	 * Returns a string (via a string builder) to print a graph as comma separated values, with the first line being a
+	 * header, to parse in other files.
+	 *
+	 * @param g the graph to represent in a csv file.
+	 * @return a csv representation of the given graph, to be printed to a file.
+	 */
 	public static String makeCommaSeparated(Graph g) {
 		int n = g.getNumVertices();
 		boolean[][] matrix = g.getAdjMatrix();
@@ -66,13 +70,13 @@ public class Graph {
 		return String.valueOf(s);
 	}
 
-    /**
-     * Finds the degree of a specified vertex in the given graph.
-     *
-     * @param g the graph in which the vertex exists.
-     * @param vertex the vertex of which we want to find the degree.
-     * @return the degree of the specified vertex.
-     */
+	/**
+	 * Finds the degree of a specified vertex in the given graph.
+	 *
+	 * @param g      the graph in which the vertex exists.
+	 * @param vertex the vertex of which we want to find the degree.
+	 * @return the degree of the specified vertex.
+	 */
 	public static int findDegree(Graph g, int vertex) {
 		return (int) IntStream.range(0, g.getNumVertices()).filter(i -> g.isEdge(vertex, i)).count();
 	}
@@ -221,24 +225,13 @@ public class Graph {
 		return getAdjMatrix()[i][j] || getAdjMatrix()[j][i];
 	}
 
-	/**
-	 * Returns a textual representation of a graph as an adjacency matrix to be printed to the standard output.
-	 *
-	 * @return a string representation of the graph.
-	 */
-	@Override
-	public String toString() {
-		int n = getNumVertices();
-		boolean[][] matrix = getAdjMatrix();
-		StringBuilder s = new StringBuilder();
-		for (int i = 0; i < n; i++) {
-			s.append(i).append(": ");
-			for (boolean j : matrix[i]) {
-				s.append(j ? 1 : 0).append(" ");
-			}
-			s.append("\n\n");
-		}
-		return s.toString();
+	public String getName() {
+		return name;
+	}
+
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	/**
@@ -265,5 +258,25 @@ public class Graph {
 	 */
 	public void setNumEdges(int numEdges) {
 		this.numEdges = numEdges;
+	}
+
+	/**
+	 * Returns a textual representation of a graph as an adjacency matrix to be printed to the standard output.
+	 *
+	 * @return a string representation of the graph.
+	 */
+	@Override
+	public String toString() {
+		int n = getNumVertices();
+		boolean[][] matrix = getAdjMatrix();
+		StringBuilder s = new StringBuilder();
+		for (int i = 0; i < n; i++) {
+			s.append(i).append(": ");
+			for (boolean j : matrix[i]) {
+				s.append(j ? 1 : 0).append(" ");
+			}
+			s.append("\n\n");
+		}
+		return s.toString();
 	}
 }

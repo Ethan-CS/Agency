@@ -1,6 +1,7 @@
 package io.github.ethankelly;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class Main {
 
@@ -8,50 +9,52 @@ public class Main {
 		// Get graph with user input (either generate or load from CSV)
 		Graph g = GraphGenerator.createGraph();
 		// Print graph in CSV file
-		StdOut.setOut(StdOut.graph);
-		StdOut.print(Graph.makeCommaSeparated(g));
+		PrintStream graph = new PrintStream("data/Graph.csv");
+		System.setOut(graph);
+		System.out.print(Graph.makeCommaSeparated(g));
 		// Initialise a model for each defence strategy
 		Model mProximity = new Model(g);
 		Model mDegree = new Model(g);
 		Model mProtection = new Model(g);
 
-		int protectionType = Model.DETERMINISTIC;
+		runModelOutput(mProximity, mDegree, mProtection, Model.RANDOM);
+		runModelOutput(mProximity, mDegree, mProtection, Model.MIXED);
+		runModelOutput(mProximity, mDegree, mProtection, Model.DETERMINISTIC);
+	}
 
-		// Print headings for data CSV file
-		StdOut.setOut(StdOut.data);
-		StdOut.print("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED\n");
+	private static void runModelOutput(Model mProximity, Model mDegree, Model mProtection, int protection) throws IOException {
+		String graphFile = "data/Graph.csv";
 
-		// Set defence and infection probabilities to 1
-		double totalDefence = 1.0, probInfection = 1.0;
-		// If graph is small enough, print readable results
-		if (Model.printReadable) mProximity.printModelInfo(totalDefence, probInfection);
-		for (int i = 0; i < mProximity.getNumVertices(); i++) {
-			// Initialise model agents
-			mProximity.initialiseAgents(i, protectionType);
-			mDegree.initialiseIdenticalModel(i, mProximity);
-			mProtection.initialiseIdenticalModel(i, mProximity);
-
-			// If we are generating a readable file, print agent information
-			if (Model.printReadable) {
-//				StdOut.setOut(StdOut.readable);
-				StdOut.readable.print("\n## Outbreak: " + i + "\n");
-				mProximity.printAgents();
-			}
-
-			String proximityResult = mProximity.runTest(totalDefence, probInfection, Model.PROXIMITY);
-			String degreeResult = mDegree.runTest(totalDefence, probInfection, Model.DEGREE);
-			String protectionResult = mProtection.runTest(totalDefence, probInfection, Model.PROTECTION);
-
-			// Print the results to a more machine-readable file.
-			StdOut.setOut(StdOut.data);
-			StdOut.print(proximityResult + "\n" + degreeResult + "\n" + protectionResult + "\n");
+		PrintStream data;
+		PrintStream readable;
+		PrintStream winner;
+		String name;
+		switch (protection) {
+			case Model.RANDOM -> name = "Random";
+			case Model.MIXED -> name = "Mixed";
+			case Model.DETERMINISTIC -> name = "Deterministic";
+			default -> throw new IllegalStateException("Unexpected value: " + protection);
 		}
-		Winner.getWinners();
+		String path = "data/" + name + "/" + name;
+		data = new PrintStream(path + "Data.csv");
+		readable = new PrintStream(path + "Readable.md");
+		winner = new PrintStream(path + "Winner.md");
 
-		Chart.getChart("INFECTED");
-		Chart.getChart("END TURN");
-		Chart.getChart("PROTECTED");
+		String[] modelResults = Model.runModels(mProximity, mDegree, mProtection, protection);
 
-		StdOut.close();
+		System.setOut(data);
+		System.out.println(modelResults[0]);
+
+		if (Model.printReadable) {
+			System.setOut(readable);
+			System.out.println(modelResults[1]);
+		}
+		System.setOut(winner);
+		System.out.println(Winner.getWinners(path + "Data.csv", graphFile));
+
+		new Chart("Defence Strategy Comparison", "INFECTED", protection);
+		new Chart("Defence Strategy Comparison", "PROTECTED", protection);
+		new Chart("Defence Strategy Comparison", "END TURN", protection);
+
 	}
 }

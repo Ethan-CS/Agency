@@ -162,7 +162,7 @@ public class GraphGenerator {
                 .parse(new FileReader(filePath))
                 .getRecords();
         int numVertices = matrix.size();
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "");
 
         for (int row = 0; row < numVertices; row++) { // Row in matrix
             for (int column = 0; column < numVertices; column++) { // Entry in row
@@ -229,7 +229,7 @@ public class GraphGenerator {
     public static Graph simple(int numVertices, int numEdges) {
         assert numEdges <= numVertices * (numVertices - 1) / 2 : "Too many edges.";
         assert numEdges >= 0 : "Too few edges.";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Simple");
         g.setNumEdges(0);
         Set<Edge> set = new Set<>();
         while (g.getNumEdges() < numEdges) {
@@ -256,7 +256,7 @@ public class GraphGenerator {
      */
     public static Graph erdosRenyi(int numVertices, double probability) {
         assert !(probability < 0.0) && !(probability > 1.0) : "Probability must be between 0 and 1";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Erdős–Rényi" );
         for (int v = 0; v < numVertices; v++)
             for (int w = v + 1; w < numVertices; w++)
                 if (StdRandom.bernoulli(probability))
@@ -272,7 +272,9 @@ public class GraphGenerator {
      * @return the complete graph on the given number of vertices.
      */
     public static Graph complete(int numVertices) {
-        return erdosRenyi(numVertices, 1.0);
+        Graph complete = erdosRenyi(numVertices, 1.0);
+        complete.setName("Complete");
+        return complete;
     }
 
     /**
@@ -286,7 +288,9 @@ public class GraphGenerator {
      * @return a complete bipartite graph on {@code numVer1} and {@code numVer2} vertices.
      */
     public static Graph completeBipartite(int numVer1, int numVer2) {
-        return bipartite(numVer1, numVer2, numVer1 * numVer2);
+        Graph bipartite = bipartite(numVer1, numVer2, numVer1 * numVer2);
+        bipartite.setName("Complete Bipartite");
+        return bipartite;
     }
 
     /**
@@ -303,7 +307,7 @@ public class GraphGenerator {
     public static Graph bipartite(int numVer1, int numVer2, int numEdges) {
         assert numEdges <= numVer1 * numVer2 : "Too many edges";
         assert numEdges >= 0 : "Too few edges";
-        Graph g = new Graph(numVer1 + numVer2);
+        Graph g = new Graph(numVer1 + numVer2, "Bipartite");
 
         int[] vertices = IntStream.range(0, numVer1 + numVer2).toArray();
         StdRandom.shuffle(vertices);
@@ -336,7 +340,7 @@ public class GraphGenerator {
         assert !(probability < 0.0) && !(probability > 1.0) : "Probability must be between 0 and 1";
         int[] vertices = IntStream.range(0, numVer1 + numVer2).toArray();
         StdRandom.shuffle(vertices);
-        Graph G = new Graph(numVer1 + numVer2);
+        Graph G = new Graph(numVer1 + numVer2, "Erdős–Rényi Bipartite");
         for (int i = 0; i < numVer1; i++)
             for (int j = 0; j < numVer2; j++)
                 if (StdRandom.bernoulli(probability))
@@ -352,7 +356,7 @@ public class GraphGenerator {
      * @return a path graph on {@code numVertices} vertices
      */
     public static Graph path(int numVertices) {
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Path");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
         StdRandom.shuffle(vertices);
@@ -372,7 +376,7 @@ public class GraphGenerator {
      * @return a complete binary tree graph on {@code numVertices} vertices
      */
     public static Graph binaryTree(int numVertices) {
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Binary Tree");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
         StdRandom.shuffle(vertices);
@@ -392,7 +396,7 @@ public class GraphGenerator {
      * @return a cycle graph on {@code numVertices} vertices.
      */
     public static Graph cycle(int numVertices) {
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Cycle");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
         StdRandom.shuffle(vertices);
@@ -418,7 +422,7 @@ public class GraphGenerator {
         // Catch incorrect input of number of edges or vertices
         assert numEdges >= 0 : "negative number of edges";
         assert numVertices > 0 : "An Eulerian path must have at least one vertex";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Eulerian Path");
         // Fill an array of length equal to the number of edges with uniformly random values
         int[] vertices = IntStream.range(0, numEdges + 1).map(i -> StdRandom.uniform(numVertices)).toArray();
         // Connect consecutive (i, i+1) vertices
@@ -438,7 +442,7 @@ public class GraphGenerator {
     public static Graph eulerianCycle(int numVertices, int numEdges) {
         assert numEdges > 0 : "An Eulerian cycle must have at least one edge";
         assert numVertices > 0 : "An Eulerian cycle must have at least one vertex";
-        Graph G = new Graph(numVertices);
+        Graph G = new Graph(numVertices, "Eulerian Cycle");
         // Fill an array of length equal to the number of edges with uniformly random values
         int[] vertices = IntStream.range(0, numEdges).map(i -> StdRandom.uniform(numVertices)).toArray();
         // Connect consecutive (i, i+1) vertices
@@ -458,7 +462,7 @@ public class GraphGenerator {
      */
     public static Graph wheel(int numVertices) {
         assert numVertices > 1 : "Number of vertices must be at least 2";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Wheel");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
         StdRandom.shuffle(vertices);
@@ -483,7 +487,7 @@ public class GraphGenerator {
      */
     public static Graph star(int numVertices) {
         assert numVertices > 0 : "Number of vertices must be at least 1";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Star");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
         StdRandom.shuffle(vertices);
@@ -506,7 +510,7 @@ public class GraphGenerator {
      */
     public static Graph regular(int numVertices, int k) {
         assert numVertices * k % 2 == 0 : "Number of vertices * k must be even";
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, k + "-Regular");
 
         // Create k copies of each vertex
         int[] vertices = new int[numVertices * k];
@@ -531,7 +535,7 @@ public class GraphGenerator {
      * @return a uniformly random tree on {@code numVertices} vertices.
      */
     public static Graph tree(int numVertices) {
-        Graph g = new Graph(numVertices);
+        Graph g = new Graph(numVertices, "Tree");
 
         if (numVertices == 1) return g;
 
@@ -581,6 +585,7 @@ public class GraphGenerator {
     // Tests the generator methods
     private static void testGenerator() {
         StdOut.setOut(StdOut.out);
+
         // Declare a number of vertices and a number of edges
         int numVertices = 8;
         int numEdges = 5;

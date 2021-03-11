@@ -42,41 +42,8 @@ public final class StdOut {
     // Send output here
     public static PrintWriter out;
 
-    public static PrintWriter data;
-    public static String dataName = "out/DETERMINISTICData.csv";
-    public static PrintWriter graph;
-    public static String graphName = "out/Graph.csv";
-    public static PrintWriter readable;
-    public static String readableName = "out/DETERMINISTICReadable.md";
-    public static PrintWriter winner;
-    public static String winnerName = "out/DETERMINISTICWinner.md";
-
     // This is called before invoking any methods
     static {
-        try {
-            readable = new PrintWriter(readableName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            graph = new PrintWriter(graphName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            data = new PrintWriter(dataName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            winner = new PrintWriter(winnerName);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
         try {
             // Replace with OutputStreamWriter to print to console
           out = new PrintWriter(new OutputStreamWriter(System.out, CHARSET_NAME), true);
