@@ -35,7 +35,7 @@ public class Graph {
 	 * Class constructor.
 	 *
 	 * @param numVertices the number of vertices to create in the graph.
-	 * @param name a string representing the type of graph the object is.
+	 * @param name        a string representing the type of graph the object is.
 	 */
 	public Graph(int numVertices, String name) {
 		this.numVertices = numVertices;
@@ -51,12 +51,11 @@ public class Graph {
 	 * @return a csv representation of the given graph, to be printed to a file.
 	 */
 	public static String makeCommaSeparated(Graph g) {
-		int n = g.getNumVertices();
+		int n = g.getNumVertices(); // Shorthand for number of vertices
 		boolean[][] matrix = g.getAdjMatrix();
+		// Initialise string builder - this will create the string to return
 		StringBuilder s = new StringBuilder();
-		for (int k = 0; k < n - 1; k++) {
-			s.append(k).append(",");
-		}
+		IntStream.range(0, n - 1).forEach(k -> s.append(k).append(","));
 		s.append(n - 1).append("\n");
 		for (int i = 0; i < n; i++) {
 			boolean[] booleans = matrix[i];
@@ -119,12 +118,11 @@ public class Graph {
 
 		int[] pathArray = new int[n];
 
-		// Shortest path set contains vertices that have a shortest path
-		// I.e. shortestPathSet[i] is true if i has a shortest path to the
-		// parameter 'vertex' and false otherwise.
+		// Shortest path set contains vertices that have a shortest path, i.e. shortestPathSet[i] is true
+		// if i has a shortest path to the parameter 'vertex' and false otherwise.
 		Boolean[] shortestPathSet = new Boolean[n];
 
-		// Initially, all distances are HUGE and shortestPathSet[] is set to false
+		// Initially all distances are HUGE and shortestPathSet[] set to false
 		// I.e. no vertices have a shortest path to the parameter 'vertex'
 		for (int i = 0; i < n; i++) {
 			pathArray[i] = Integer.MAX_VALUE;
@@ -132,7 +130,7 @@ public class Graph {
 		}
 		pathArray[vertex] = 0; // Path between vertex and itself is always 0
 
-		// Now, we find the shortest path for all vertices
+		// Find shortest path for all vertices
 		for (int count = 0; count < n - 1; count++) {
 			// Call minDistance to find the vertex v with minimum distance to the parameter 'vertex'
 			int u = minDistance(pathArray, shortestPathSet);
@@ -225,11 +223,22 @@ public class Graph {
 		return getAdjMatrix()[i][j] || getAdjMatrix()[j][i];
 	}
 
+	/**
+	 * The name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
+	 * tree or a simple graph.
+	 *
+	 * @return the name of the current graph.
+	 */
 	public String getName() {
 		return name;
 	}
 
-
+	/**
+	 * She name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
+	 * tree or a simple graph. This method sets the name of the graph to the specified name.
+	 *
+	 * @param name the name to assign to the current graph.
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}

@@ -17,12 +17,12 @@ public class Main {
 		Model mDegree = new Model(g);
 		Model mProtection = new Model(g);
 
-		runModelOutput(mProximity, mDegree, mProtection, Model.RANDOM);
-		runModelOutput(mProximity, mDegree, mProtection, Model.MIXED);
-		runModelOutput(mProximity, mDegree, mProtection, Model.DETERMINISTIC);
+		runModelOutput(mProximity, mDegree, mProtection, Protection.RANDOM);
+		runModelOutput(mProximity, mDegree, mProtection, Protection.MIXED);
+		runModelOutput(mProximity, mDegree, mProtection, Protection.DETERMINISTIC);
 	}
 
-	private static void runModelOutput(Model mProximity, Model mDegree, Model mProtection, int protection) throws IOException {
+	private static void runModelOutput(Model mProximity, Model mDegree, Model mProtection, Protection protection) throws IOException {
 		String graphFile = "data/Graph.csv";
 
 		PrintStream data;
@@ -30,9 +30,9 @@ public class Main {
 		PrintStream winner;
 		String name;
 		switch (protection) {
-			case Model.RANDOM -> name = "Random";
-			case Model.MIXED -> name = "Mixed";
-			case Model.DETERMINISTIC -> name = "Deterministic";
+			case RANDOM -> name = "Random";
+			case MIXED -> name = "Mixed";
+			case DETERMINISTIC -> name = "Deterministic";
 			default -> throw new IllegalStateException("Unexpected value: " + protection);
 		}
 		String path = "data/" + name + "/" + name;

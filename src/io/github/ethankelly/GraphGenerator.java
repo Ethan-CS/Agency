@@ -57,19 +57,17 @@ public class GraphGenerator {
             g = readGraphFromFile(filePath);
 
         } else if (choice.equalsIgnoreCase("g")) {
-            // Get number of vertices and number of edges required
-            int numVertices = Model.inputVertices();
-            int numEdges = Model.inputEdges();
-            // Probability for Erdős–Rényi-style generation
-            double p = (double) numEdges / (numVertices * (numVertices - 1) / 2.0);
-            // Partition number of vertices for bipartite graphs
-            int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
-            g = inputGraphSelection(s, numVertices, numEdges, p, numVertices1, numVertices2);
+            g = inputGraphSelection(s);
         }
+        s.close();
         return g;
     }
 
-    private static Graph inputGraphSelection(Scanner s, int numVertices, int numEdges, double p, int numVertices1, int numVertices2) {
+    private static Graph inputGraphSelection(Scanner s) {
+        // Get number of vertices and number of edges required
+        int numVertices = Model.inputVertices();
+        int numVertices1 = numVertices / 2, numVertices2 = numVertices - numVertices1;
+
         Graph g;
         // Print the menu
         System.out.println("""
@@ -92,20 +90,26 @@ public class GraphGenerator {
         int selection = s.nextInt(); // User selection
         switch (selection) {
             case 1 -> { // Simple
+                System.out.println("You have selected a Simple graph.");
+                int numEdges = Model.inputEdges();
                 g = simple(numVertices, numEdges);
-                System.out.println("You have selected a Simple graph.\n" + g);
+                System.out.println(g);
             }
             case 2 -> { // Erdős–Rényi
+                System.out.println("You have selected an Erdős–Rényi graph.");
+                double p = (double) Model.inputEdges() / (numVertices * (numVertices - 1) / 2.0);
                 g = erdosRenyi(numVertices, p);
-                System.out.println("You have selected an Erdős–Rényi graph.\n" + g);
+                System.out.println(g);
             }
             case 3 -> { // Complete
                 g = complete(numVertices);
                 System.out.println("You have selected a Complete graph.\n" + g);
             }
             case 4 -> { // Bipartite
+                System.out.println("You have selected a Bipartite graph.");
+                int numEdges = Model.inputEdges();
                 g = bipartite(numVertices1, numVertices2, numEdges);
-                System.out.println("You have selected a Bipartite graph.\n" + g);
+                System.out.println(g);
             }
             case 5 -> { // Complete bipartite
                 g = completeBipartite(numVertices1, numVertices2);
@@ -124,12 +128,16 @@ public class GraphGenerator {
                 System.out.println("You have selected a Cycle graph.\n" + g);
             }
             case 9 -> { // Eulerian path
+                System.out.println("You have selected an Eulerian Path graph.");
+                int numEdges = Model.inputEdges();
                 g = eulerianPath(numVertices, numEdges);
-                System.out.println("You have selected an Eulerian Path graph.\n" + g);
+                System.out.println(g);
             }
             case 10 -> { // Eulerian cycle
+                System.out.println("You have selected an Eulerian Cycle graph.");
+                int numEdges = Model.inputEdges();
                 g = eulerianCycle(numVertices, numEdges);
-                System.out.println("You have selected an Eulerian Cycle graph.\n" + g);
+                System.out.println(g);
             }
             case 11 -> { // Wheel
                 g = wheel(numVertices);
@@ -140,10 +148,10 @@ public class GraphGenerator {
                 System.out.println("You have selected a Star graph.\n" + g);
             }
             case 13 -> { // Regular
-                System.out.println("You have selected a k-Regular graph. Please enter your desired value of k:");
+                System.out.println("You have selected a k-Regular graph.\nPlease enter your desired value of k:");
                 int k = s.nextInt();
                 g = regular(numVertices, k);
-                System.out.println("You have selected a " + k + "-Regular graph.\n" + g);
+                System.out.println(g);
             }
             case 14 -> { // Tree
                 g = tree(numVertices);
@@ -154,6 +162,7 @@ public class GraphGenerator {
         return g;
     }
 
+    // Reads a graph from a CSV file
     private static Graph readGraphFromFile(String filePath) throws IOException {
         // Load the CSV file (with header indicating vertex numbers)
         List<CSVRecord> matrix = CSVFormat
@@ -233,8 +242,8 @@ public class GraphGenerator {
         g.setNumEdges(0);
         Set<Edge> set = new Set<>();
         while (g.getNumEdges() < numEdges) {
-            int v = StdRandom.uniform(numVertices);
-            int w = StdRandom.uniform(numVertices);
+            int v = Std.StdRandom.uniform(numVertices);
+            int w = Std.StdRandom.uniform(numVertices);
             Edge e = new Edge(v, w);
             if ((v != w) && !set.contains(e)) {
                 set.add(e);
@@ -259,7 +268,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Erdős–Rényi" );
         for (int v = 0; v < numVertices; v++)
             for (int w = v + 1; w < numVertices; w++)
-                if (StdRandom.bernoulli(probability))
+                if (Std.StdRandom.bernoulli(probability))
                     g.addEdge(v, w);
         return g;
     }
@@ -310,12 +319,12 @@ public class GraphGenerator {
         Graph g = new Graph(numVer1 + numVer2, "Bipartite");
 
         int[] vertices = IntStream.range(0, numVer1 + numVer2).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
 
         Set<Edge> set = new Set<>();
         while (g.getNumEdges() < numEdges) {
-            int i = StdRandom.uniform(numVer1);
-            int j = numVer1 + StdRandom.uniform(numVer2);
+            int i = Std.StdRandom.uniform(numVer1);
+            int j = numVer1 + Std.StdRandom.uniform(numVer2);
             Edge e = new Edge(vertices[i], vertices[j]);
             if (!set.contains(e)) {
                 set.add(e);
@@ -339,11 +348,11 @@ public class GraphGenerator {
     public static Graph bipartite(int numVer1, int numVer2, double probability) {
         assert !(probability < 0.0) && !(probability > 1.0) : "Probability must be between 0 and 1";
         int[] vertices = IntStream.range(0, numVer1 + numVer2).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
         Graph G = new Graph(numVer1 + numVer2, "Erdős–Rényi Bipartite");
         for (int i = 0; i < numVer1; i++)
             for (int j = 0; j < numVer2; j++)
-                if (StdRandom.bernoulli(probability))
+                if (Std.StdRandom.bernoulli(probability))
                     G.addEdge(vertices[i], vertices[numVer1 + j]);
         return G;
     }
@@ -359,7 +368,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Path");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
         // Connect the consecutive vertices to generate the random path graph
         for (int i = 0; i < numVertices - 1; i++) {
             g.addEdge(vertices[i], vertices[i + 1]);
@@ -379,7 +388,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Binary Tree");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
         // Give each vertex two children (if we can)
         for (int i = 1; i < numVertices; i++) {
             g.addEdge(vertices[i], vertices[(i - 1) / 2]);
@@ -399,7 +408,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Cycle");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
         // Connect vertices from 0 to 2 less than the number of vertices consecutively
         for (int i = 0; i < numVertices - 1; i++) {
             g.addEdge(vertices[i], vertices[i + 1]);
@@ -424,7 +433,7 @@ public class GraphGenerator {
         assert numVertices > 0 : "An Eulerian path must have at least one vertex";
         Graph g = new Graph(numVertices, "Eulerian Path");
         // Fill an array of length equal to the number of edges with uniformly random values
-        int[] vertices = IntStream.range(0, numEdges + 1).map(i -> StdRandom.uniform(numVertices)).toArray();
+        int[] vertices = IntStream.range(0, numEdges + 1).map(i -> Std.StdRandom.uniform(numVertices)).toArray();
         // Connect consecutive (i, i+1) vertices
         IntStream.range(0, numEdges).forEach(i -> g.addEdge(vertices[i], vertices[i + 1]));
         return g;
@@ -444,7 +453,7 @@ public class GraphGenerator {
         assert numVertices > 0 : "An Eulerian cycle must have at least one vertex";
         Graph G = new Graph(numVertices, "Eulerian Cycle");
         // Fill an array of length equal to the number of edges with uniformly random values
-        int[] vertices = IntStream.range(0, numEdges).map(i -> StdRandom.uniform(numVertices)).toArray();
+        int[] vertices = IntStream.range(0, numEdges).map(i -> Std.StdRandom.uniform(numVertices)).toArray();
         // Connect consecutive (i, i+1) vertices
         IntStream.range(0, numEdges - 1).forEach(i -> G.addEdge(vertices[i], vertices[i + 1]));
         // Connect the last edge-indexed element in the vertex array to the first vertex to complete the cycle
@@ -465,7 +474,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Wheel");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
 
         // Create an Erdős–Rényi cycle on numVertices-1 vertices
         IntStream.range(1, numVertices - 1).forEach(i -> g.addEdge(vertices[i], vertices[i + 1]));
@@ -490,7 +499,7 @@ public class GraphGenerator {
         Graph g = new Graph(numVertices, "Star");
         // Generate an array: [0, 1, ..., numVertices] and randomly shuffle it.
         int[] vertices = IntStream.range(0, numVertices).toArray();
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
 
         // Connect vertices[0] to every other vertex
         IntStream.range(1, numVertices).forEach(i -> g.addEdge(vertices[0], vertices[i]));
@@ -522,7 +531,7 @@ public class GraphGenerator {
         // Pick a random perfect matching:
         // Shuffle the vertices and, for i from 0 to (k*numVertices)/2,
         // add edges between consecutive vertices (2i, 2i + 1)
-        StdRandom.shuffle(vertices);
+        Std.StdRandom.shuffle(vertices);
         IntStream.range(0, numVertices * k / 2).forEach(i -> g.addEdge(vertices[2 * i], vertices[2 * i + 1]));
         return g;
     }
@@ -544,14 +553,14 @@ public class GraphGenerator {
         // Prüfer's proof of Cayley's theorem: Prüfer sequences are in 1-1 with labeled trees on numVertices vertices
 
         // Fill a new array of size two less than numVertices with uniformly random integers
-        int[] prufer = IntStream.range(0, numVertices - 2).map(i -> StdRandom.uniform(numVertices)).toArray();
+        int[] prufer = IntStream.range(0, numVertices - 2).map(i -> Std.StdRandom.uniform(numVertices)).toArray();
 
         // Degree of vertex v = 1 + no. times it appears in Prüfer sequence
         int[] degree = IntStream.range(0, numVertices).map(v -> 1).toArray();
         IntStream.range(0, numVertices - 2).forEach(i -> degree[prufer[i]]++);
 
         // Minimum priority queue object pq contains all vertices of degree 1
-        MinPriorityQueue<Integer> pq = new MinPriorityQueue<>();
+        Set.MinPriorityQueue<Integer> pq = new Set.MinPriorityQueue<>();
         IntStream.range(0, numVertices).filter(v -> degree[v] == 1).forEach(pq::insert);
 
         // Repeatedly call delMin() (removes and returns smallest key on the priority queue)
@@ -579,12 +588,12 @@ public class GraphGenerator {
      * graphs.
      */
     public static void setSeed() {
-        seed = StdRandom.getSeed();
+        seed = Std.StdRandom.getSeed();
     }
 
     // Tests the generator methods
     private static void testGenerator() {
-        StdOut.setOut(StdOut.out);
+        Std.StdOut.setOut(Std.StdOut.out);
 
         // Declare a number of vertices and a number of edges
         int numVertices = 8;
@@ -599,69 +608,69 @@ public class GraphGenerator {
         double q = (double) numEdges / (numVertices1 * numVertices2);
 
         // Print the numbers of vertices and edges to the standard output
-        StdOut.println();
-        StdOut.println("Generating random graphs on " + numVertices + " vertices and " + numEdges + " edges.");
-        StdOut.println();
+        Std.StdOut.println();
+        Std.StdOut.println("Generating random graphs on " + numVertices + " vertices and " + numEdges + " edges.");
+        Std.StdOut.println();
 
         // Generate and print each graph from the methods above to the standard output
-        StdOut.println("Complete graph");
-        StdOut.println(complete(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Complete graph");
+        Std.StdOut.println(complete(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("Simple");
-        StdOut.println(simple(numVertices, numEdges));
-        StdOut.println();
+        Std.StdOut.println("Simple");
+        Std.StdOut.println(simple(numVertices, numEdges));
+        Std.StdOut.println();
 
-        StdOut.println("Erdős–Rényi");
-        StdOut.println(erdosRenyi(numVertices, p));
-        StdOut.println();
+        Std.StdOut.println("Erdős–Rényi");
+        Std.StdOut.println(erdosRenyi(numVertices, p));
+        Std.StdOut.println();
 
-        StdOut.println("Complete bipartite");
-        StdOut.println(completeBipartite(numVertices1, numVertices2));
-        StdOut.println();
+        Std.StdOut.println("Complete bipartite");
+        Std.StdOut.println(completeBipartite(numVertices1, numVertices2));
+        Std.StdOut.println();
 
-        StdOut.println("Bipartite");
-        StdOut.println(bipartite(numVertices1, numVertices2, numEdges));
-        StdOut.println();
+        Std.StdOut.println("Bipartite");
+        Std.StdOut.println(bipartite(numVertices1, numVertices2, numEdges));
+        Std.StdOut.println();
 
-        StdOut.println("Erdős–Rényi bipartite");
-        StdOut.println(bipartite(numVertices1, numVertices2, q));
-        StdOut.println();
+        Std.StdOut.println("Erdős–Rényi bipartite");
+        Std.StdOut.println(bipartite(numVertices1, numVertices2, q));
+        Std.StdOut.println();
 
-        StdOut.println("Path");
-        StdOut.println(path(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Path");
+        Std.StdOut.println(path(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("Cycle");
-        StdOut.println(cycle(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Cycle");
+        Std.StdOut.println(cycle(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("Binary tree");
-        StdOut.println(binaryTree(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Binary tree");
+        Std.StdOut.println(binaryTree(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("Eulerian Cycle");
-        StdOut.println(eulerianCycle(numVertices, numEdges));
-        StdOut.println();
+        Std.StdOut.println("Eulerian Cycle");
+        Std.StdOut.println(eulerianCycle(numVertices, numEdges));
+        Std.StdOut.println();
 
-        StdOut.println("Eulerian Path ");
-        StdOut.println(eulerianPath(numVertices, numEdges));
-        StdOut.println();
+        Std.StdOut.println("Eulerian Path ");
+        Std.StdOut.println(eulerianPath(numVertices, numEdges));
+        Std.StdOut.println();
 
-        StdOut.println("Tree");
-        StdOut.println(tree(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Tree");
+        Std.StdOut.println(tree(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("4-Regular");
-        StdOut.println(regular(numVertices, 4));
-        StdOut.println();
+        Std.StdOut.println("4-Regular");
+        Std.StdOut.println(regular(numVertices, 4));
+        Std.StdOut.println();
 
-        StdOut.println("Star");
-        StdOut.println(star(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Star");
+        Std.StdOut.println(star(numVertices));
+        Std.StdOut.println();
 
-        StdOut.println("Wheel");
-        StdOut.println(wheel(numVertices));
-        StdOut.println();
+        Std.StdOut.println("Wheel");
+        Std.StdOut.println(wheel(numVertices));
+        Std.StdOut.println();
     }
 }

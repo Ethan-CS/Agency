@@ -33,33 +33,27 @@ public class Chart extends ApplicationFrame {
 	 * @param filter         the value from the results we want to compare.
 	 * @param protectionType which method of protection allocation the model uses.
 	 */
-	public Chart(String title, String filter, int protectionType) throws IOException {
+	public Chart(String title, String filter, Protection protectionType) throws IOException {
 		super(title);
 		CategoryDataset dataset = Model.getResults(filter, protectionType);
 		chart = createChart(dataset, filter);
 		String name;
 		switch (protectionType) {
-			case Model.RANDOM -> name = "Random";
-			case Model.MIXED -> name = "Mixed";
-			case Model.DETERMINISTIC -> name = "Deterministic";
+			case RANDOM -> name = "Random";
+			case MIXED -> name = "Mixed";
+			case DETERMINISTIC -> name = "Deterministic";
 			default -> throw new IllegalStateException("Unexpected value: " + filter);
 		}
 		String[] filterArray = filter.split("\\s+");
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < filterArray.length; i++) {
-            filterArray[i] = filterArray[i].substring(0, 1).toUpperCase() + filterArray[i].substring(1).toLowerCase();
-            s.append(filterArray[i]);
-        }
+			filterArray[i] = filterArray[i].substring(0, 1).toUpperCase() + filterArray[i].substring(1).toLowerCase();
+			s.append(filterArray[i]);
+		}
 		this.writeChartToImageFile(new File("data/" + name + "/" + name + s + "Chart.png"));
 	}
 
-	/**
-	 * Creates the required comparison chart.
-	 *
-	 * @param dataset the dataset.
-	 * @param filter  the value we want to compare across different strategies.
-	 * @return the chart.
-	 */
+	// Creates the required comparison chart.
 	private static JFreeChart createChart(CategoryDataset dataset, String filter) {
 		String yAxisLabel;
 		String subTitle;
@@ -93,13 +87,17 @@ public class Chart extends ApplicationFrame {
 		rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 		BarRenderer renderer = (BarRenderer) plot.getRenderer();
 		renderer.setDrawBarOutline(false);
-        chart.getLegend().setFrame(BlockBorder.NONE);
+		chart.getLegend().setFrame(BlockBorder.NONE);
 		return chart;
 	}
 
+	/**
+	 * Writes the current chart to an image file.
+	 *
+	 * @param chartFile the file name to which to write the chart.
+	 */
 	public void writeChartToImageFile(File chartFile) {
-		JFreeChart chart = this.chart;
-		BufferedImage chartImage = chart.createBufferedImage(1200, 500);
+		BufferedImage chartImage = this.chart.createBufferedImage(1200, 500);
 		try (OutputStream out = new FileOutputStream(chartFile)) {
 			ImageIO.write(chartImage, "png", out);
 		} catch (IOException e) {
