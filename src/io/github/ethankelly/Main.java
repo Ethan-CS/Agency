@@ -28,6 +28,7 @@ public class Main {
 		PrintStream data;
 		PrintStream readable;
 		PrintStream winner;
+		PrintStream texTable;
 		String name;
 		switch (protection) {
 			case RANDOM -> name = "Random";
@@ -39,6 +40,7 @@ public class Main {
 		data = new PrintStream(path + "Data.csv");
 		readable = new PrintStream(path + "Readable.md");
 		winner = new PrintStream(path + "Winner.md");
+		texTable = new PrintStream(path + "Table.txt");
 
 		String[] modelResults = Model.runModels(mProximity, mDegree, mProtection, protection);
 
@@ -50,7 +52,10 @@ public class Main {
 			System.out.println(modelResults[1]);
 		}
 		System.setOut(winner);
-		System.out.println(Winner.getWinners(path + "Data.csv", graphFile));
+		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[0]);
+
+		System.setOut(texTable);
+		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[1]);
 
 		new Chart("Defence Strategy Comparison", "INFECTED", protection);
 		new Chart("Defence Strategy Comparison", "PROTECTED", protection);

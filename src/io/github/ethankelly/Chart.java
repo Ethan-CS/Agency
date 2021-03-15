@@ -44,6 +44,7 @@ public class Chart extends ApplicationFrame {
 			case DETERMINISTIC -> name = "Deterministic";
 			default -> throw new IllegalStateException("Unexpected value: " + filter);
 		}
+		// Just to make first letters upper case and rest lower case
 		String[] filterArray = filter.split("\\s+");
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < filterArray.length; i++) {
@@ -78,10 +79,19 @@ public class Chart extends ApplicationFrame {
 				"Source vertex",
 				yAxisLabel,
 				dataset);
+		Font titleFont = new Font("CMU Bright", Font.BOLD, 30);
+		Font subtitleFont = new Font("CMU Bright", Font.PLAIN, 15);
+		Font axisFont = new Font("CMU Bright",Font.ITALIC, 18);
 
-		chart.addSubtitle(new TextTitle(subTitle));
+		chart.getTitle().setFont(titleFont);
+		TextTitle sub = new TextTitle((subTitle));
+		sub.setFont(subtitleFont);
+		chart.addSubtitle(sub);
 		chart.setBackgroundPaint(Color.WHITE);
 		CategoryPlot plot = (CategoryPlot) chart.getPlot();
+
+		plot.getDomainAxis().setLabelFont(axisFont);
+		plot.getRangeAxis().setLabelFont(axisFont);
 
 		NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
 		rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());

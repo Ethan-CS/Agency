@@ -2,6 +2,7 @@ package io.github.ethankelly;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,8 +13,8 @@ import java.util.stream.IntStream;
 
 public class Winner {
 
-	public static String getWinners(String dataFilePath, String graphFile) throws IOException {
-		StringBuilder s = new StringBuilder();
+	public static String[] getWinners(String dataFilePath, String graphFile) throws IOException {
+
 		// Read in the model defence results
 		List<CSVRecord> records = CSVFormat
 				.DEFAULT
@@ -31,9 +32,20 @@ public class Winner {
 
 		List<List<CSVRecord>> recordsByOutbreak = byOutbreak(records, numVertices);
 
-		// Print the winning defence strategy from each outbreak
+		String s = getReadableWinners(numVertices, recordsByOutbreak);
+		String t = getTexTableWinners(numVertices, recordsByOutbreak);
+
+		return new String[] {s, t};
+	}
+
+	@NotNull
+	private static String getReadableWinners(int numVertices, List<List<CSVRecord>> recordsByOutbreak) {
+		// Initialise string builder to construct string to return.
+		StringBuilder s = new StringBuilder();
+		// Append the winning defence strategy from each outbreak
 		s.append("# Winning Strategies\n");
 		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
+
 		for (CSVRecord strings : winners) {
 			s.append("\n* _").append(strings.get("OUTBREAK")).append(":_ ")
 					.append(strings.get("STRATEGY")).append(" with ")
@@ -42,6 +54,48 @@ public class Winner {
 					.append(strings.get("END TURN")).append(" turns.\n\n");
 		}
 		return String.valueOf(s);
+	}
+
+	public static String getTexTableWinners(int numVertices, List<List<CSVRecord>> recordsByOutbreak) {
+		// Initialise string builder to construct string to return.
+		StringBuilder t = new StringBuilder();
+
+		// Append the start of the centering and tabular environments
+		t.append("""
+				\\begin{center}
+				  \\begin{tabular}{| c || c | c | c | c |}
+				    \\hline
+				    {\\bfseries Source node} & {\\bfseries Winning Strategy} & {\\bfseries Infections} & {\\bfseries Protections} & {\\bfseries End-Turn} \\\\  %[0.5ex]
+				    \\hline\\hline""");
+
+		// Get the winners
+		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
+
+		winners.forEach(record -> t.append("\n    ").append(record.get("OUTBREAK")).append(" & ")
+				.append(capitaliseWord(record.get("STRATEGY"))).append(" & ")
+				.append(record.get("INFECTED")).append(" & ")
+				.append(record.get("PROTECTED")).append(" & ")
+				.append(record.get("END TURN")).append("\n    \\hline"));
+		t.append("""
+				  \\hline
+				  \\end{tabular}
+				\\end{center}
+				""");
+
+		return String.valueOf(t);
+	}
+
+
+	public static String capitaliseWord(String str) {
+		String[] words = str.split("\\s");
+		StringBuilder capitalizeWord = new StringBuilder();
+		for (String w : words) {
+			w = w.toLowerCase();
+			String first = w.substring(0, 1);
+			String afterFirst = w.substring(1);
+			capitalizeWord.append(first.toUpperCase()).append(afterFirst).append(" ");
+		}
+		return capitalizeWord.toString().trim();
 	}
 
 	/**
