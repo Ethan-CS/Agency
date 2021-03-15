@@ -11,8 +11,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Uses a CSV parser to read the results of a model from a CSV file and determines the winning strategy or strategies
+ * for each source node a model was run on and outputs as both a human readable Markdown file and as LaTeX code for use
+ * in presentation and reporting of modelling results.
+ */
 public class Winner {
-
+	/**
+	 * Uses the below helper methods to find the winning strategies from a CSV file of model data and returns a string
+	 * array with the strategies in a human readable and machine readable form.
+	 *
+	 * @param dataFilePath the location of the data file to be parsed.
+	 * @param graphFile    the location of the graph file to be parsed.
+	 * @return a string array of size 2 - the first location contains a human-readable formatted list of winners (for
+	 * printing to a Markdown file) and the second location contains LaTeX code for inputting into a file later.
+	 * @throws IOException if the given files cannot be found.
+	 */
 	public static String[] getWinners(String dataFilePath, String graphFile) throws IOException {
 
 		// Read in the model defence results
@@ -31,20 +45,21 @@ public class Winner {
 		int numVertices = matrix.size();
 
 		List<List<CSVRecord>> recordsByOutbreak = byOutbreak(records, numVertices);
+		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
 
-		String s = getReadableWinners(numVertices, recordsByOutbreak);
-		String t = getTexTableWinners(numVertices, recordsByOutbreak);
+		String s = getReadableWinners(winners);
+		String t = getTexTableWinners(winners);
 
 		return new String[] {s, t};
 	}
 
 	@NotNull
-	private static String getReadableWinners(int numVertices, List<List<CSVRecord>> recordsByOutbreak) {
+	// Helper method - gets the winners in a human readable format.
+	private static String getReadableWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
 		StringBuilder s = new StringBuilder();
 		// Append the winning defence strategy from each outbreak
 		s.append("# Winning Strategies\n");
-		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
 
 		for (CSVRecord strings : winners) {
 			s.append("\n* _").append(strings.get("OUTBREAK")).append(":_ ")
@@ -56,7 +71,9 @@ public class Winner {
 		return String.valueOf(s);
 	}
 
-	public static String getTexTableWinners(int numVertices, List<List<CSVRecord>> recordsByOutbreak) {
+	@NotNull
+	// Helper method - returns the winners in LaTeX code (namely a tabular environment).
+	private static String getTexTableWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
 		StringBuilder t = new StringBuilder();
 
@@ -64,15 +81,12 @@ public class Winner {
 		t.append("""
 				\\documentclass[results.tex]{subfiles}
 				\\begin{document}
-				
+								
 				\\begin{center}
 				  \\begin{tabular}{| c || c | c | c | c |}
 				    \\hline
 				    {\\bfseries Source node} & {\\bfseries Winning Strategy} & {\\bfseries Infections} & {\\bfseries Protections} & {\\bfseries End-Turn} \\\\  %[0.5ex]
 				    \\hline\\hline""");
-
-		// Get the winners
-		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
 
 		winners.forEach(record -> t.append("\n    ").append(record.get("OUTBREAK")).append(" & ")
 				.append(capitaliseWord(record.get("STRATEGY"))).append(" & ")
@@ -82,14 +96,14 @@ public class Winner {
 		t.append("""
 				   \\end{tabular}
 				\\end{center}
-				
+								
 				\\end{document}
 				""");
 		return String.valueOf(t);
 	}
 
-
-	public static String capitaliseWord(String str) {
+	// Used for formatting outputs - capitalises a given word.
+	private static String capitaliseWord(String str) {
 		String[] words = str.split("\\s");
 		StringBuilder capitalizeWord = new StringBuilder();
 		for (String w : words) {

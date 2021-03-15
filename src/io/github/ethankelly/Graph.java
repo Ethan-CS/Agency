@@ -134,11 +134,9 @@ public class Graph {
 		for (int count = 0; count < n - 1; count++) {
 			// Call minDistance to find the vertex v with minimum distance to the parameter 'vertex'
 			int u = minDistance(pathArray, shortestPathSet);
-			// Then, vertex u is processed
 			shortestPathSet[u] = true;
-			// We now process adjacent nodes of the current vertex
+			// If vertex v is not in shortestPathSet yet, then update it
 			for (int v = 0; v < n; v++)
-				// If vertex v is not in shortestPathSet yet, then update it
 				if (!shortestPathSet[v] && matrix[u][v] != 0 && pathArray[u] !=
 				                                                Integer.MAX_VALUE && pathArray[u]
 				                                                                     + matrix[u][v] < pathArray[v])

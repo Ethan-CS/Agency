@@ -36,6 +36,9 @@ public enum Protection {
 		this.value = value;
 	}
 
+	/**
+	 * @return the underlying value associated with the current protection allocation method.
+	 */
 	public int getValue() {
 		return value;
 	}

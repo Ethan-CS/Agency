@@ -24,6 +24,7 @@ import java.io.*;
 public class Chart extends ApplicationFrame {
 	@Serial
 	private static final long serialVersionUID = 1L;
+	// The chart object
 	private final JFreeChart chart;
 
 	/**
@@ -32,6 +33,7 @@ public class Chart extends ApplicationFrame {
 	 * @param title          the frame title.
 	 * @param filter         the value from the results we want to compare.
 	 * @param protectionType which method of protection allocation the model uses.
+	 * @throws IOException if the specified files do not exist.
 	 */
 	public Chart(String title, String filter, Protection protectionType) throws IOException {
 		super(title);
@@ -81,7 +83,7 @@ public class Chart extends ApplicationFrame {
 				dataset);
 		Font titleFont = new Font("CMU Bright", Font.BOLD, 30);
 		Font subtitleFont = new Font("CMU Bright", Font.PLAIN, 15);
-		Font axisFont = new Font("CMU Bright",Font.ITALIC, 18);
+		Font axisFont = new Font("CMU Bright", Font.ITALIC, 18);
 
 		chart.getTitle().setFont(titleFont);
 		TextTitle sub = new TextTitle((subTitle));

@@ -607,7 +607,9 @@ public class Std {
 		private static final String CHARSET_NAME = "UTF-8";
 		// Language = English UK
 		private static final Locale LOCALE = Locale.UK;
-		// Send output here
+		/**
+		 * The location to which we send the output.
+		 */
 		public static PrintWriter out;
 
 		// This is called before invoking any methods

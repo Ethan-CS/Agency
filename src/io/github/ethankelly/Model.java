@@ -9,6 +9,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -132,6 +133,7 @@ public class Model {
 	 *                       count or number of protected agents).
 	 * @param protectionType the method of protection allocation utilised in the model, for file naming.
 	 * @return the results of the model that have been obtained from the CSV file.
+	 * @throws IOException if a specified file does not exist.
 	 */
 	public static CategoryDataset getResults(String filter, Protection protectionType) throws IOException {
 		DefaultCategoryDataset data = new DefaultCategoryDataset();
@@ -154,15 +156,67 @@ public class Model {
 	}
 
 	/**
-	 * Cycles through the agents list field and prints them to the standard output. Used for testing purposes.
+	 * Cycles through the agents list field and creates a string representation of them to be printed to the standard
+	 * output. Used for testing purposes.
 	 *
 	 * @param model the model with agents we want to print.
+	 * @return the string representation of the agents of the given model.
 	 */
 	public static String agentsToString(Model model) {
 		List<Agent> agents = model.getAgents();
 		StringBuilder s = new StringBuilder();
 		agents.stream().map(agent -> "\n* " + agent).forEach(s::append);
 		return String.valueOf(s);
+	}
+
+	/**
+	 * Given three models to run, runs them and outputs required results to the specified directories and files.
+	 *
+	 * @param mProximity  the proximity-based model.
+	 * @param mDegree     the degree-based model.
+	 * @param mProtection the cheapest protection-based model.
+	 * @param protection  the type of protection allocation used (random, deterministic or mixed).
+	 * @throws IOException if any of the files do not exist.
+	 */
+	public static void printModelOutput(Model mProximity, Model mDegree, Model mProtection, Protection protection) throws IOException {
+		String graphFile = "data/Graph.csv";
+
+		PrintStream data;
+		PrintStream readable;
+		PrintStream winner;
+		PrintStream texTable;
+		String name;
+		switch (protection) {
+			case RANDOM -> name = "Random";
+			case MIXED -> name = "Mixed";
+			case DETERMINISTIC -> name = "Deterministic";
+			default -> throw new IllegalStateException("Unexpected value: " + protection);
+		}
+		String path = "data/" + name + "/" + name;
+		data = new PrintStream(path + "Data.csv");
+		readable = new PrintStream(path + "Readable.md");
+		winner = new PrintStream(path + "Winner.md");
+		texTable = new PrintStream(path + "Table.tex");
+
+		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
+
+		System.setOut(data);
+		System.out.println(modelResults[0]);
+
+		if (printReadable) {
+			System.setOut(readable);
+			System.out.println(modelResults[1]);
+		}
+		System.setOut(winner);
+		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[0]);
+
+		System.setOut(texTable);
+		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[1]);
+
+		new Chart("Defence Strategy Comparison", "INFECTED", protection);
+		new Chart("Defence Strategy Comparison", "PROTECTED", protection);
+		new Chart("Defence Strategy Comparison", "END TURN", protection);
+
 	}
 
 	/**
@@ -252,6 +306,8 @@ public class Model {
 	 *                               vertices each defensive turn.
 	 * @param probabilityOfInfection the probability with which the infection propagates.
 	 * @param whichDefence           the choice of defence strategy.
+	 * @return a string array - string at the first position is the human readable result of the test to be printed to a
+	 * Markdown file, the string at the second position is the machine readable result to be printed to a CSV file.
 	 */
 	public String[] runTest(double totalDefence, double probabilityOfInfection, Defence whichDefence) {
 		StringBuilder data = new StringBuilder();
