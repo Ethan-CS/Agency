@@ -161,7 +161,7 @@ public class Model {
 	public static String agentsToString(Model model) {
 		List<Agent> agents = model.getAgents();
 		StringBuilder s = new StringBuilder();
-		agents.stream().map(agent -> "* " + agent).forEach(s::append);
+		agents.stream().map(agent -> "\n* " + agent).forEach(s::append);
 		return String.valueOf(s);
 	}
 
@@ -288,33 +288,33 @@ public class Model {
 				DecimalFormat df = new DecimalFormat("0.00");
 				int i = 0;
 				for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-				readable.append("\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
+				readable.append("\n\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
 				readable.append(this.getSIRP());
 
 				turn++;
 			} else {
-				readable.append("\n__Nothing more to protect.__\nEnding model with ")
+				readable.append("\n\n__Nothing more to protect.__\n\nEnding model with ")
 						.append(this.getProtected().size()).append(" protected and ")
 						.append(this.getInfected().size()).append(" infected vertices in ")
-						.append(turn).append(turn == 1 ? " turn.\n" : " turns.\n");
+						.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
 				break;
 			}
 			if (!this.getSusceptible().isEmpty()) {
 				List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
 				if (!toInfect.isEmpty()) {
-					readable.append("\n_Infecting:_ ");
+					readable.append("\n\n_Infecting:_ ");
 					toInfect.stream().map(agent -> agent.getVertex() + " ").forEach(readable::append);
-					readable.append("\n");
+					readable.append("\n\n");
 				} else {
-					readable.append("\n_Nothing infected._");
+					readable.append("\n\n_Nothing infected._");
 				}
 				readable.append(this.getSIRP());
 				turn++;
 			} else {
-				readable.append("\n__Nothing more to infect.__\nEnding model with ")
+				readable.append("\n\n__Nothing more to infect.__\n\nEnding model with ")
 						.append(this.getProtected().size()).append(" protected and ")
 						.append(this.getInfected().size()).append(" infected vertices in ")
-						.append(turn).append(turn == 1 ? " turn.\n" : " turns.\n");
+						.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
 				break;
 			}
 		}
