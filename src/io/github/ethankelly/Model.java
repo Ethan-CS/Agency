@@ -3,7 +3,6 @@ package io.github.ethankelly;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.jetbrains.annotations.NotNull;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 
@@ -551,7 +550,6 @@ public class Model {
 		return strategy;
 	}
 
-	@NotNull
 	private List<Agent> getToDefend(Defence whichDefence) {
 		return switch (whichDefence) {
 			case PROXIMITY -> findHighestPeril();

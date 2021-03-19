@@ -1,7 +1,5 @@
 package io.github.ethankelly;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -172,7 +170,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 *
 	 * @return an iterator to all of the keys in this set.
 	 */
-	public @NotNull Iterator<Key> iterator() {
+	public Iterator<Key> iterator() {
 		return set.iterator();
 	}
 
@@ -531,7 +529,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 		/**
 		 * @return an iterator that iterates over the keys in ascending order
 		 */
-		public @NotNull Iterator<Key> iterator() {
+		public Iterator<Key> iterator() {
 			return new HeapIterator();
 		}
 

@@ -2,7 +2,6 @@ package io.github.ethankelly;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -53,7 +52,6 @@ public class Winner {
 		return new String[] {s, t};
 	}
 
-	@NotNull
 	// Helper method - gets the winners in a human readable format.
 	private static String getReadableWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
@@ -71,7 +69,7 @@ public class Winner {
 		return String.valueOf(s);
 	}
 
-	@NotNull
+
 	// Helper method - returns the winners in LaTeX code (namely a tabular environment).
 	private static String getTexTableWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
