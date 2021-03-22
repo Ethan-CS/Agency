@@ -33,11 +33,13 @@ public class Chart extends ApplicationFrame {
 	 * @param title          the frame title.
 	 * @param filter         the value from the results we want to compare.
 	 * @param protectionType which method of protection allocation the model uses.
+	 * @param path           the path to the resources folder (i.e. directory containing model results).
 	 * @throws IOException if the specified files do not exist.
 	 */
-	public Chart(String title, String filter, Protection protectionType) throws IOException {
+	public Chart(String title, Graph graph, String filter, Protection protectionType, String path, int round) throws IOException {
 		super(title);
-		CategoryDataset dataset = Model.getResults(filter, protectionType);
+		String graphName = graph.getName();
+		CategoryDataset dataset = Model.getResults(filter, graphName, protectionType, path, round);
 		chart = createChart(dataset, filter);
 		String name;
 		switch (protectionType) {
@@ -53,7 +55,7 @@ public class Chart extends ApplicationFrame {
 			filterArray[i] = filterArray[i].substring(0, 1).toUpperCase() + filterArray[i].substring(1).toLowerCase();
 			s.append(filterArray[i]);
 		}
-		this.writeChartToImageFile(new File("data/" + name + "/" + name + s + "Chart.png"));
+		this.writeChartToImageFile(new File(path + s + "Chart.png"));
 	}
 
 	// Creates the required comparison chart.

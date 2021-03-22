@@ -134,7 +134,11 @@ public class Model {
 	 * @return the results of the model that have been obtained from the CSV file.
 	 * @throws IOException if a specified file does not exist.
 	 */
-	public static CategoryDataset getResults(String filter, Protection protectionType) throws IOException {
+	public static CategoryDataset getResults(String filter,
+	                                         String graphName,
+	                                         Protection protectionType,
+	                                         String path,
+	                                         int thisRound) throws IOException {
 		DefaultCategoryDataset data = new DefaultCategoryDataset();
 		String name = "";
 		switch (protectionType) {
@@ -143,7 +147,7 @@ public class Model {
 			case DETERMINISTIC -> name = "Deterministic";
 		}
 		// Read in the model defence results and associated graph
-		Reader in = new FileReader("data/" + name + "/" + name + "Data.csv");
+		Reader in = new FileReader(path + "Data" + thisRound + ".csv");
 		List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
 
 		// Add each result to our dataset
@@ -177,8 +181,13 @@ public class Model {
 	 * @param protection  the type of protection allocation used (random, deterministic or mixed).
 	 * @throws IOException if any of the files do not exist.
 	 */
-	public static void printModelOutput(Model mProximity, Model mDegree, Model mProtection, Protection protection) throws IOException {
-		String graphFile = "data/Graph.csv";
+	public static void printModelOutput(Model mProximity,
+	                                    Model mDegree,
+	                                    Model mProtection,
+	                                    Protection protection,
+	                                    String filePath,
+	                                    int thisRound) throws IOException {
+		String graphFile = filePath + "/Graph" + thisRound + ".csv";
 
 		PrintStream data;
 		PrintStream readable;
@@ -191,11 +200,11 @@ public class Model {
 			case DETERMINISTIC -> name = "Deterministic";
 			default -> throw new IllegalStateException("Unexpected value: " + protection);
 		}
-		String path = "data/" + name + "/" + name;
-		data = new PrintStream(path + "Data.csv");
-		readable = new PrintStream(path + "Readable.md");
-		winner = new PrintStream(path + "Winner.md");
-		texTable = new PrintStream(path + "Table.tex");
+		String path = filePath + "/" + name + "/" + name;
+		data = new PrintStream(path + "Data" + thisRound + ".csv");
+		readable = new PrintStream(path + "Readable" + thisRound + ".md");
+		winner = new PrintStream(path + "Winner" + thisRound + ".md");
+		texTable = new PrintStream(path + "Table" + thisRound + ".tex");
 
 		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
 
@@ -207,14 +216,14 @@ public class Model {
 			System.out.println(modelResults[1]);
 		}
 		System.setOut(winner);
-		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[0]);
+		System.out.println(Winner.getWinners(path + "Data" + thisRound + ".csv", graphFile)[0]);
 
 		System.setOut(texTable);
-		System.out.println(Winner.getWinners(path + "Data.csv", graphFile)[1]);
+		System.out.println(Winner.getWinners(path + "Data" + thisRound + ".csv", graphFile)[1]);
 
-		new Chart("Defence Strategy Comparison", "INFECTED", protection);
-		new Chart("Defence Strategy Comparison", "PROTECTED", protection);
-		new Chart("Defence Strategy Comparison", "END TURN", protection);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "INFECTED", protection, path, thisRound);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "PROTECTED", protection, path, thisRound);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "END TURN", protection, path, thisRound);
 
 	}
 

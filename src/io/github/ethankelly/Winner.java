@@ -27,13 +27,13 @@ public class Winner {
 	 * @throws IOException if the given files cannot be found.
 	 */
 	public static String[] getWinners(String dataFilePath, String graphFile) throws IOException {
-
 		// Read in the model defence results
 		List<CSVRecord> records = CSVFormat
 				.DEFAULT
 				.withFirstRecordAsHeader()
 				.parse(new FileReader(dataFilePath))
 				.getRecords();
+
 		// Read in the graph associated with the model
 		List<CSVRecord> matrix = CSVFormat
 				.DEFAULT
