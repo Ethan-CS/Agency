@@ -28,9 +28,9 @@ public class TestMain {
 
 		String path = "data/" + g.getName();
 
-		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.RANDOM, path, 1);
-		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.MIXED, path, 1);
-		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.DETERMINISTIC, path, 1);
+//		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.RANDOM, path, 1);
+//		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.MIXED, path, 1);
+//		Model.printModelOutput(mProximity, mDegree, mProtection, Protection.DETERMINISTIC, path, 1);
 	}
 
 }
