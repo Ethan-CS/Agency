@@ -186,45 +186,48 @@ public class Model {
 	                                    Model mProtection,
 	                                    Protection protection,
 	                                    String filePath,
-	                                    int thisRound) throws IOException {
+	                                    int thisRound,
+	                                    PrintStream data,
+	                                    PrintStream winner,
+	                                    PrintStream texTable) throws IOException {
 		String graphFile = filePath + "/Graph" + thisRound + ".csv";
-
-		PrintStream data;
-		PrintStream readable;
-		PrintStream winner;
-		PrintStream texTable;
-		String name;
-		switch (protection) {
-			case RANDOM -> name = "Random";
-			case MIXED -> name = "Mixed";
-			case DETERMINISTIC -> name = "Deterministic";
-			default -> throw new IllegalStateException("Unexpected value: " + protection);
-		}
-		String path = filePath + "/" + name + "/" + name;
-		data = new PrintStream(path + "Data" + thisRound + ".csv");
-		readable = new PrintStream(path + "Readable" + thisRound + ".md");
-		winner = new PrintStream(path + "Winner" + thisRound + ".md");
-		texTable = new PrintStream(path + "Table" + thisRound + ".tex");
 
 		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
 
 		System.setOut(data);
 		System.out.println(modelResults[0]);
 
-		if (printReadable) {
-			System.setOut(readable);
-			System.out.println(modelResults[1]);
-		}
+//		if (printReadable) {
+//			System.setOut(readable);
+//			System.out.println(modelResults[1]);
+//		}
 		System.setOut(winner);
-		System.out.println(Winner.getWinners(path + "Data" + thisRound + ".csv", graphFile)[0]);
+//		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[0]);
+		System.out.println(Arrays.toString(Winner.getOverallWinners(filePath + "Data.csv")));
 
-		System.setOut(texTable);
-		System.out.println(Winner.getWinners(path + "Data" + thisRound + ".csv", graphFile)[1]);
+//		System.setOut(texTable);
+//		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[1]);
 
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "INFECTED", protection, path, thisRound);
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "PROTECTED", protection, path, thisRound);
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "END TURN", protection, path, thisRound);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "INFECTED", protection, filePath, thisRound);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "PROTECTED", protection, filePath, thisRound);
+		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "END TURN", protection, filePath, thisRound);
 
+	}
+
+	public static void printOverallModelOutput(Model mProximity,
+	                                    Model mDegree,
+	                                    Model mProtection,
+	                                    Protection protection,
+	                                    String filePath,
+	                                    PrintStream data,
+	                                    PrintStream winner) throws IOException {
+
+		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
+
+		System.setOut(data);
+		System.out.println(modelResults[0]);
+
+		System.setOut(winner);
 	}
 
 	/**

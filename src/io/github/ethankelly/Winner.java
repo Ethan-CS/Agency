@@ -220,4 +220,30 @@ public class Winner {
 		}
 		return mostProtected;
 	}
+
+	public static int[] getOverallWinners(String dataFilePath) throws IOException {
+		// Read in the model defence results
+		List<CSVRecord> records = CSVFormat
+				.DEFAULT
+				.withFirstRecordAsHeader()
+				.parse(new FileReader(dataFilePath))
+				.getRecords();
+
+		int protection = 0;
+		int proximity = 0;
+		int degree = 0;
+
+		for (CSVRecord record : records) {
+			String strategy = record.get("STRATEGY");
+			switch(strategy) {
+				case "STRATEGY" -> {
+				}
+				case "PROTECTION" -> protection++;
+				case "PROXIMITY" -> proximity++;
+				case "DEGREE" -> degree++;
+				default -> throw new IllegalStateException("Unexpected value: " + strategy);
+			}
+		}
+		return new int[] {proximity, degree, protection};
+	}
 }
