@@ -202,11 +202,10 @@ public class Model {
 //			System.out.println(modelResults[1]);
 //		}
 		System.setOut(winner);
-//		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[0]);
-		System.out.println(Arrays.toString(Winner.getOverallWinners(filePath + "Data.csv")));
+		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[1]);
 
-//		System.setOut(texTable);
-//		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[1]);
+		System.setOut(texTable);
+		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[2]);
 
 		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "INFECTED", protection, filePath, thisRound);
 		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "PROTECTED", protection, filePath, thisRound);
@@ -215,12 +214,14 @@ public class Model {
 	}
 
 	public static void printOverallModelOutput(Model mProximity,
-	                                    Model mDegree,
-	                                    Model mProtection,
-	                                    Protection protection,
-	                                    String filePath,
-	                                    PrintStream data,
-	                                    PrintStream winner) throws IOException {
+	                                           Model mDegree,
+	                                           Model mProtection,
+	                                           Protection protection,
+	                                           String filePath,
+	                                           String graphFile,
+	                                           int i,
+	                                           PrintStream data,
+	                                           PrintStream winner) throws IOException {
 
 		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
 
@@ -228,6 +229,80 @@ public class Model {
 		System.out.println(modelResults[0]);
 
 		System.setOut(winner);
+		System.out.println(Winner.getWinners(filePath + "Data" + i + ".csv", graphFile)[1]);
+	}
+
+	public static void runMultiGraphTest(String graphName, String path) throws IOException {
+		// Check if we're dealing with the complete graph, in which case we only need to run models once.
+		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.numGraphs;
+
+		for (int i = 0; i < bound; i++) {
+			PrintStream graphFile = new PrintStream(path + "/Graph" + i + ".csv");
+
+			PrintStream randomData = new PrintStream(path + "/Random/RandomData" + i + ".csv");
+			PrintStream mixedData = new PrintStream(path + "/Mixed/MixedData" + i + ".csv");
+			PrintStream deterministicData = new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv");
+
+			PrintStream randomWinner = new PrintStream(path + "/Random/RandomWinner" + i + ".csv");
+			System.setOut(randomWinner);
+			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+
+			PrintStream mixedWinner = new PrintStream(path + "/Mixed/MixedWinner" + i + ".csv");
+			System.setOut(mixedWinner);
+			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+
+			PrintStream deterministicWinner = new PrintStream(path + "/Deterministic/DeterministicWinner" + i + ".csv");
+			System.setOut(deterministicWinner);
+			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+
+			Graph g;
+			switch (graphName) {
+				case "Complete" -> g = GraphGenerator.complete(Main.numVertices);
+				case "Erdős–Rényi" -> g = GraphGenerator.erdosRenyi(Main.numVertices, Main.p);
+				case "Tree" -> g = GraphGenerator.tree(Main.numVertices);
+				default -> throw new IllegalStateException("Unexpected value: " + graphName);
+			}
+			// Print the generated graph to the appropriate file
+			System.setOut(graphFile);
+			System.out.println(Graph.makeCommaSeparated(g));
+
+			// Initialise three models and run on the generated graph
+			Model cProximity = new Model(g);
+			Model cDegree = new Model(g);
+			Model cProtection = new Model(g);
+
+			// Run the models three times: protection allocation first random,
+			// then by degree and finally by protection.
+			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.RANDOM,
+					path + "/Random/Random", path + "/Graph0.csv",
+					0, randomData, randomWinner);
+			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.MIXED,
+					path + "/Mixed/Mixed", path + "/Graph0.csv",
+					0, mixedData, mixedWinner);
+			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.DETERMINISTIC,
+					path + "/Deterministic/Deterministic", path + "/Graph0.csv",
+					0, deterministicData, deterministicWinner);
+
+
+		}
+		PrintStream winner = new PrintStream(path + "Winner.md");
+
+		System.setOut(winner);
+		long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
+		long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
+		long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
+		System.out.println("# " + graphName + " " + "Model Results\n\n" +
+		                   "## Random\n" +
+		                   " * " + Defence.PROXIMITY + ": " + winRandom[Defence.PROXIMITY.getValue()] + "\n" +
+		                   " * " + Defence.DEGREE + ": " + winRandom[Defence.DEGREE.getValue()] + "\n" +
+		                   " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] + "\n\n## Mixed\n" +
+		                   " * " + Defence.PROXIMITY + ": " + winMixed[Defence.PROXIMITY.getValue()] + "\n" +
+		                   " * " + Defence.DEGREE + ": " + winMixed[Defence.DEGREE.getValue()] + "\n" +
+		                   " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] + "\n\n## Deterministic\n" +
+		                   " * " + Defence.PROXIMITY + ": " + winDeterministic[Defence.PROXIMITY.getValue()] + "\n" +
+		                   " * " + Defence.DEGREE + ": " + winDeterministic[Defence.DEGREE.getValue()] + "\n" +
+		                   " * " + Defence.PROTECTION + ": " + winDeterministic[Defence.PROTECTION.getValue()] + "\n\n");
+
 	}
 
 	/**

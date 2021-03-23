@@ -47,9 +47,10 @@ public class Winner {
 		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
 
 		String s = getReadableWinners(winners);
+		String m = getMachineReadable(winners);
 		String t = getTexTableWinners(winners);
 
-		return new String[] {s, t};
+		return new String[] {s, m, t};
 	}
 
 	// Helper method - gets the winners in a human readable format.
@@ -67,6 +68,17 @@ public class Winner {
 					.append(strings.get("END TURN")).append(" turns.\n\n");
 		}
 		return String.valueOf(s);
+	}
+
+	private static String getMachineReadable(List<CSVRecord> winners) {
+		StringBuilder m = new StringBuilder();
+		for (CSVRecord w : winners) {
+			m.append(w.get("OUTBREAK")).append(",").append(w.get("STRATEGY")).append(",").append(w.get("END TURN"))
+					.append(",").append(w.get("SUSCEPTIBLE")).append(",").append(w.get("INFECTED")).append(",")
+					.append(w.get("RECOVERED")).append(",").append(w.get("PROTECTED")).append("\n");
+		}
+
+		return String.valueOf(m);
 	}
 
 
@@ -221,29 +233,37 @@ public class Winner {
 		return mostProtected;
 	}
 
-	public static int[] getOverallWinners(String dataFilePath) throws IOException {
-		// Read in the model defence results
-		List<CSVRecord> records = CSVFormat
-				.DEFAULT
-				.withFirstRecordAsHeader()
-				.parse(new FileReader(dataFilePath))
-				.getRecords();
+	public static long[] getBestStrategies(String dataFilePath) throws IOException {
+		long protection = 0;
+		long proximity = 0;
+		long degree = 0;
 
-		int protection = 0;
-		int proximity = 0;
-		int degree = 0;
+		// Make sure we only loop for as many times as we need!
+		int bound;
+		if (dataFilePath.equals("data/Complete/Random/RandomWinner") ||
+		    dataFilePath.equals("data/Complete/Mixed/MixedWinner") ||
+		    dataFilePath.equals("data/Complete/Deterministic/DeterministicWinner")) {
+			bound = 1;
+		} else bound = Main.numGraphs;
 
-		for (CSVRecord record : records) {
-			String strategy = record.get("STRATEGY");
-			switch(strategy) {
-				case "STRATEGY" -> {
+		for (int i = 0; i < bound; i++) {
+			// Read in the model defence results
+			List<CSVRecord> records = CSVFormat
+					.DEFAULT
+					.withFirstRecordAsHeader()
+					.parse(new FileReader(dataFilePath + i + ".csv"))
+					.getRecords();
+
+			for (CSVRecord record : records) {
+				String strategy = record.get("STRATEGY");
+				switch (strategy) {
+					case "PROTECTION" -> protection++;
+					case "PROXIMITY" -> proximity++;
+					case "DEGREE" -> degree++;
+					default -> throw new IllegalStateException("Unexpected value: " + strategy);
 				}
-				case "PROTECTION" -> protection++;
-				case "PROXIMITY" -> proximity++;
-				case "DEGREE" -> degree++;
-				default -> throw new IllegalStateException("Unexpected value: " + strategy);
 			}
 		}
-		return new int[] {proximity, degree, protection};
+		return new long[] {proximity, degree, protection};
 	}
 }
