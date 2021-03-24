@@ -39,7 +39,7 @@ public class Chart extends ApplicationFrame {
 	public Chart(String title, Graph graph, String filter, Protection protectionType, String path, int round) throws IOException {
 		super(title);
 		String graphName = graph.getName();
-		CategoryDataset dataset = Model.getResults(filter, graphName, protectionType, path, round);
+		CategoryDataset dataset = Model.getResults(filter, path, round);
 		chart = createChart(dataset, filter);
 		String name;
 		switch (protectionType) {

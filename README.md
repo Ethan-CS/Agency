@@ -1,103 +1,79 @@
 # Agency-based contagion modelling
 
-Below is an overview of the project I am to create. I hope to outline the key functions of each object, especially how they are instantiated, accessed and updated as the model progresses, as well as the structure of the model and how programs will interact with each other. Much of the aims and objectives below are idealistic and long-term goals, meaning they are fairly complex. Not all of the features suggested will have been implemented at all times, but the project should be progressing to those places.
+This repo contains code for an agency-centred network model of infectious disease (or similar contagion). There are a
+number of variable parameters in this project, which can be varied automatically for otherwise identical models, and the
+results of each change can be compared in the output.
 
+## Graph
 
-## Class: `Agent`
+The graph is the first step in creating a model in this project. The model uses vertices (noes) to represent individuals
+between whom the disease can spread provided there is an edge between two vertices. There is a `GraphGenerator` class in
+the model that can be used to (pseudo-randomly) generate graphs of the following types:
 
-Each `Agent` object will have several attributes:
-- `vertex` - their position in the graph
-- `peril` - based on their proximity to the closest fire (uses Dijkstra's algorithm to determine)
-	- 0 - Perfectly safe
-	- 1 - On fire
--  `protection` - combination of a baseline protection rating (between 0 and 1) and the peril rating. Contagion is based on this protection rating.
-	-  0 - Completely unprotected (would immediately contract)
-	-  1 - Completely protected (would not contract)
--  `state` - whether they are susceptible, infected(, recovered) or defended.
+* Simple,
+* Erdős–Rényi,
+* Complete,
+* Bipartite,
+* Complete bipartite,
+* Erdős–Rényi bipartite,
+* Path,
+* Binary tree
+* Cycle,
+* Eulerian path,
+* Eulerian cycle,
+* Wheel,
+* Star,
+* Regular,
+* Tree.
 
-An `Agent` object is created and gains these attributes - `vertex` is passed to the constructor, `peril` is based on the initial state of the graph (where the outbreak occurred), `protection` is then calculated based on their proximity to fire and then their `state` is determined.
+A graph object stores (as an attribute) the random seed used to generate the values which, in turn, generated the random
+graph. Each graph object also has an associated number of vertices, number of edges and adjacency matrix stored as
+attributes.
 
-At the next time step, the player gets to play a defensive move. In vanilla Firefighter, we fully protect the vertices we select in this capacity. In the agency-based version we propose, we instead have a 'quota' of 'influence' that we can exert in each round. For instance, if our quota (perhaps due to budget or time constraints) is the equivalent of increasing one person's protection rating by 100%, we might choose to increase two peoples' ratings by 50% each or three by 50%, 30% and 20% and so on. Some distribution of this influence will be played each turn in order to defend the graph and aim to contain the contagion as quickly as possible.
+## Agents
 
-Each agent needs to be updated whenever they are protected, become closer to fire (especially in close enough proximity to determine whether they may contract, based on `protection`) and when they recover from an infection. These things need to be checked every turn and updated where appropriate. Burning happens on even numbered turns, defence happens on odd numbered turns.
+Each agent in the model is the occupant of a vertex of the graph associated with the model. The vertex location of each
+agent object is stored as an attribute of the agent. The other attributes of each agent are the peril and protection
+ratings and the state they occupy. Peril is a measure of proximity to the closest infection (in the future, I aim to
+make this 'proximity to _all_ infections') and represents the danger the given agent is currently in, as a number
+between 0 (no danger) and 1 (immediate danger). The protection rating is one of the most important factors in this
+agency-centred formulation - it represents how much a given agent is protected from contraction. In the context of
+infectious disease, this could be related to how many people they usually see, and the steps they take to maintain hand
+hygiene, mask wearing practices and so on. In this project, initial protection can be determined in one of three ways:
 
+* Randomly - each agent is assigned a (pseudo-)random number representing their degree of protection from the contagion.
+* Deterministically - the protection rating is simply the peril rating, representing the case of agents increasing their
+  personal protective measures the closer infection is to them.
+* Mixed - protection is allocated based partially on a baseline (pseudo-)random number and then increased based on
+  proximity to the closest infection, to add some more realistic variation to the deterministic approach.
 
+The state an agent is in can change throughout the model: at the moment, the states in use are:
 
-## Class: `Graph`
+* Susceptible - the agent may contract the contagion.
+* Infected - the agent is currently infected with the contagion.
+* Protected - the agent is currently unable to contract the disease because, for instance, their protection rating has
+  been increased to 1 or there is no path of infection between them and an infected agent in the graph.
 
-The `Graph` class contains methods to instantiate a graph and represent it using an adjacency matrix. This class will be used with `Agents` as vertices for the contagion to spread.
+In the future, I will make use of:
 
+* Recovered - the agent has been infected by the contagion, has recovered and therefore cannot contract again for some
+  set period of time (possibly indefinitely).
 
-## Class: `GraphGenerator`
+## Modelling
 
-The `GraphGenerator` has the capacity to generate any of the following types of random graph:
-- Simple,
-- Erdős–Rényi,
-- Complete,
-- Bipartite,
-- Complete bipartite,
-- Erdős–Rényi bipartite,
-- Path,
-- Binary tree
-- Cycle,
-- Eulerian path,
-- Eulerian cycle,
-- Wheel,
-- Star,
-- Regular,
-- Tree.
-
-There is also a unit test in the `main` method of this class that tests each of these graphs generate correctly, given a number of vertices and a number of edges and/or probability as and when appropriate.
-
-
-
-## Class: `MinPriorityQueue`
-
-This class can be instantiated to represent a priority queue of generic keys, with the usual methods as well as the capacity to see the minimum key, get whether the queue is empty and iterate through all of the keys. This utilises a binary heap and has various notes about run times and complexity for general interest.
-
-
-## Class: `Model`
-
-This will be the 'engine' of the project. Here, we can pass in the values (probabilities) which dictate whether someone will contract and run the simulation in the console. This also contains all methods involved in storing and updating the state of play will be kept and called from. For instance, a method for getting the currently burning vertices (based on probabilistic propagation) and for updating the state (stored as a matrix) of the graph. The matrix keeping information about how the contagion has progressed will begin with one column of all zeros, where each row represents the vertex corresponding to the row index. Then, in this first column, the outbreak will have the value 2 here and from now on and all others will remain 0. Another column will represent a defensive move - if any vertices have been influenced to the level required to deem them immune to the disease (perhaps by a vaccine), then they move to the protected state and have the value 1 in their row from now on. Then, another column is added to represent any transmissions that occur - based on the probability of transmission and the protection rating of the agents the contagion is currently adjacent to. Then, another defence turn is played and so on, until no more moves can be made - either burning or defence. This class also needs to contain methods that check for this instance after every turn and thereby end the simulation.
-
-
-## Class: `Set`
-
-The `Set` class represents an ordered set of comparable keys. We have the usual methods and some ordered methods for finding the minimum, maximum, floor and ceiling and also set methods for union, intersection and equality.
-
-
-## Enum: `State`
-
-This enum will contain the states that an agent can be in. All agents begin as susceptible. The possible states are:
-- _`SUSCEPTIBLE`_ - Not currently exposed to/infected by the contagion
-- _`EXPOSED`_ - (potentially) Has been exposed to the contagion
-- _`INFECTED`_ - Currently infected by the contagion and can infect others
-- _`RECOVERED`_ (potentially) Has had but no longer has the contagion
-- _`PROTECTED`_ Protected from the contagion (significant `protected` rating, usually 1)
-
-
-
-## Class: `StdIn`
-
-The `StdIn` class gives many static methods used to read strings and numbers from standard input, which are handled as detailed in the documentation for this class.
-
-
-## Class: `StdOut`
-
-The `StdOut` class gives many static methods used to print strings and numbers to standard output. These operations are again handled as detailed in the documentation for this class.
-
-
-## Class: `StdRandom`
-
-The `StdRandom` class provides many static methods to generate pseudo-random numbers from the following distributions:
-- Uniform,
-- Bernoulli,
-- Gaussian,
-- Geometric,
-- Poisson,
-- Pareto,
-- Cauchy,
-- Discrete
-- Exponential.
-
-The class also provides methods to shuffle an array of various types of Objects/primitives and return a uniformly random permutation. Importantly, the class also provides a seed for the random number generation, so that results can be reproduced if/when required (when used to generate random graphs).
+When the model is run, some parameters are set - the number of vertices for the graph, the number of edges and/or a
+probability for random graph generation if required, and the number of graphs to generate if we wish to run a
+multi-graph test. Then, we can run identical models for each protection allocation method, which in turn run identical
+models for each defence strategy, which involves setting each vertex in the graph as the outbreak of the contagion in
+turn, implementing the relevant defence strategy, determining infections (with a variable probability of infection) and
+repeating until either nothing can be infected or nothing can be defended. The results of each model are outputted as a
+CSV file for machine-readable data and (if the graphs are small enough) a markdown human-readable file to understand
+more granular information about how the model ran (i.e. including the defence implementation in each defensive round,
+and the infections that subsequently occurred). Then, a CSV reader class has been written to analyse the data files and
+determine the winning strategy for each model. If we are running multi-graph experiments, we then read back in this
+winning strategy data and keep track for each type of protection allocation how many times on the given graph each
+defence strategy won. By 'win', we mean the following: the winning strategy (or strategies) for a given model (which is
+the full run from initial outbreak to nothing more can be infected or defended on a particular graph with a specific
+protection allocation) is the strategy (or strategies) which resulted in the fewest infected agents and the most
+protected agents in the shortest time (the smallest end-turn, where a turn is either a defence strategy implementation
+or infection attempt). 

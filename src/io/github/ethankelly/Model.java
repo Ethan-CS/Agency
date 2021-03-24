@@ -1,6 +1,5 @@
 package io.github.ethankelly;
 
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.jfree.data.category.CategoryDataset;
@@ -11,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.text.DecimalFormat;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +33,9 @@ import java.util.stream.IntStream;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-@SuppressWarnings("unused")
 public class Model {
+	// The number of strategies that can be used to deploy defence
+	public static final int NUM_STRATEGIES = Defence.values().length;
 	// Ensures readable results aren't printed for large graphs
 	static boolean printReadable;
 	// Underlying graph the model runs on
@@ -107,8 +108,7 @@ public class Model {
 			mDegree.initialiseIdenticalModel(i, mProximity);
 			mProtection.initialiseIdenticalModel(i, mProximity);
 
-			// If we are generating a readable file, print agent information
-
+			// Add agent information to the readable string value
 			readable.append("\n## Outbreak: ").append(i).append("\n").append(agentsToString(mProximity));
 
 			String[] proximityResult = mProximity.runTest(totalDefence, probInfection, Defence.PROXIMITY);
@@ -128,33 +128,25 @@ public class Model {
 	/**
 	 * Gets the results of a model from a CSV data file
 	 *
-	 * @param filter         the heading of the data results we are interested in (number of infected agents, end turn
-	 *                       count or number of protected agents).
-	 * @param protectionType the method of protection allocation utilised in the model, for file naming.
+	 * @param filter the heading of the data results we are interested in (number of infected agents, end turn count or
+	 *               number of protected agents).
+	 * @param path   the filepath where the method should locate the data files in order to obtain the results
+	 * @param i      the current model number - used to keep track of which model we are getting the results for, this
+	 *               value can be anywhere between zero and the total number of graphs generated in the model.
 	 * @return the results of the model that have been obtained from the CSV file.
 	 * @throws IOException if a specified file does not exist.
 	 */
 	public static CategoryDataset getResults(String filter,
-	                                         String graphName,
-	                                         Protection protectionType,
 	                                         String path,
-	                                         int thisRound) throws IOException {
-		DefaultCategoryDataset data = new DefaultCategoryDataset();
-		String name = "";
-		switch (protectionType) {
-			case RANDOM -> name = "Random";
-			case MIXED -> name = "Mixed";
-			case DETERMINISTIC -> name = "Deterministic";
-		}
+	                                         int i) throws IOException {
 		// Read in the model defence results and associated graph
-		Reader in = new FileReader(path + "Data" + thisRound + ".csv");
+		Reader in = new FileReader(path + "Data" + i + ".csv");
 		List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
 
 		// Add each result to our dataset
-		records.forEach(record -> data.addValue(
-				Double.parseDouble(record.get(filter)),
-				record.get("STRATEGY"),
-				record.get("OUTBREAK")));
+		DefaultCategoryDataset data = new DefaultCategoryDataset();
+		records.forEach(record -> data.addValue(Double.parseDouble(record.get(filter)),
+				record.get("STRATEGY"), record.get("OUTBREAK")));
 		return data;
 	}
 
@@ -173,20 +165,30 @@ public class Model {
 	}
 
 	/**
-	 * Given three models to run, runs them and outputs required results to the specified directories and files.
+	 * Given three models to run, runs them and outputs required results to the specified directories and files. Used
+	 * for testing with single graphs.
 	 *
 	 * @param mProximity  the proximity-based model.
 	 * @param mDegree     the degree-based model.
 	 * @param mProtection the cheapest protection-based model.
 	 * @param protection  the type of protection allocation used (random, deterministic or mixed).
+	 * @param filePath    the path to output the model results to.
+	 * @param thisRound   the current model number count, between 0 and the number of models generated in the
+	 *                    multi-graph test.
+	 * @param readable    the path to output human-readable model results to.
+	 * @param data        the file to print machine-parsable complete model results to.
+	 * @param winner      the file to print the winning strategy data to.
+	 * @param texTable    the file to output tex code with the winning model strategies to.
 	 * @throws IOException if any of the files do not exist.
 	 */
+	@SuppressWarnings("unused")
 	public static void printModelOutput(Model mProximity,
 	                                    Model mDegree,
 	                                    Model mProtection,
 	                                    Protection protection,
 	                                    String filePath,
 	                                    int thisRound,
+	                                    PrintStream readable,
 	                                    PrintStream data,
 	                                    PrintStream winner,
 	                                    PrintStream texTable) throws IOException {
@@ -197,10 +199,10 @@ public class Model {
 		System.setOut(data);
 		System.out.println(modelResults[0]);
 
-//		if (printReadable) {
-//			System.setOut(readable);
-//			System.out.println(modelResults[1]);
-//		}
+		if (printReadable) {
+			System.setOut(readable);
+			System.out.println(modelResults[1]);
+		}
 		System.setOut(winner);
 		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[1]);
 
@@ -237,12 +239,15 @@ public class Model {
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.numGraphs;
 
 		for (int i = 0; i < bound; i++) {
+			// Graph CSV file
 			PrintStream graphFile = new PrintStream(path + "/Graph" + i + ".csv");
 
+			// Data files
 			PrintStream randomData = new PrintStream(path + "/Random/RandomData" + i + ".csv");
 			PrintStream mixedData = new PrintStream(path + "/Mixed/MixedData" + i + ".csv");
 			PrintStream deterministicData = new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv");
 
+			// Winning files (print headings to each one, to avoid duplicated headings when written to again later)
 			PrintStream randomWinner = new PrintStream(path + "/Random/RandomWinner" + i + ".csv");
 			System.setOut(randomWinner);
 			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
@@ -255,6 +260,7 @@ public class Model {
 			System.setOut(deterministicWinner);
 			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
 
+			// Generate the graph corresponding to the supplied graph name
 			Graph g;
 			switch (graphName) {
 				case "Complete" -> g = GraphGenerator.complete(Main.numVertices);
@@ -262,32 +268,31 @@ public class Model {
 				case "Tree" -> g = GraphGenerator.tree(Main.numVertices);
 				default -> throw new IllegalStateException("Unexpected value: " + graphName);
 			}
+
 			// Print the generated graph to the appropriate file
 			System.setOut(graphFile);
 			System.out.println(Graph.makeCommaSeparated(g));
 
-			// Initialise three models and run on the generated graph
-			Model cProximity = new Model(g);
-			Model cDegree = new Model(g);
-			Model cProtection = new Model(g);
+			// Initialise three models on the generated graph
+			Model proximityModel = new Model(g);
+			Model degreeModel = new Model(g);
+			Model protectionModel = new Model(g);
 
-			// Run the models three times: protection allocation first random,
-			// then by degree and finally by protection.
-			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.RANDOM,
-					path + "/Random/Random", path + "/Graph0.csv",
-					0, randomData, randomWinner);
-			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.MIXED,
-					path + "/Mixed/Mixed", path + "/Graph0.csv",
-					0, mixedData, mixedWinner);
-			printOverallModelOutput(cProximity, cDegree, cProtection, Protection.DETERMINISTIC,
-					path + "/Deterministic/Deterministic", path + "/Graph0.csv",
-					0, deterministicData, deterministicWinner);
+			// Run the models three times (for each protection allocation)
+			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.RANDOM,
+					path + "/Random/Random", path + "/Graph" + i + ".csv",
+					i, randomData, randomWinner);
+			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.MIXED,
+					path + "/Mixed/Mixed", path + "/Graph" + i + ".csv",
+					i, mixedData, mixedWinner);
+			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.DETERMINISTIC,
+					path + "/Deterministic/Deterministic", path + "/Graph" + i + ".csv",
+					i, deterministicData, deterministicWinner);
 
 
 		}
-		PrintStream winner = new PrintStream(path + "Winner.md");
-
-		System.setOut(winner);
+		// Print the human readable winning strategy results to the winner readable file
+		System.setOut(new PrintStream(path + "Winner.md"));
 		long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
 		long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
 		long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
@@ -295,14 +300,55 @@ public class Model {
 		                   "## Random\n" +
 		                   " * " + Defence.PROXIMITY + ": " + winRandom[Defence.PROXIMITY.getValue()] + "\n" +
 		                   " * " + Defence.DEGREE + ": " + winRandom[Defence.DEGREE.getValue()] + "\n" +
-		                   " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] + "\n\n## Mixed\n" +
+		                   " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] +
+		                   "\n\n## Mixed\n" +
 		                   " * " + Defence.PROXIMITY + ": " + winMixed[Defence.PROXIMITY.getValue()] + "\n" +
 		                   " * " + Defence.DEGREE + ": " + winMixed[Defence.DEGREE.getValue()] + "\n" +
-		                   " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] + "\n\n## Deterministic\n" +
+		                   " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] +
+		                   "\n\n## Deterministic\n" +
 		                   " * " + Defence.PROXIMITY + ": " + winDeterministic[Defence.PROXIMITY.getValue()] + "\n" +
 		                   " * " + Defence.DEGREE + ": " + winDeterministic[Defence.DEGREE.getValue()] + "\n" +
 		                   " * " + Defence.PROTECTION + ": " + winDeterministic[Defence.PROTECTION.getValue()] + "\n\n");
 
+		// Print the machine readable winning strategy results to the winner data file
+		System.setOut(new PrintStream(path + "WinnerData.csv"));
+		System.out.println(MessageFormat.format("""
+						PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS
+						RANDOM,PROXIMITY,{0}
+						RANDOM,DEGREE{1}
+						RANDOM,PROTECTION{2}
+						MIXED,PROXIMITY,{3}
+						MIXED,DEGREE{4}
+						MIXED,PROTECTION{5}
+						DETERMINISTIC,PROXIMITY{6}
+						DETERMINISTIC,DEGREE{7}
+						DETERMINISTIC,PROTECTION{8}""",
+				winRandom[Defence.PROXIMITY.getValue()],
+				winRandom[Defence.DEGREE.getValue()],
+				winRandom[Defence.PROTECTION.getValue()],
+				winMixed[Defence.PROXIMITY.getValue()],
+				winMixed[Defence.DEGREE.getValue()],
+				winMixed[Defence.PROTECTION.getValue()],
+				winDeterministic[Defence.PROXIMITY.getValue()],
+				winDeterministic[Defence.DEGREE.getValue()],
+				winDeterministic[Defence.PROTECTION.getValue()])
+		);
+
+
+	}
+
+	/*
+	 * We set the list of agents by creating a new agent for each vertex and setting peril and protection initially to
+	 * zero and state to susceptible. We then go on to assign the actual ratings and states to each agent once we
+	 * initialise the graph and decide on a vertex location for the outbreak to begin at. This method is called only
+	 * once, at the start of the method when we do not have an instance of the field yet.
+	 */
+	private List<Agent> assignAgents(int numVertices) {
+		List<Agent> agents = IntStream.range(0, numVertices)
+				.mapToObj(i -> new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE))
+				.collect(Collectors.toList());
+		this.agents = agents;
+		return agents;
 	}
 
 	/**
@@ -468,6 +514,32 @@ public class Model {
 		return new String[] {String.valueOf(data), String.valueOf(readable)};
 	}
 
+	/*
+	 * Stores arrays as strings that represent the vertices of the currently susceptible, infected, recovered
+	 * and protected vertices in order to verify that the model is working as expected.
+	 */
+	private String getSIRP() {
+		StringBuilder s = new StringBuilder();
+		s.append("\n");
+		// Get the vertex locations of currently susceptible agents.
+		int[] susceptible = new int[this.getSusceptible().size()];
+		Arrays.setAll(susceptible, i -> this.getSusceptible().get(i).getVertex());
+		// Get the vertex locations of currently infected, recovered and protected agents.
+		int[] infected = new int[this.getInfected().size()];
+		Arrays.setAll(infected, i -> this.getInfected().get(i).getVertex());
+		int[] recovered = new int[this.getRecovered().size()];
+		Arrays.setAll(recovered, i -> this.getRecovered().get(i).getVertex());
+		int[] defended = new int[this.getProtected().size()];
+		Arrays.setAll(defended, i -> this.getProtected().get(i).getVertex());
+
+		// Return each array as a string (via a string builder)
+		s.append(" * S: ").append(Arrays.toString(susceptible)).append("\n * I: ")
+				.append(Arrays.toString(infected)).append("\n * R: ").append(Arrays.toString(recovered))
+				.append("\n * P: ").append(Arrays.toString(defended));
+
+		return String.valueOf(s);
+	}
+
 	/**
 	 * Given an agent, the current fires and the graph the model uses, we return a peril rating. This method can be used
 	 * frequently to update the peril when the graph has been updated (new infections, recoveries and protections have
@@ -582,18 +654,19 @@ public class Model {
 	 * @return the strategy to deploy based on the defence we have chosen.
 	 */
 	public double[] runDefence(double totalDefence, Defence whichDefence) {
-		// Find the susceptible agents (the only agents we are interested in defending).
+		// Find the agents to defend by first finding the susceptible agents (only ones we are interested in defending)
 		List<Agent> susceptibleAgents = this.getSusceptible();
-		double[] strategy = new double[this.getNumVertices()];
 		List<Agent> toDefend = getToDefend(whichDefence);
 
+		// Initialise the strategy array to store the increases in defence the method determines
+		double[] strategy = new double[this.getNumVertices()];
 		// Split the defence quota evenly among the total vertices we have determined should be defended.
 		double eachDefence = totalDefence / toDefend.size();
 		loop:
 		for (int i = 0; i < this.getNumVertices(); i++) {
 			if (toDefend.contains(this.getAgents().get(i))) {
 				// If increasing protection by the calculated amount will take protection over 1, take the defence
-				// up to 1.0 and then redistribute the remaining defence quota amongst the other agents to protect.
+				// up to 1 and then redistribute the remaining defence quota amongst the other agents to defend.
 				if (this.getAgents().get(i).getProtection() + eachDefence > 1) {
 					double increase = 1 - this.getAgents().get(i).getProtection();
 					strategy[i] = increase;
@@ -624,7 +697,6 @@ public class Model {
 							susceptibleAgents.remove(nextDefence);
 							toDefend.remove(nextDefence);
 							totalDefence -= (increase - previous);
-
 						} else {
 							strategy[nextDefence.getVertex()] += totalDefence;
 							break loop;
@@ -637,6 +709,10 @@ public class Model {
 		return strategy;
 	}
 
+	/*
+	 * Helper method - given a defence strategy, chooses the appropriate method to determine what should be defended
+	 * and returns the result of the selected method.
+	 */
 	private List<Agent> getToDefend(Defence whichDefence) {
 		return switch (whichDefence) {
 			case PROXIMITY -> findHighestPeril();
@@ -645,22 +721,57 @@ public class Model {
 		};
 	}
 
-	private void updatePeril(double[] strategy) {
-		// Get the currently infected vertices, so we can re-calculate peril and assign states.
-		int[] fires = new int[this.getNumVertices()];
-		List<Agent> onFire = this.getInfected();
-		int k = 0;
-		for (Agent infected : onFire) {
-			fires[k++] = infected.getVertex();
+	/*
+	 * Helper method: determines the vertex with highest peril in the current model. There may be more than one at the
+	 * same peril value (e.g. 1.0 is quite a common peril, when an agent is directly adjacent to an infected agent),
+	 * so we find all agents with the highest peril and choose which one to return as the agent to defend by determining
+	 * first which of the agents has greatest degree and then, if there are still multiple candidates, we determine
+	 * which of the choices has the highest degree. If there is more than one such candidate, we select the
+	 * lexicographically first agent.
+	 */
+	private List<Agent> findHighestPeril() {
+		List<Agent> susceptibleAgents =
+				this.getAgents().stream().filter(
+						agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+		List<Agent> toDefend = new ArrayList<>();
+		// Find the agent or agents with highest peril rating(s) in order to increase their protection.
+		double highestPeril = 0.0;
+		for (Agent agent : susceptibleAgents) {
+			if (agent.getPeril() > highestPeril) {
+				highestPeril = agent.getPeril();
+			}
 		}
-		fires = Arrays.copyOf(fires, k);
-
-		for (int j = 0; j < this.getNumVertices(); j++) {
-			agents.get(j).setProtection(agents.get(j).getProtection() + strategy[j]);
-			agents.get(j).setState(this.findState(agents.get(j), fires));
+		for (Agent agent : susceptibleAgents) {
+			if (agent.getPeril() == highestPeril) {
+				toDefend.add(agent);
+			}
 		}
+		// Tie-breaker: if we have more than one vertex with highest peril rating in the model,
+		// Choose the agent at vertex with greatest degree and defend that one.
+		if (toDefend.size() > 1) {
+			int highestDegree = 0;
+			for (Agent agent : toDefend) {
+				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+				if (thisDegree > highestDegree) highestDegree = thisDegree;
+			}
+			for (Agent agent : toDefend) {
+				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+				if (thisDegree == highestDegree) {
+					// There may be more than one suitable candidate - select the
+					// lexicographically first vertex to defend relative agent.
+					toDefend.clear();
+					toDefend.add(agent);
+					break;
+				}
+			}
+		}
+		return toDefend;
 	}
 
+	/*
+	 * Helper method: finds the highest degree vertex of the currently susceptible vertices. Here, if we have multiple
+	 * candidates for highest degree vertex, we break ties based on their proximity to the closest infected agent.
+	 */
 	private List<Agent> findHighestDegree() {
 		List<Agent> susceptibleAgents =
 				this.getAgents().stream().filter(
@@ -702,51 +813,12 @@ public class Model {
 	}
 
 	/*
-	 * In order to determine a reasonable defence, we need to find the agent at highest peril currently. There may be
-	 * more than one at this same peril value (e.g. 1.0 is quite a common peril, when an agent is directly adjacent to
-	 * an infected agent), so we find all agents with the highest peril and choose which one to return as the agent to
-	 * defend by determining which of the choices has the highest degree. If there is more than one such candidate, we
-	 * select the lexicographically first agent.
+	 * Helper method: determines the agent or agents with the highest protection rating and returning a list of the
+	 * agent or agents. We don't break ties here because it is generally unusual to find two agents with the same
+	 * protection rating (as this generally involves some degree of randomness) and because this is used to determine the
+	 * cheapest ways to fully protect agents, so there is usually a good deal of defence quota available that will be
+	 * distributed across several candidates for cheapest protection increase.
 	 */
-	private List<Agent> findHighestPeril() {
-		List<Agent> susceptibleAgents =
-				this.getAgents().stream().filter(
-						agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
-		List<Agent> toDefend = new ArrayList<>();
-		// Find the agent or agents with highest peril rating(s) in order to increase their protection.
-		double highestPeril = 0.0;
-		for (Agent agent : susceptibleAgents) {
-			if (agent.getPeril() > highestPeril) {
-				highestPeril = agent.getPeril();
-			}
-		}
-		for (Agent agent : susceptibleAgents) {
-			if (agent.getPeril() == highestPeril) {
-				toDefend.add(agent);
-			}
-		}
-		// Tie-breaker: if we have more than one vertex with highest peril rating in the model,
-		// Choose the agent at vertex with greatest degree and defend that one.
-		if (toDefend.size() > 1) {
-			int highestDegree = 0;
-			for (Agent agent : toDefend) {
-				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
-				if (thisDegree > highestDegree) highestDegree = thisDegree;
-			}
-			for (Agent agent : toDefend) {
-				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
-				if (thisDegree == highestDegree) {
-					// There may be more than one suitable candidate - select the
-					// lexicographically first vertex to defend relative agent.
-					toDefend.clear();
-					toDefend.add(agent);
-					break;
-				}
-			}
-		}
-		return toDefend;
-	}
-
 	private List<Agent> findHighestProtection() {
 		List<Agent> susceptibleAgents =
 				this.getAgents().stream().filter(
@@ -769,6 +841,25 @@ public class Model {
 		return highestProtection;
 	}
 
+	/*
+	Helper method: updates the peril ratings of the current model given a particular strategy
+ */
+	private void updatePeril(double[] strategy) {
+		// Get the currently infected vertices, so we can re-calculate peril and assign states.
+		int[] fires = new int[this.getNumVertices()];
+		List<Agent> onFire = this.getInfected();
+		int k = 0;
+		for (Agent infected : onFire) {
+			fires[k++] = infected.getVertex();
+		}
+		fires = Arrays.copyOf(fires, k);
+
+		for (int j = 0; j < this.getNumVertices(); j++) {
+			agents.get(j).setProtection(agents.get(j).getProtection() + strategy[j]);
+			agents.get(j).setState(this.findState(agents.get(j), fires));
+		}
+	}
+
 	/**
 	 * Given a rate (probability) of infection, we determine which susceptible vertices contract the infection from any
 	 * infected neighbours.
@@ -782,36 +873,29 @@ public class Model {
 		// Find the susceptible agents (the only agents we could infect).
 		List<Agent> susceptibleAgents = this.getSusceptible();
 
+		// For each susceptible agent, if it shares an edge with an infected edge, try the probabilities and see
+		// if the susceptible agent becomes infected (represented by adding them to the toInfect list of agents).
 		List<Agent> toInfect = new ArrayList<>();
-		for (Agent susceptibleAgent : susceptibleAgents) {
-			for (Agent infectedAgent : infectedAgents) {
-				if (getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex())) {
-					if (willInfect(probabilityOfInfection, susceptibleAgent.getProtection())) {
-						toInfect.add(susceptibleAgent);
-					}
-				}
-			}
-		}
+		susceptibleAgents.forEach(susceptibleAgent ->
+				infectedAgents.stream().filter(infectedAgent ->
+						getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
+						willInfect(probabilityOfInfection, susceptibleAgent.getProtection())).map(infectedAgent ->
+						susceptibleAgent).forEach(toInfect::add));
 		toInfect.forEach(agent -> agent.setState(State.INFECTED));
 		return toInfect.stream().distinct().collect(Collectors.toList());
 	}
 
-	/**
-	 * Given a probability of infection and the defence rating of the susceptible vertex that that may become infected,
-	 * determines whether it will be infected.
-	 *
-	 * @param probInfection the probability with which the infection propagates.
-	 * @param defence       the protection rating of the susceptible agent in peril.
-	 * @return whether the agent becomes infected or not.
+	/*
+	 * Helper method: given a probability of infection and the defence rating of the susceptible vertex that that may
+	 * become infected, determines whether it will become infected.
 	 */
-	public boolean willInfect(double probInfection, double defence) {
+	private boolean willInfect(double probInfection, double defence) {
 		return (2 - probInfection - (1 - defence) < 1);
 	}
 
 	/**
-	 * Being a graph (or network) model, we associate each model with a graph object (using the graph class). The graph
-	 * a given model utilises is saved and stored as an attribute of the model, hence the use of getters and setters to
-	 * access it.
+	 * Being a graph (or network) model, we associate each model with a {@code Graph} object. The graph a given model
+	 * utilises is saved and stored as an attribute of the model, hence the use of getters and setters to access it.
 	 *
 	 * @return the graph on which the model is based.
 	 */
@@ -820,8 +904,8 @@ public class Model {
 	}
 
 	/**
-	 * Setter used to set a graph to the model attribute - that is, to store a graph object that we instantiate as a
-	 * permanent attribute to the model we are working on.
+	 * Sets a graph to the model attribute - that is, to store a graph object that we instantiate as a permanent
+	 * attribute to the model we are working on.
 	 *
 	 * @param graph the graph to associate as an attribute to the current model.
 	 */
@@ -838,23 +922,6 @@ public class Model {
 	 */
 	public List<Agent> getAgents() {
 		return this.agents;
-	}
-
-	/**
-	 * We set the list of agents by creating a new agent for each vertex and setting peril and protection initially to
-	 * zero and state to susceptible. We then go on to assign the actual ratings and states to each agent once we
-	 * initialise the graph and decide on a vertex location for the outbreak to begin at. This method is called only
-	 * once, at the start of the method when we do not have an instance of the field yet.
-	 *
-	 * @param numVertices the number of vertices in the graph model.
-	 * @return the list of agents we have created.
-	 */
-	private List<Agent> assignAgents(int numVertices) {
-		List<Agent> agents = IntStream.range(0, numVertices)
-				.mapToObj(i -> new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE))
-				.collect(Collectors.toList());
-		this.agents = agents;
-		return agents;
 	}
 
 	/**
@@ -939,34 +1006,5 @@ public class Model {
 				protectedAgents.add(agent);
 		}
 		return protectedAgents;
-	}
-
-	/**
-	 * Prints arrays to the standard output that contain the vertices of the currently susceptible, infected, recovered
-	 * and protected vertices in order to verify that the model is working as expected.
-	 */
-	private String getSIRP() {
-		StringBuilder s = new StringBuilder();
-		s.append("\n");
-		// Get the vertex locations of currently susceptible agents.
-		int[] susceptible = new int[this.getSusceptible().size()];
-		Arrays.setAll(susceptible, i -> this.getSusceptible().get(i).getVertex());
-		// Get the vertex locations of currently infected agents.
-		int[] infected = new int[this.getInfected().size()];
-		Arrays.setAll(infected, i -> this.getInfected().get(i).getVertex());
-		// Get the vertex locations of currently recovered agents.
-		int[] recovered = new int[this.getRecovered().size()];
-		Arrays.setAll(recovered, i -> this.getRecovered().get(i).getVertex());
-		// Get the vertex locations of currently protected agents.
-		int[] defended = new int[this.getProtected().size()];
-		Arrays.setAll(defended, i -> this.getProtected().get(i).getVertex());
-
-		// Print each array, as found above, to the standard output
-		// to monitor progression of the model.
-		s.append(" * S: ").append(Arrays.toString(susceptible)).append("\n * I: ")
-				.append(Arrays.toString(infected)).append("\n * R: ").append(Arrays.toString(recovered))
-				.append("\n * P: ").append(Arrays.toString(defended));
-
-		return String.valueOf(s);
 	}
 }
