@@ -49,10 +49,8 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 
 	/**
 	 * Unit tests the {@code SET} data type.
-	 *
-	 * @param args the command-line arguments.
 	 */
-	public static void main(String[] args) {
+	public static void testMethods() {
 		Set<String> set = new Set<>();
 		Std.StdOut.println("set = " + set);
 
@@ -385,10 +383,8 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 
 		/**
 		 * Unit tests the {@code MinPQ} data type.
-		 *
-		 * @param args the command-line arguments
 		 */
-		public static void main(String[] args) {
+		public static void testMethods() {
 			MinPriorityQueue<Integer> pq = new MinPriorityQueue<>();
 			int[] toAdd = new int[] {0, 1, 1, 2, 3, 5, 8, 13, 21};
 			for (int i : toAdd) pq.insert(i);

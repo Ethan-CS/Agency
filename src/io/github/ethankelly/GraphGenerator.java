@@ -24,18 +24,6 @@ public class GraphGenerator {
 	}
 
 	/**
-	 * Unit tests the {@code GraphGenerator} library.
-	 *
-	 * @param args the command-line arguments, ignored.
-	 * @throws IOException if the graph cannot be created (if user chooses to load from file).
-	 */
-	public static void main(String[] args) throws IOException {
-		// Test the create graph model
-		Graph g = createGraph();
-		System.out.println(g);
-	}
-
-	/**
 	 * Prints the current graphs that can be (randomly) generated or allows for loading of another graph (in csv
 	 * format). Gets user input as to which graph to create and returns the generated graph.
 	 *

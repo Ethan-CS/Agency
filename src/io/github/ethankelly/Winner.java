@@ -5,6 +5,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,8 +95,8 @@ public class Winner {
 		List<List<CSVRecord>> recordsByOutbreak = byOutbreak(records, numVertices);
 		List<CSVRecord> winners = findWinners(recordsByOutbreak, numVertices);
 
-		String s = getReadableWinners(winners);
-		String m = getDataWinners(winners);
+		String s = getReadableOverallWinners(winners);
+		String m = getCsvOverallWinners(winners);
 		String t = getTexTableWinners(winners);
 
 		return new String[] {s, m, t};
@@ -157,7 +158,7 @@ public class Winner {
 	/*
 	    Helper method - gets the winners in a human readable format.
 	 */
-	private static String getReadableWinners(List<CSVRecord> winners) {
+	private static String getReadableOverallWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
 		StringBuilder s = new StringBuilder();
 		// Append the winning defence strategy from each outbreak
@@ -176,7 +177,7 @@ public class Winner {
 	/*
 	    Helper method - gets the winners in a machine-readable CSV format.
 	 */
-	private static String getDataWinners(List<CSVRecord> winners) {
+	private static String getCsvOverallWinners(List<CSVRecord> winners) {
 		StringBuilder m = new StringBuilder();
 		for (CSVRecord w : winners) {
 			m.append(w.get("OUTBREAK")).append(",").append(w.get("STRATEGY")).append(",").append(w.get("END TURN"))
@@ -296,5 +297,65 @@ public class Winner {
 			capitalizeWord.append(first.toUpperCase()).append(afterFirst).append(" ");
 		}
 		return capitalizeWord.toString().trim();
+	}
+
+	/**
+	 * Returns a human-readable string representing the overall winners when various models have been run on a given
+	 * graph class. Each array parameter represents the number of times the named defence strategy won on the graph and
+	 * sub-categorised by defence strategies Proximity, Degree and Protection.
+	 *
+	 * @param graphName        the type of graph on which the models have been run.
+	 * @param winRandom        the random protection allocation winners, for each of the three defence strategies.
+	 * @param winMixed         the mixed protection allocation win data.
+	 * @param winDeterministic the deterministic protection allocation win data.
+	 * @return a human-readable (markdown-formatted) string representing a summary of a multi-graph test.
+	 */
+	public static String getReadableOverallWinners(String graphName, long[] winRandom, long[] winMixed, long[] winDeterministic) {
+		return "# " + graphName + " " + "Model Results\n\n" +
+		       "## Random\n" +
+		       " * " + Defence.PROXIMITY + ": " + winRandom[Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + Defence.DEGREE + ": " + winRandom[Defence.DEGREE.getValue()] + "\n" +
+		       " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] +
+		       "\n\n## Mixed\n" +
+		       " * " + Defence.PROXIMITY + ": " + winMixed[Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + Defence.DEGREE + ": " + winMixed[Defence.DEGREE.getValue()] + "\n" +
+		       " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] +
+		       "\n\n## Deterministic\n" +
+		       " * " + Defence.PROXIMITY + ": " + winDeterministic[Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + Defence.DEGREE + ": " + winDeterministic[Defence.DEGREE.getValue()] + "\n" +
+		       " * " + Defence.PROTECTION + ": " + winDeterministic[Defence.PROTECTION.getValue()] + "\n\n";
+	}
+
+	/**
+	 * Returns a machine-readable string representing the overall winners when various models have been run on a given
+	 * graph class. Each array parameter represents the number of times the named defence strategy won on the graph and
+	 * sub-categorised by defence strategies Proximity, Degree and Protection. the random protection allocation winners,
+	 * for each of the three defence strategies.
+	 *
+	 * @param winMixed         the mixed protection allocation win data.
+	 * @param winDeterministic the deterministic protection allocation win data.
+	 * @return a machine-readable (comma separated) string representing a summary of a multi-graph test.
+	 */
+	public static String getCsvOverallWinners(long[] winRandom, long[] winMixed, long[] winDeterministic) {
+		return MessageFormat.format("""
+						PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS
+						RANDOM,PROXIMITY,{0}
+						RANDOM,DEGREE,{1}
+						RANDOM,PROTECTION,{2}
+						MIXED,PROXIMITY,{3}
+						MIXED,DEGREE,{4}
+						MIXED,PROTECTION,{5}
+						DETERMINISTIC,PROXIMITY,{6}
+						DETERMINISTIC,DEGREE,{7}
+						DETERMINISTIC,PROTECTION,{8}""",
+				winRandom[Defence.PROXIMITY.getValue()],
+				winRandom[Defence.DEGREE.getValue()],
+				winRandom[Defence.PROTECTION.getValue()],
+				winMixed[Defence.PROXIMITY.getValue()],
+				winMixed[Defence.DEGREE.getValue()],
+				winMixed[Defence.PROTECTION.getValue()],
+				winDeterministic[Defence.PROXIMITY.getValue()],
+				winDeterministic[Defence.DEGREE.getValue()],
+				winDeterministic[Defence.PROTECTION.getValue()]);
 	}
 }

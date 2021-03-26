@@ -5,12 +5,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Reader;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -234,19 +230,30 @@ public class Model {
 		System.out.println(Winner.getWinners(filePath + "Data" + i + ".csv", graphFile)[1]);
 	}
 
-	public static void runMultiGraphTest(String graphName, String path) throws IOException {
+	@SuppressWarnings("ResultOfMethodCallIgnored")
+	public static void runMultiGraphTest(String graphName, String path, PrintStream overallWin, PrintStream overallWinData) throws IOException {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.numGraphs;
+
+		// Make sure all necessary directories exist
+		File directory = new File(path + "/");
+		File random = new File(path + "/Random/");
+		File mixed = new File(path + "/Mixed/");
+		File deter = new File(path + "/Deterministic/");
+		if (!directory.exists() || !random.exists() || !mixed.exists() || !deter.exists()) {
+			directory.mkdir();
+			random.mkdir();
+			mixed.mkdir();
+			deter.mkdir();
+		}
 
 		for (int i = 0; i < bound; i++) {
 			// Graph CSV file
 			PrintStream graphFile = new PrintStream(path + "/Graph" + i + ".csv");
-
 			// Data files
 			PrintStream randomData = new PrintStream(path + "/Random/RandomData" + i + ".csv");
 			PrintStream mixedData = new PrintStream(path + "/Mixed/MixedData" + i + ".csv");
 			PrintStream deterministicData = new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv");
-
 			// Winning files (print headings to each one, to avoid duplicated headings when written to again later)
 			PrintStream randomWinner = new PrintStream(path + "/Random/RandomWinner" + i + ".csv");
 			System.setOut(randomWinner);
@@ -288,52 +295,35 @@ public class Model {
 			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.DETERMINISTIC,
 					path + "/Deterministic/Deterministic", path + "/Graph" + i + ".csv",
 					i, deterministicData, deterministicWinner);
-
-
 		}
-		// Print the human readable winning strategy results to the winner readable file
-		System.setOut(new PrintStream(path + "Winner.md"));
-		long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
-		long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
-		long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
-		System.out.println("# " + graphName + " " + "Model Results\n\n" +
-		                   "## Random\n" +
-		                   " * " + Defence.PROXIMITY + ": " + winRandom[Defence.PROXIMITY.getValue()] + "\n" +
-		                   " * " + Defence.DEGREE + ": " + winRandom[Defence.DEGREE.getValue()] + "\n" +
-		                   " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] +
-		                   "\n\n## Mixed\n" +
-		                   " * " + Defence.PROXIMITY + ": " + winMixed[Defence.PROXIMITY.getValue()] + "\n" +
-		                   " * " + Defence.DEGREE + ": " + winMixed[Defence.DEGREE.getValue()] + "\n" +
-		                   " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] +
-		                   "\n\n## Deterministic\n" +
-		                   " * " + Defence.PROXIMITY + ": " + winDeterministic[Defence.PROXIMITY.getValue()] + "\n" +
-		                   " * " + Defence.DEGREE + ": " + winDeterministic[Defence.DEGREE.getValue()] + "\n" +
-		                   " * " + Defence.PROTECTION + ": " + winDeterministic[Defence.PROTECTION.getValue()] + "\n\n");
 
-		// Print the machine readable winning strategy results to the winner data file
-		System.setOut(new PrintStream(path + "WinnerData.csv"));
-		System.out.println(MessageFormat.format("""
-						PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS
-						RANDOM,PROXIMITY,{0}
-						RANDOM,DEGREE{1}
-						RANDOM,PROTECTION{2}
-						MIXED,PROXIMITY,{3}
-						MIXED,DEGREE{4}
-						MIXED,PROTECTION{5}
-						DETERMINISTIC,PROXIMITY{6}
-						DETERMINISTIC,DEGREE{7}
-						DETERMINISTIC,PROTECTION{8}""",
-				winRandom[Defence.PROXIMITY.getValue()],
-				winRandom[Defence.DEGREE.getValue()],
-				winRandom[Defence.PROTECTION.getValue()],
-				winMixed[Defence.PROXIMITY.getValue()],
-				winMixed[Defence.DEGREE.getValue()],
-				winMixed[Defence.PROTECTION.getValue()],
-				winDeterministic[Defence.PROXIMITY.getValue()],
-				winDeterministic[Defence.DEGREE.getValue()],
-				winDeterministic[Defence.PROTECTION.getValue()])
-		);
 
+		for (int i = 0; i < bound; i++) {
+			System.setOut(overallWin);
+			// Print the human readable winning strategy results to the winner readable file
+			long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
+			long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
+			long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
+
+			// Update the overall results in the Main class attributes
+			for (int j = 0; j < winRandom.length; j++) {
+				Main.winRandom[j] += winRandom[j];
+				Main.winMixed[j] += winMixed[j];
+				Main.winDeterministic[j] += winDeterministic[j];
+			}
+
+			// Add to the list of winning results
+			Main.random.add(winRandom);
+			Main.mixed.add(winMixed);
+			Main.deterministic.add(winDeterministic);
+
+			System.out.println(Winner.getReadableOverallWinners(graphName, winRandom, winMixed, winDeterministic));
+
+			// Print the machine readable winning strategy results to the winner data file
+			System.setOut(overallWinData);
+			System.out.println(Winner.getCsvOverallWinners(winRandom, winMixed, winDeterministic)
+			);
+		}
 
 	}
 
