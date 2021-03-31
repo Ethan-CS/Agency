@@ -1,6 +1,2 @@
 # Project exclude paths
-/out/production/
-/out/TestData.txt
-/data/Complete/
-/data/Erdős–Rényi/
-/data/Tree/
+/out/
