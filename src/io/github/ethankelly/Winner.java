@@ -33,7 +33,7 @@ public class Winner {
 		long degree = 0;
 
 		// Make sure we only loop for as many times as we need! (Once for complete graph)
-		int bound = dataFilePath.toLowerCase().contains("complete") ? 1 : Main.numGraphs;
+		int bound = dataFilePath.toLowerCase().contains("complete") ? 1 : Main.NUM_GRAPHS;
 
 		// Loop through each graph model that was run
 		for (int i = 0; i < bound; i++) {

@@ -233,7 +233,7 @@ public class Model {
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void runMultiGraphTest(String graphName, String path, PrintStream overallWin, PrintStream overallWinData) throws IOException {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
-		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.numGraphs;
+		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.NUM_GRAPHS;
 
 		// Make sure all necessary directories exist
 		File directory = new File(path + "/");
@@ -270,9 +270,9 @@ public class Model {
 			// Generate the graph corresponding to the supplied graph name
 			Graph g;
 			switch (graphName) {
-				case "Complete" -> g = GraphGenerator.complete(Main.numVertices);
-				case "Erdős–Rényi" -> g = GraphGenerator.erdosRenyi(Main.numVertices, Main.p);
-				case "Tree" -> g = GraphGenerator.tree(Main.numVertices);
+				case "Complete" -> g = GraphGenerator.complete(Main.NUM_VERTICES);
+				case "Erdős–Rényi" -> g = GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.p);
+				case "Tree" -> g = GraphGenerator.tree(Main.NUM_VERTICES);
 				default -> throw new IllegalStateException("Unexpected value: " + graphName);
 			}
 
