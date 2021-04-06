@@ -7,48 +7,121 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main {
-	// Declare the relevant parameters
+	// Number of vertices in the generated graph(s)
 	public static final int NUM_VERTICES = 50;
-	public static final int NUM_EDGES = 250;
+	// Partition the vertices for bipartite graphs
+	public static final int NUM_VERTICES_1 = NUM_VERTICES / 2, NUM_VERTICES_2 = NUM_VERTICES - NUM_VERTICES_1;
+	// Number of graphs to generate for each increment (if relevant).
 	public static final int NUM_GRAPHS = 10;
-	public static final int NUM_INCREMENTS = 20;
-	public static final double MAX_PROBABILITY = 0.20;
+	// Number of increments to vary probability over.
+	public static final int P_INCREMENTS = 20;
+	// Maximum probability for graphs generated using a number of vertices and probability.
+	public static final double MAX_PROBABILITY = 1.00;
+	// Maximum number of edges for graphs generated using a number of vertices and a number of edges.
+	public static final int MAX_EDGES = 250, MIN_EDGES = 5, EDGE_INCREMENTS = 5;
+	// Maximum value of k for k-Regular graphs.
+	public static final int MAX_K = 5, MIN_K = 1, K_INCREMENTS = 1;
+	// The graph type to be generated to run models on.
+	public static String GRAPH_NAME;
+	public static float P;
+	public static int NUM_EDGES;
+	public static int K;
 
+	/* Store overall results */
+	public static long[] winRandom = new long[3], winMixed = new long[3], winDeterministic = new long[3];
+	public static List<long[]> random = new ArrayList<>(), mixed = new ArrayList<>(), deterministic = new ArrayList<>();
 	// File path
-	private static final String PATH = "data/Erdős–Rényi " + String.format("%.2f", MAX_PROBABILITY / NUM_INCREMENTS)
-	                                   + "-" + String.format("%.2f", MAX_PROBABILITY);
-	public static double p;
-
-	// Store overall results as fields
-	public static long[] winRandom = new long[3];
-	public static long[] winMixed = new long[3];
-	public static long[] winDeterministic = new long[3];
-	public static List<long[]> random = new ArrayList<>();
-	public static List<long[]> mixed = new ArrayList<>();
-	public static List<long[]> deterministic = new ArrayList<>();
+	private static String PATH;
 
 	/**
 	 * Unit-tests the modelling results.
 	 *
-	 * @param args command-line args, ignored.
+	 * @param args the graph type to use in the model.
 	 */
+
 	public static void main(String[] args) throws IOException {
-		p = (float) MAX_PROBABILITY / NUM_INCREMENTS;
-		while (p <= MAX_PROBABILITY) {
-			PrintStream winRead = new PrintStream(PATH + "/" + String.format("%.2f", p) + "Winner.md"),
-					winData = new PrintStream(PATH + "/" + String.format("%.2f", p) + "WinnerData.csv");
-			Model.runMultiGraphTest("Erdős–Rényi", PATH + "/" + String.format("%.2f", p), winRead, winData);
-			printProgress();
-			p += MAX_PROBABILITY / NUM_INCREMENTS;
+		String graphName = args[0];
+		System.out.println("  ******* NEW GRAPH ******* ");
+		System.out.println(graphName);
+		GRAPH_NAME = graphName.strip();
+
+		if (GraphGenerator.requiresProbToGenerate(GRAPH_NAME)) {
+			// We generate this graph type with a probability
+			runErdosRenyiModels();
+		} else if (GraphGenerator.requiresEdgesToGenerate(GRAPH_NAME)) {
+			// These all require a number of edges
+			runIntParamModels(GRAPH_NAME, MAX_EDGES, MIN_EDGES, EDGE_INCREMENTS);
+		} else if (GRAPH_NAME.equalsIgnoreCase("Regular")) {
+			// This requires a value of k
+			runIntParamModels(GRAPH_NAME, MAX_K, MIN_K, K_INCREMENTS);
+		} else {
+			PATH = "data/" + GRAPH_NAME;
+			File dir = new File(PATH);
+			//noinspection ResultOfMethodCallIgnored
+			dir.mkdirs();
 		}
 		printWinData("Random", random);
 		printWinData("Mixed", mixed);
 		printWinData("Deterministic", deterministic);
 	}
 
-	private static void printProgress() {
+	private static void runIntParamModels(String graphName, int max, int min, int increment) throws IOException {
+		// Write an appropriate path name for storing data and results
+		PATH = "data/" + graphName + " " + min + "-" + max;
+		// Make sure directories exist
+		File dir = new File(PATH);
+		//noinspection ResultOfMethodCallIgnored
+		dir.mkdirs();
+		// Loop through all increments from minimum
+		String paramType = "";
+		if (GraphGenerator.requiresEdgesToGenerate(graphName)) paramType = "edges";
+		else if (GraphGenerator.requiresKToGenerate(graphName)) paramType = "k";
+
+		int count = min;
+		while (count <= max) {
+			PrintStream winRead = new PrintStream(PATH + "/" + count + "Winner.md"),
+					winData = new PrintStream(PATH + "/" + count + "WinnerData.csv");
+			Model.runMultiGraphTest(graphName, PATH + "/" + count, winRead, winData);
+			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+			System.out.println("\nRunning with " + paramType + " = " + count);
+			System.out.println("--- Results ---" +
+			                   "\nRandom: " + Arrays.toString(winRandom) +
+			                   "\nMixed: " + Arrays.toString(winMixed) +
+			                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+			if (GraphGenerator.requiresEdgesToGenerate(graphName)) NUM_EDGES = count;
+			else if (GraphGenerator.requiresKToGenerate(graphName)) K = count;
+			count += increment;
+		}
+	}
+
+	private static void runErdosRenyiModels() throws IOException {
+		// Write an appropriate path name for storing data and results
+		PATH = "data/" + GRAPH_NAME + " " +
+		       String.format("%.2f", MAX_PROBABILITY / P_INCREMENTS) + "-" +
+		       String.format("%.2f", MAX_PROBABILITY);
+		// Make sure directories exist
+		File dir = new File(PATH);
+		//noinspection ResultOfMethodCallIgnored
+		dir.mkdirs();
+		// Loop through the probabilities (dictated by increments)
+		P = (float) MAX_PROBABILITY / P_INCREMENTS;
+		while (P <= MAX_PROBABILITY) {
+			PrintStream winRead = new PrintStream(PATH + "/" + String.format("%.2f", P) + "Winner.md"),
+					winData = new PrintStream(PATH + "/" + String.format("%.2f", P) + "WinnerData.csv");
+			Model.runMultiGraphTest(GRAPH_NAME, PATH + "/" + String.format("%.2f", P), winRead, winData);
+			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+			System.out.println("\nRunning with p = " + String.format("%.2f", P));
+			System.out.println("--- Results ---" +
+			                   "\nRandom: " + Arrays.toString(winRandom) +
+			                   "\nMixed: " + Arrays.toString(winMixed) +
+			                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+			P += MAX_PROBABILITY / P_INCREMENTS;
+		}
+	}
+
+	private static void printProgress(String paramType) {
 		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-		System.out.println("\nRunning with p = " + String.format("%.2f", p));
+		System.out.println("\nRunning with " + paramType + " = " + String.format("%.2f", P));
 		System.out.println("--- Results ---" +
 		                   "\nRandom: " + Arrays.toString(winRandom) +
 		                   "\nMixed: " + Arrays.toString(winMixed) +
@@ -68,7 +141,7 @@ public class Main {
 							{0},{1},PROTECTION,{4}
 							""",
 					String.format("%.2f",
-							(float) (Math.ceil((float) (i + 1) / NUM_GRAPHS) / NUM_INCREMENTS) * MAX_PROBABILITY),
+							(float) (Math.ceil((float) (i + 1) / NUM_GRAPHS) / P_INCREMENTS) * MAX_PROBABILITY),
 					allocation.toUpperCase(),
 					array[Defence.PROXIMITY.getValue()],
 					array[Defence.DEGREE.getValue()],
