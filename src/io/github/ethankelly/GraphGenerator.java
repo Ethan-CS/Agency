@@ -622,6 +622,36 @@ public class GraphGenerator {
 	}
 
 	/**
+	 * Determines whether the provided graph type requires provision of a number of edges for generation.
+	 *
+	 * @param graphName the name of the graph type to check.
+	 * @return true if the graph type requires a number of edges, false otherwise.
+	 */
+	public static boolean requiresEdgesToGenerate(String graphName) {
+		return graphName.equalsIgnoreCase("simple") ||
+		       graphName.equalsIgnoreCase("bipartite") ||
+		       graphName.equalsIgnoreCase("eulerian path") ||
+		       graphName.equalsIgnoreCase("eulerian cycle");
+	}
+
+	/**
+	 * Determines whether the provided graph type requires provision of a probability for generation.
+	 *
+	 * @param graphName the name of the graph type to check.
+	 * @return true if the graph type requires a probability, false otherwise.
+	 */
+	public static boolean requiresProbToGenerate(String graphName) {
+		return graphName.equalsIgnoreCase("Erdős–Rényi") ||
+		       graphName.equalsIgnoreCase("Erdos-Renyi") ||
+		       graphName.equalsIgnoreCase("Erdos Renyi");
+	}
+
+	public static boolean requiresKToGenerate(String graphName) {
+		return graphName.equalsIgnoreCase("Regular") ||
+		       graphName.equalsIgnoreCase("k-Regular");
+	}
+
+	/**
 	 * The Edge class is used to represent an edge as a pair of vertex locations (v, w) where v < w, between which the
 	 * edge exists.
 	 *

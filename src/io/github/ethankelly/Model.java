@@ -231,7 +231,10 @@ public class Model {
 	}
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
-	public static void runMultiGraphTest(String graphName, String path, PrintStream overallWin, PrintStream overallWinData) throws IOException {
+	public static void runMultiGraphTest(String graphName,
+	                                     String path,
+	                                     PrintStream overallWin,
+	                                     PrintStream overallWinData) throws IOException {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.NUM_GRAPHS;
 
@@ -268,13 +271,24 @@ public class Model {
 			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
 
 			// Generate the graph corresponding to the supplied graph name
-			Graph g;
-			switch (graphName) {
-				case "Complete" -> g = GraphGenerator.complete(Main.NUM_VERTICES);
-				case "Erdős–Rényi" -> g = GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.p);
-				case "Tree" -> g = GraphGenerator.tree(Main.NUM_VERTICES);
+			Graph g = switch (graphName.toLowerCase()) {
+				case "complete" -> GraphGenerator.complete(Main.NUM_VERTICES);
+				case "tree" -> GraphGenerator.tree(Main.NUM_VERTICES);
+				case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Main.NUM_VERTICES);
+				case "path" -> GraphGenerator.path(Main.NUM_VERTICES);
+				case "cycle" -> GraphGenerator.cycle(Main.NUM_VERTICES);
+				case "star" -> GraphGenerator.star(Main.NUM_VERTICES);
+				case "wheel" -> GraphGenerator.wheel(Main.NUM_VERTICES);
+				case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.P);
+				case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.P);
+				case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2);
+				case "regular", "k-regular" -> GraphGenerator.regular(Main.NUM_VERTICES, Main.K);
+				case "simple" -> GraphGenerator.simple(Main.NUM_VERTICES, Main.NUM_EDGES);
+				case "bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.NUM_EDGES);
+				case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Main.NUM_VERTICES, Main.NUM_EDGES);
+				case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Main.NUM_VERTICES, Main.NUM_EDGES);
 				default -> throw new IllegalStateException("Unexpected value: " + graphName);
-			}
+			};
 
 			// Print the generated graph to the appropriate file
 			System.setOut(graphFile);
