@@ -523,6 +523,27 @@ public class GraphGenerator {
 		return g;
 	}
 
+	/*
+	TODO PREFERENTIAL ATTACHMENT GRAPH GENERATION
+
+	Input: Number of Nodes N;
+        Initial number of nodes m0;
+        Offset Exponent a;
+        Minimum degree 1 <= d <= m0.
+	Output: scale-free multi-graph G = ({0,....,N-1}, E).
+
+	1) Add m0 nodes to G.
+	2) Connect every node in G to every other node in G, i.e. create a complete graph.
+	3) Create a new node i.
+	4) Pick a node j uniformly at random from the graph G. Set P = (k(j)/k_tot)^a.
+	5) Pick a real number R uniformly at random between 0 and 1.
+	6) If P > R then add j to i's adjacency list.
+	7) Repeat steps 4 - 6 until i has m nodes in its adjacency list.
+	8) Add i to the adjacency list of each node in its adjacency list.
+	9) Add i to to the graph.
+	10) Repeat steps 3 - 9 until there are N nodes in the graph.
+	 */
+
 	/**
 	 * @return the seed from StdRandom used to generate the pseudo-random values used to create random graphs.
 	 */
