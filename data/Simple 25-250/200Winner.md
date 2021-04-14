@@ -8,9 +8,9 @@
 
 ## Mixed
 
-* PROXIMITY: 9
-* DEGREE: 0
-* PROTECTION: 41
+* PROXIMITY: 4
+* DEGREE: 2
+* PROTECTION: 44
 
 ## Deterministic
 

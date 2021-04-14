@@ -72,12 +72,11 @@ public class Graph {
 	/**
 	 * Finds the degree of a specified vertex in the given graph.
 	 *
-	 * @param g      the graph in which the vertex exists.
 	 * @param vertex the vertex of which we want to find the degree.
 	 * @return the degree of the specified vertex.
 	 */
-	public static int findDegree(Graph g, int vertex) {
-		return (int) IntStream.range(0, g.getNumVertices()).filter(i -> g.isEdge(vertex, i)).count();
+	public int findDegree(int vertex) {
+		return (int) IntStream.range(0, this.getNumVertices()).filter(i -> this.isEdge(vertex, i)).count();
 	}
 
 	/**
@@ -222,13 +221,30 @@ public class Graph {
 	}
 
 	/**
+	 * Adds a given number of vertices to the current graph.
+	 *
+	 * @param numVertices the number of vertices to append to the graph.
+	 */
+	public void appendVertices(int numVertices) {
+		if (numVertices < 0) throw new IllegalArgumentException("Number of vertices to add must be a positive integer");
+		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
+		for (int i = 0; i < this.getNumVertices(); i++) {
+			for (int j = 0; j < this.getNumVertices(); j++) {
+				if (this.isEdge(i, j)) that.addEdge(i, j);
+			}
+		}
+		this.setNumVertices(that.getNumVertices());
+		this.setAdjMatrix(that.getAdjMatrix());
+	}
+
+	/**
 	 * The name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
 	 * tree or a simple graph.
 	 *
 	 * @return the name of the current graph.
 	 */
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	/**
@@ -244,11 +260,10 @@ public class Graph {
 	/**
 	 * Selects a random vertex from the set of vertices to begin the setOutbreak.
 	 *
-	 * @param numVertices the number of vertices (indexed 0, 1, ..., numVertices) to choose from.
 	 * @return a pseudo-randomly selected vertex between 0 and numVertices to be the source node.
 	 */
-	public int randomVertex(int numVertices) {
-		return new Random().nextInt(numVertices);
+	public int getRandomVertex() {
+		return new Random().nextInt(this.getNumVertices());
 	}
 
 	/**

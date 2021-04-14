@@ -2,15 +2,15 @@
 
 ## Random
 
-* PROXIMITY: 0
+* PROXIMITY: 1
 * DEGREE: 0
-* PROTECTION: 50
+* PROTECTION: 49
 
 ## Mixed
 
 * PROXIMITY: 0
-* DEGREE: 0
-* PROTECTION: 50
+* DEGREE: 1
+* PROTECTION: 49
 
 ## Deterministic
 

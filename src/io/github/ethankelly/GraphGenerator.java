@@ -3,8 +3,10 @@ package io.github.ethankelly;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.IntStream;
@@ -543,6 +545,39 @@ public class GraphGenerator {
 	9) Add i to to the graph.
 	10) Repeat steps 3 - 9 until there are N nodes in the graph.
 	 */
+
+	public static Graph preferentialAttachment(int numVertices, int initialNumVertices, double offsetExponent, int minDegree) {
+		// Add initial number of vertex to graph and connect every vertex to every other vertex
+		Graph g = complete(initialNumVertices);
+		g.setName("Preferential Attachment");
+
+		while (g.getNumVertices() < numVertices) {
+			// Create a new node i
+			g.appendVertices(1);
+			int i = g.getNumVertices() - 1;
+			// Repeat this until i has m vertices adjacent to it
+			while (g.findDegree(i) <= minDegree) {
+				// Pick a node j at random
+				int j = g.getRandomVertex();
+				// Set p = (k(j)/2*numEdges).
+				double p = Math.pow(((double) g.findDegree(j) / (double) 2 * g.getNumEdges()), offsetExponent);
+				// Pick a real number r at random between 0 and 1
+				double r = Math.random();
+				// If p > r, add an edge between i and j
+				if (p > r) g.addEdge(i, j);
+			}
+		}
+		return g;
+	}
+
+	public static void main(String[] args) throws FileNotFoundException {
+		Graph g = preferentialAttachment(20, 10, 1, 4);
+		System.out.println("Final graph: " + g);
+		System.setOut(new PrintStream("data/test.csv"));
+		System.out.println(Graph.makeCommaSeparated(g));
+
+	}
+
 
 	/**
 	 * @return the seed from StdRandom used to generate the pseudo-random values used to create random graphs.

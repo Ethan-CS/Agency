@@ -32,8 +32,6 @@ import java.util.stream.IntStream;
 public class Model {
 	// The number of strategies that can be used to deploy defence
 	public static final int NUM_STRATEGIES = Defence.values().length;
-	// Ensures readable results aren't printed for large graphs
-	static boolean printReadable;
 	// Underlying graph the model runs on
 	private Graph graph;
 	// Agents assigned to each graph vertex
@@ -47,7 +45,7 @@ public class Model {
 	public Model(Graph graph) {
 		this.graph = graph;
 		// Logical test to see whether printing to readable output is feasible
-		printReadable = graph.getNumVertices() < 25;
+		Print.printReadable = graph.getNumVertices() < 25;
 		// This ensures only one instance is created, which we then update,
 		// rather than creating multiple instances and so on.
 		this.agents = assignAgents(graph.getNumVertices());
@@ -80,15 +78,13 @@ public class Model {
 	/**
 	 * This method is used to run three models in turn, examining each of the currently available defence strategies.
 	 *
-	 * @param mProximity     the model with proximity-based defence.
-	 * @param mDegree        the model with degree-based defence.
-	 * @param mProtection    the model with highest protection-based defence.
+	 * @param models         the array of models to run in parallel.
 	 * @param protectionType the method of protection allocation we use.
 	 * @return a string array of size 2, the first element being a machine-readable string to print to a CSV file and
 	 * the second element a human-readable string to print to a human-readable file (provided this would not be
 	 * excessively large).
 	 */
-	public static String[] runModels(Model mProximity, Model mDegree, Model mProtection, Protection protectionType) {
+	public static String[] runModels(Model[] models, Protection protectionType) {
 		// Print headings for data CSV file
 		StringBuilder data = new StringBuilder();
 		StringBuilder readable = new StringBuilder();
@@ -97,28 +93,26 @@ public class Model {
 		// Set defence and infection probabilities to 1
 		double totalDefence = 1.0, probInfection = 1.0;
 		// If graph is small enough, print readable results
-		readable.append(mProximity.printModelInfo(totalDefence, probInfection));
-		for (int i = 0; i < mProximity.getNumVertices(); i++) {
+		readable.append(models[0].toString(totalDefence, probInfection));
+		for (int i = 0; i < models[0].getNumVertices(); i++) {
 			// Initialise model agents
-			mProximity.initialiseModel(i, protectionType);
-			mDegree.initialiseIdenticalModel(i, mProximity);
-			mProtection.initialiseIdenticalModel(i, mProximity);
-
+			models[0].initialiseModel(i, protectionType);
+			for (int j = 1; j < models.length; j++) {
+				models[j].initialiseIdenticalModel(i, models[0]);
+			}
 			// Add agent information to the readable string value
-			readable.append("\n## Outbreak: ").append(i).append("\n").append(agentsToString(mProximity));
+			readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
 
-			String[] proximityResult = mProximity.runTest(totalDefence, probInfection, Defence.PROXIMITY);
-			String[] degreeResult = mDegree.runTest(totalDefence, probInfection, Defence.DEGREE);
-			String[] protectionResult = mProtection.runTest(totalDefence, probInfection, Defence.PROTECTION);
+			for (int j = 0; j < models.length; j++) {
+				// Run the models
+				String[] result = models[j].runTest(totalDefence, probInfection, Defence.getDefence(j));
+				// 0 - data, 1 - readable
+				data.append(result[0]).append("\n");
+				readable.append(result[1]).append("\n");
+			}
 
-			// Print the results to a more machine-readable file.
-			data.append(proximityResult[0]).append("\n").append(degreeResult[0]).append("\n")
-					.append(protectionResult[0]).append("\n");
-
-			readable.append(proximityResult[1]).append("\n").append(degreeResult[1]).append("\n")
-					.append(protectionResult[1]).append("\n");
 		}
-		return new String[] {String.valueOf(data), String.valueOf(readable)}; // 0 - data, 1 - readable
+		return new String[] {String.valueOf(data), String.valueOf(readable)};
 	}
 
 	/**
@@ -146,91 +140,6 @@ public class Model {
 		return data;
 	}
 
-	/**
-	 * Cycles through the agents list field and creates a string representation of them to be printed to the standard
-	 * output. Used for testing purposes.
-	 *
-	 * @param model the model with agents we want to print.
-	 * @return the string representation of the agents of the given model.
-	 */
-	public static String agentsToString(Model model) {
-		List<Agent> agents = model.getAgents();
-		StringBuilder s = new StringBuilder();
-		agents.stream().map(agent -> "\n* " + agent).forEach(s::append);
-		return String.valueOf(s);
-	}
-
-	/**
-	 * Given three models to run, runs them and outputs required results to the specified directories and files. Used
-	 * for testing with single graphs.
-	 *
-	 * @param mProximity  the proximity-based model.
-	 * @param mDegree     the degree-based model.
-	 * @param mProtection the cheapest protection-based model.
-	 * @param protection  the type of protection allocation used (random, deterministic or mixed).
-	 * @param filePath    the path to output the model results to.
-	 * @param thisRound   the current model number count, between 0 and the number of models generated in the
-	 *                    multi-graph test.
-	 * @param readable    the path to output human-readable model results to.
-	 * @param data        the file to print machine-parsable complete model results to.
-	 * @param winner      the file to print the winning strategy data to.
-	 * @param texTable    the file to output tex code with the winning model strategies to.
-	 * @throws IOException if any of the files do not exist.
-	 */
-	@SuppressWarnings("unused")
-	public static void printModelOutput(Model mProximity,
-	                                    Model mDegree,
-	                                    Model mProtection,
-	                                    Protection protection,
-	                                    String filePath,
-	                                    int thisRound,
-	                                    PrintStream readable,
-	                                    PrintStream data,
-	                                    PrintStream winner,
-	                                    PrintStream texTable) throws IOException {
-		String graphFile = filePath + "/Graph" + thisRound + ".csv";
-
-		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
-
-		System.setOut(data);
-		System.out.println(modelResults[0]);
-
-		if (printReadable) {
-			System.setOut(readable);
-			System.out.println(modelResults[1]);
-		}
-		System.setOut(winner);
-		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[1]);
-
-		System.setOut(texTable);
-		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[2]);
-
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "INFECTED", protection, filePath, thisRound);
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "PROTECTED", protection, filePath, thisRound);
-		new Chart("Defence Strategy Comparison", mProximity.getGraph(), "END TURN", protection, filePath, thisRound);
-
-	}
-
-	public static void printOverallModelOutput(Model mProximity,
-	                                           Model mDegree,
-	                                           Model mProtection,
-	                                           Protection protection,
-	                                           String filePath,
-	                                           String graphFile,
-	                                           int i,
-	                                           PrintStream data,
-	                                           PrintStream winner) throws IOException {
-
-		String[] modelResults = runModels(mProximity, mDegree, mProtection, protection);
-
-		System.setOut(data);
-		System.out.println(modelResults[0]);
-
-		System.setOut(winner);
-		System.out.println(Winner.getWinners(filePath + "Data" + i + ".csv", graphFile)[1]);
-	}
-
-	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void runMultiGraphTest(String graphName,
 	                                     String path,
 	                                     PrintStream overallWin,
@@ -238,17 +147,7 @@ public class Model {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.NUM_GRAPHS;
 
-		// Make sure all necessary directories exist
-		File directory = new File(path + "/");
-		File random = new File(path + "/Random/");
-		File mixed = new File(path + "/Mixed/");
-		File deter = new File(path + "/Deterministic/");
-		if (!directory.exists() || !random.exists() || !mixed.exists() || !deter.exists()) {
-			directory.mkdir();
-			random.mkdir();
-			mixed.mkdir();
-			deter.mkdir();
-		}
+		createDirectories(path);
 
 		for (int i = 0; i < bound; i++) {
 			// Graph CSV file
@@ -270,43 +169,27 @@ public class Model {
 			System.setOut(deterministicWinner);
 			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
 
-			// Generate the graph corresponding to the supplied graph name
-			Graph g = switch (graphName.toLowerCase()) {
-				case "complete" -> GraphGenerator.complete(Main.NUM_VERTICES);
-				case "tree" -> GraphGenerator.tree(Main.NUM_VERTICES);
-				case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Main.NUM_VERTICES);
-				case "path" -> GraphGenerator.path(Main.NUM_VERTICES);
-				case "cycle" -> GraphGenerator.cycle(Main.NUM_VERTICES);
-				case "star" -> GraphGenerator.star(Main.NUM_VERTICES);
-				case "wheel" -> GraphGenerator.wheel(Main.NUM_VERTICES);
-				case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.P);
-				case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.P);
-				case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2);
-				case "regular", "k-regular" -> GraphGenerator.regular(Main.NUM_VERTICES, Main.K);
-				case "simple" -> GraphGenerator.simple(Main.NUM_VERTICES, Main.NUM_EDGES);
-				case "bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.NUM_EDGES);
-				case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Main.NUM_VERTICES, Main.NUM_EDGES);
-				case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Main.NUM_VERTICES, Main.NUM_EDGES);
-				default -> throw new IllegalStateException("Unexpected value: " + graphName);
-			};
+			Graph g = getGraph(graphName);
 
 			// Print the generated graph to the appropriate file
 			System.setOut(graphFile);
 			System.out.println(Graph.makeCommaSeparated(g));
 
 			// Initialise three models on the generated graph
-			Model proximityModel = new Model(g);
-			Model degreeModel = new Model(g);
-			Model protectionModel = new Model(g);
+			Model proximityModel = new Model(g),
+					degreeModel = new Model(g),
+					protectionModel = new Model(g);
+
+			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
 
 			// Run the models three times (for each protection allocation)
-			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.RANDOM,
+			Print.printOverallModelOutput(models, Protection.RANDOM,
 					path + "/Random/Random", path + "/Graph" + i + ".csv",
 					i, randomData, randomWinner);
-			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.MIXED,
+			Print.printOverallModelOutput(models, Protection.MIXED,
 					path + "/Mixed/Mixed", path + "/Graph" + i + ".csv",
 					i, mixedData, mixedWinner);
-			printOverallModelOutput(proximityModel, degreeModel, protectionModel, Protection.DETERMINISTIC,
+			Print.printOverallModelOutput(models, Protection.DETERMINISTIC,
 					path + "/Deterministic/Deterministic", path + "/Graph" + i + ".csv",
 					i, deterministicData, deterministicWinner);
 		}
@@ -341,6 +224,43 @@ public class Model {
 
 	}
 
+	private static Graph getGraph(String graphName) {
+		// Generate the graph corresponding to the supplied graph name
+		Graph g = switch (graphName.toLowerCase()) {
+			case "complete" -> GraphGenerator.complete(Main.NUM_VERTICES);
+			case "tree" -> GraphGenerator.tree(Main.NUM_VERTICES);
+			case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Main.NUM_VERTICES);
+			case "path" -> GraphGenerator.path(Main.NUM_VERTICES);
+			case "cycle" -> GraphGenerator.cycle(Main.NUM_VERTICES);
+			case "star" -> GraphGenerator.star(Main.NUM_VERTICES);
+			case "wheel" -> GraphGenerator.wheel(Main.NUM_VERTICES);
+			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.P);
+			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.P);
+			case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2);
+			case "regular", "k-regular" -> GraphGenerator.regular(Main.NUM_VERTICES, Main.K);
+			case "simple" -> GraphGenerator.simple(Main.NUM_VERTICES, Main.NUM_EDGES);
+			case "bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.NUM_EDGES);
+			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Main.NUM_VERTICES, Main.NUM_EDGES);
+			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Main.NUM_VERTICES, Main.NUM_EDGES);
+			default -> throw new IllegalStateException("Unexpected value: " + graphName);
+		};
+		return g;
+	}
+
+	private static void createDirectories(String path) {
+		// Make sure all necessary directories exist
+		File directory = new File(path + "/"),
+				random = new File(path + "/Random/"),
+				mixed = new File(path + "/Mixed/"),
+				deter = new File(path + "/Deterministic/");
+		if (!directory.exists() || !random.exists() || !mixed.exists() || !deter.exists()) {
+			directory.mkdir();
+			random.mkdir();
+			mixed.mkdir();
+			deter.mkdir();
+		}
+	}
+
 	/*
 	 * We set the list of agents by creating a new agent for each vertex and setting peril and protection initially to
 	 * zero and state to susceptible. We then go on to assign the actual ratings and states to each agent once we
@@ -362,7 +282,7 @@ public class Model {
 	 * @param probInfection the probability with which the infection we are modelling propagates.
 	 * @return a string to print to a Markdown file to describe the current model in a human-readable way.
 	 */
-	public String printModelInfo(double totalDefence, double probInfection) {
+	public String toString(double totalDefence, double probInfection) {
 		Graph g = this.getGraph();
 		StringBuilder s = new StringBuilder();
 		s.append("# Readable results of SIRP defence strategies on a random graph\n");
@@ -411,9 +331,9 @@ public class Model {
 		// Initialise a list of agents given the starting state of the graph..
 		for (int j = 0; j < this.getNumVertices(); j++) {
 			this.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
-			this.getAgents().get(j).setPeril(this.perilRating(this.getAgents().get(j), new int[] {outbreak}, this.getGraph()));
-			this.getAgents().get(j).setProtection(this.protectionRating(this.getAgents().get(j), protectionType));
-			this.getAgents().get(j).setState(this.findState(this.getAgents().get(j), new int[] {outbreak}));
+			this.getAgents().get(j).setPeril(this.getAgents().get(j).perilRating(new int[] {outbreak}, this.getGraph()));
+			this.getAgents().get(j).setProtection(this.getAgents().get(j).protectionRating(protectionType));
+			this.getAgents().get(j).setState(this.getAgents().get(j).findState(new int[] {outbreak}, this));
 		}
 		this.getAgents().get(outbreak).setState(State.INFECTED);
 	}
@@ -429,7 +349,7 @@ public class Model {
 			this.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
 			this.getAgents().get(j).setPeril(that.getAgents().get(j).getPeril());
 			this.getAgents().get(j).setProtection(that.getAgents().get(j).getProtection());
-			this.getAgents().get(j).setState(this.findState(this.getAgents().get(j), new int[] {outbreak}));
+			this.getAgents().get(j).setState(this.getAgents().get(j).findState(new int[] {outbreak}, this));
 		}
 		this.getAgents().get(outbreak).setState(State.INFECTED);
 	}
@@ -542,91 +462,6 @@ public class Model {
 				.append("\n * P: ").append(Arrays.toString(defended));
 
 		return String.valueOf(s);
-	}
-
-	/**
-	 * Given an agent, the current fires and the graph the model uses, we return a peril rating. This method can be used
-	 * frequently to update the peril when the graph has been updated (new infections, recoveries and protections have
-	 * taken place) and the peril rating itself is thus a true reflection of the danger level the agent is facing.
-	 *
-	 * @param agent the agent we want to calculate danger relative to.
-	 * @param fires agents that are currently infected by the contagion.
-	 * @param g     the graph associated with the model.
-	 * @return the updated peril rating, based on proximity to infection (0 - no danger, 1 - imminent danger).
-	 */
-	public double perilRating(Agent agent, int[] fires, Graph g) {
-		double peril;
-
-		int[] leastDistancePath = g.shortestPath(agent.getVertex());
-		double leastDist = leastDistancePath[fires[0]];
-		//TODO make this work for more than one fire location - find closest fire, find shortest path to it
-
-		if (leastDist == 0) peril = 1.0;
-		else peril = leastDist == Integer.MAX_VALUE ? 0.0 : 1 / leastDist;
-
-		agent.setPeril(peril);
-		return peril;
-	}
-
-	/**
-	 * For a given agent, we need to update their protection rating frequently, which this model does by multiplying a
-	 * baseline random number between 0 and 1 by the current peril rating, which means the protection rating increases
-	 * with proximity to infected agents.
-	 *
-	 * @param agent          the agent to determine a protection rating for.
-	 * @param protectionType the method of protection determination we use (fully random, fully deterministic or mixed)
-	 * @return the updated protection rating attribute.
-	 */
-	public double protectionRating(Agent agent, Protection protectionType) {
-		double peril = agent.getPeril();
-		double baseline = Math.random();
-		double protection;
-
-		switch (protectionType) {
-			case RANDOM -> // Fully random protection rating
-					protection = baseline;
-			case MIXED -> { // Partially random, partially deterministic protection rating
-				if (baseline * (1 / peril) > 1) protection = 1;
-				else protection = (peril == 0) ? baseline : (baseline * (1 / peril));
-			}
-			case DETERMINISTIC -> { // Fully deterministic protection rating
-				if (peril < 1) protection = peril;
-				else protection = 0.999;
-			}
-			default -> throw new IllegalStateException("Unexpected value: " + protectionType);
-		}
-
-		return protection;
-	}
-
-	/**
-	 * Given an agent and the agents that are currently infected, we determine the state based on whether a path exists
-	 * between the agent and an infected vertex. If no such path exists, we say the agent is protected. If one exists,
-	 * they are susceptible. If the distance to an infected vertex is zero, then they are infected themselves. If they
-	 * have been infected for a given number of turns, the agent becomes recovered for a further given number of turns.
-	 *
-	 * @param agent the agent to determine the state of.
-	 * @param fires all currently infected (burning) vertices.
-	 * @return the updated state of the agent we have determined for the current model situation.
-	 */
-	public State findState(Agent agent, int[] fires) {
-		int vertex = agent.getVertex();
-		double peril = this.getAgents().get(vertex).getPeril();
-		double protection = this.getAgents().get(vertex).getProtection();
-		State toSet = State.SUSCEPTIBLE;
-
-		for (int fire : fires) {
-			if (vertex == fire) {
-				toSet = State.INFECTED;
-				break;
-			}
-		}
-		if (protection == 1.0 || peril == 0) {
-			toSet = State.PROTECTED;
-		}
-
-		agent.setState(toSet);
-		return toSet;
 	}
 
 	/**
@@ -755,11 +590,11 @@ public class Model {
 		if (toDefend.size() > 1) {
 			int highestDegree = 0;
 			for (Agent agent : toDefend) {
-				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+				int thisDegree = this.graph.findDegree(agent.getVertex());
 				if (thisDegree > highestDegree) highestDegree = thisDegree;
 			}
 			for (Agent agent : toDefend) {
-				int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+				int thisDegree = this.graph.findDegree(agent.getVertex());
 				if (thisDegree == highestDegree) {
 					// There may be more than one suitable candidate - select the
 					// lexicographically first vertex to defend relative agent.
@@ -785,13 +620,13 @@ public class Model {
 
 		int highestDegree = 0;
 		for (Agent agent : susceptibleAgents) {
-			int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+			int thisDegree = this.graph.findDegree(agent.getVertex());
 			if (thisDegree > highestDegree) {
 				highestDegree = thisDegree;
 			}
 		}
 		for (Agent agent : susceptibleAgents) {
-			int thisDegree = Graph.findDegree(this.graph, agent.getVertex());
+			int thisDegree = this.graph.findDegree(agent.getVertex());
 			if (thisDegree == highestDegree) {
 				highestDegrees.add(agent);
 			}
@@ -860,7 +695,7 @@ public class Model {
 
 		for (int j = 0; j < this.getNumVertices(); j++) {
 			agents.get(j).setProtection(agents.get(j).getProtection() + strategy[j]);
-			agents.get(j).setState(this.findState(agents.get(j), fires));
+			agents.get(j).setState(agents.get(j).findState(fires, this));
 		}
 	}
 

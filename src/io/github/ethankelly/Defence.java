@@ -39,4 +39,13 @@ public enum Defence {
 	public int getValue() {
 		return value;
 	}
+
+	public static Defence getDefence(int i) {
+		return switch (i) {
+			case 0 -> PROXIMITY;
+			case 1 -> DEGREE;
+			case 2 -> PROTECTION;
+			default -> throw new IllegalStateException("Unexpected value: " + i);
+		};
+	}
 }

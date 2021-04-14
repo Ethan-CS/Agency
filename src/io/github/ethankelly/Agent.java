@@ -57,11 +57,9 @@ public class Agent {
 	}
 
 	/**
-	 * An agent's peril rating represents the danger they are currently in. The more infected vertices within a certain
-	 * proximity, and the closer infected vertices are to the given agent, the higher the peril rating. Peril is zero if
-	 * there is no path between the vertex and an infected agent, in which case they are placed into the protected
-	 * state. Peril is one if the agent is in immediate danger, i.e. one of their directly adjacent neighbours is
-	 * infected.
+	 * Peril rating represents the danger they are currently in. The more infected vertices within a certain proximity,
+	 * and the closer infected vertices are to the given agent, the higher the peril rating. Peril is zero if there is
+	 * no path between the vertex and an infected agent and one if the agent is in immediate danger.
 	 *
 	 * @return the current peril rating of the agent.
 	 */
@@ -80,11 +78,8 @@ public class Agent {
 	}
 
 	/**
-	 * The protection rating of an agent is based on a baseline random real number, between 0 and 1, and the peril. As
-	 * peril increases, protection increases - simulating an agent becoming more concerned as more agents close to them
-	 * contract the infection, thereby adopting more protective behaviours and increasing their overall protection
-	 * rating. The protection rating is also updated when we deploy a defensive move in the model, and the higher the
-	 * defence rating the smaller the likelihood of the agent contracting the contagion.
+	 * The protection rating of an agent is their intrinsic inclination towards avoidance of contraction in an epidemic
+	 * scenario (e.g. related to how much contact they have daily, how much PPE they wear, etc.).
 	 *
 	 * @return the protection rating of the current agent.
 	 */
@@ -139,5 +134,88 @@ public class Agent {
 		       + ": peril " + String.format("%.2f", this.getPeril())
 		       + ", protection " + String.format("%.2f", this.getProtection())
 		       + " and state " + this.getState() + ".";
+	}
+
+	/**
+	 * For a given agent, we need to update their protection rating frequently, which this model does by multiplying a
+	 * baseline random number between 0 and 1 by the current peril rating, which means the protection rating increases
+	 * with proximity to infected agents.
+	 *
+	 * @param protectionType the method of protection determination we use (fully random, fully deterministic or mixed)
+	 * @return the updated protection rating attribute.
+	 */
+	public double protectionRating(Protection protectionType) {
+		double peril = this.getPeril();
+		double baseline = Math.random();
+		double protection;
+
+		switch (protectionType) {
+			case RANDOM -> // Fully random protection rating
+					protection = baseline;
+			case MIXED -> { // Partially random, partially deterministic protection rating
+				if (baseline * (1 / peril) > 1) protection = 1;
+				else protection = (peril == 0) ? baseline : (baseline * (1 / peril));
+			}
+			case DETERMINISTIC -> { // Fully deterministic protection rating
+				if (peril < 1) protection = peril;
+				else protection = 0.999;
+			}
+			default -> throw new IllegalStateException("Unexpected value: " + protectionType);
+		}
+		this.setProtection(protection);
+		return protection;
+	}
+
+	/**
+	 * Given an agent, the current fires and the graph the model uses, we return a peril rating. This method can be used
+	 * frequently to update the peril when the graph has been updated (new infections, recoveries and protections have
+	 * taken place) and the peril rating itself is thus a true reflection of the danger level the agent is facing.
+	 *
+	 * @param fires agents that are currently infected by the contagion.
+	 * @param g     the graph associated with the model.
+	 * @return the updated peril rating, based on proximity to infection (0 - no danger, 1 - imminent danger).
+	 */
+	public double perilRating(int[] fires, Graph g) {
+		double peril;
+
+		int[] leastDistancePath = g.shortestPath(getVertex());
+		double leastDist = leastDistancePath[fires[0]];
+		//TODO make this work for more than one fire location - find closest fire, find shortest path to it
+
+		if (leastDist == 0) peril = 1.0;
+		else peril = leastDist == Integer.MAX_VALUE ? 0.0 : 1 / leastDist;
+
+		setPeril(peril);
+		return peril;
+	}
+
+	/**
+	 * Given an agent and the agents that are currently infected, we determine the state based on whether a path exists
+	 * between the agent and an infected vertex. If no such path exists, we say the agent is protected. If one exists,
+	 * they are susceptible. If the distance to an infected vertex is zero, then they are infected themselves. If they
+	 * have been infected for a given number of turns, the agent becomes recovered for a further given number of turns.
+	 *
+	 * @param fires all currently infected (burning) vertices.
+	 * @param model the current model.
+	 * @return the updated state of the agent we have determined for the current model situation.
+	 */
+	public State findState(int[] fires, Model model) {
+		int vertex = getVertex();
+		double peril = model.getAgents().get(vertex).getPeril();
+		double protection = model.getAgents().get(vertex).getProtection();
+		State toSet = State.SUSCEPTIBLE;
+
+		for (int fire : fires) {
+			if (vertex == fire) {
+				toSet = State.INFECTED;
+				break;
+			}
+		}
+		if (protection == 1.0 || peril == 0) {
+			toSet = State.PROTECTED;
+		}
+
+		setState(toSet);
+		return toSet;
 	}
 }
