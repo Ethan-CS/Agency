@@ -29,6 +29,8 @@ public class Print {
 			System.out.println("NUMBER OF EDGES,PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 		} else if (GraphGenerator.requiresKToGenerate(graphName)) {
 			System.out.println("K VALUE,PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
+		} else if (graphName.equalsIgnoreCase("Preferential Attachment")) {
+			System.out.println("MIN DEGREE,PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 		} else System.out.println("PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 
 		for (int i = 0; i < defence.size(); i++) {
@@ -72,6 +74,18 @@ public class Print {
 						array[Defence.DEGREE.getValue()],
 						array[Defence.PROTECTION.getValue()]
 				);
+			} else if (graphName.equalsIgnoreCase("Preferential Attachment")) {
+				message = MessageFormat.format("""
+								{0},{1},PROXIMITY,{2}
+								{0},{1},DEGREE,{3}
+								{0},{1},PROTECTION,{4}
+								""",
+						((Math.ceil((float) (i + 1) / Main.NUM_GRAPHS))),
+						allocation.toUpperCase(),
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
+				);
 			} else {
 				message = MessageFormat.format("""
 								{0},PROXIMITY,{1}
@@ -92,7 +106,6 @@ public class Print {
 	 * Gets parallel models and a protection strategy and prints the output of the models.
 	 *
 	 * @param models     an array of all parallel models to be run
-	 * @param protection the protection allocation strategy used.
 	 * @param filePath   the file path to output model result files to.
 	 * @param graphFile  the graph file containing the current graph.
 	 * @param i          an identifier for use when there is more than one model for each incremented value.
@@ -101,20 +114,21 @@ public class Print {
 	 * @throws IOException if any of the files cannot be found and/or written to.
 	 */
 	public static void printOverallModelOutput(Model[] models,
-	                                           Protection protection,
 	                                           String filePath,
 	                                           String graphFile,
 	                                           int i,
-	                                           PrintStream data,
-	                                           PrintStream winner) throws IOException {
+	                                           PrintStream[] data,
+	                                           PrintStream[] winner) throws IOException {
 
-		String[] modelResults = Model.runModels(models, protection);
+		for (int j = 0; j < Protection.values().length; j++) {
+			String[] modelResults = Model.runModels(models, Protection.getProtection(j));
 
-		System.setOut(data);
-		System.out.println(modelResults[0]);
+			System.setOut(data[j]);
+			System.out.println(modelResults[0]);
 
-		System.setOut(winner);
-		System.out.println(Winner.getWinners(filePath + "Data" + i + ".csv", graphFile)[1]);
+			System.setOut(winner[j]);
+			System.out.println(Winner.getWinners(filePath + "Data" + i + ".csv", graphFile)[1]);
+		}
 	}
 
 	/**

@@ -42,4 +42,13 @@ public enum Protection {
 	public int getValue() {
 		return value;
 	}
+
+	public static Protection getProtection(int i) {
+		return switch (i) {
+			case 0 -> RANDOM;
+			case 1 -> MIXED;
+			case 2 -> DETERMINISTIC;
+			default -> throw new IllegalStateException("Unexpected value: " + i);
+		};
+	}
 }

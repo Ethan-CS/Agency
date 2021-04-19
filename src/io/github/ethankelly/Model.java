@@ -153,21 +153,19 @@ public class Model {
 			// Graph CSV file
 			PrintStream graphFile = new PrintStream(path + "/Graph" + i + ".csv");
 			// Data files
-			PrintStream randomData = new PrintStream(path + "/Random/RandomData" + i + ".csv");
-			PrintStream mixedData = new PrintStream(path + "/Mixed/MixedData" + i + ".csv");
-			PrintStream deterministicData = new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv");
+			PrintStream[] data = new PrintStream[] {new PrintStream(path + "/Random/RandomData" + i + ".csv"),
+					new PrintStream(path + "/Mixed/MixedData" + i + ".csv"),
+					new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv")};
+
+			PrintStream[] winner = new PrintStream[] {new PrintStream(path + "/Random/RandomWinner" + i + ".csv"),
+					new PrintStream(path + "/Mixed/MixedWinner" + i + ".csv"),
+					new PrintStream(path + "/Deterministic/DeterministicWinner" + i + ".csv")};
+
 			// Winning files (print headings to each one, to avoid duplicated headings when written to again later)
-			PrintStream randomWinner = new PrintStream(path + "/Random/RandomWinner" + i + ".csv");
-			System.setOut(randomWinner);
-			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
-
-			PrintStream mixedWinner = new PrintStream(path + "/Mixed/MixedWinner" + i + ".csv");
-			System.setOut(mixedWinner);
-			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
-
-			PrintStream deterministicWinner = new PrintStream(path + "/Deterministic/DeterministicWinner" + i + ".csv");
-			System.setOut(deterministicWinner);
-			System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+			Arrays.stream(winner).forEach(ps -> {
+				System.setOut(ps);
+				System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+			});
 
 			Graph g = getGraph(graphName);
 
@@ -176,22 +174,12 @@ public class Model {
 			System.out.println(Graph.makeCommaSeparated(g));
 
 			// Initialise three models on the generated graph
-			Model proximityModel = new Model(g),
-					degreeModel = new Model(g),
-					protectionModel = new Model(g);
-
 			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
 
 			// Run the models three times (for each protection allocation)
-			Print.printOverallModelOutput(models, Protection.RANDOM,
+			Print.printOverallModelOutput(models,
 					path + "/Random/Random", path + "/Graph" + i + ".csv",
-					i, randomData, randomWinner);
-			Print.printOverallModelOutput(models, Protection.MIXED,
-					path + "/Mixed/Mixed", path + "/Graph" + i + ".csv",
-					i, mixedData, mixedWinner);
-			Print.printOverallModelOutput(models, Protection.DETERMINISTIC,
-					path + "/Deterministic/Deterministic", path + "/Graph" + i + ".csv",
-					i, deterministicData, deterministicWinner);
+					i, data, winner);
 		}
 
 
@@ -226,7 +214,7 @@ public class Model {
 
 	private static Graph getGraph(String graphName) {
 		// Generate the graph corresponding to the supplied graph name
-		Graph g = switch (graphName.toLowerCase()) {
+		return switch (graphName.toLowerCase()) {
 			case "complete" -> GraphGenerator.complete(Main.NUM_VERTICES);
 			case "tree" -> GraphGenerator.tree(Main.NUM_VERTICES);
 			case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Main.NUM_VERTICES);
@@ -242,11 +230,12 @@ public class Model {
 			case "bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.NUM_EDGES);
 			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Main.NUM_VERTICES, Main.NUM_EDGES);
 			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Main.NUM_VERTICES, Main.NUM_EDGES);
+			case "preferential attachment", "barabási–albert" -> GraphGenerator.preferentialAttachment(Main.NUM_VERTICES, Main.INITIAL_NUM_VERTICES, Main.OFFSET_EXP, Main.MIN_DEGREE);
 			default -> throw new IllegalStateException("Unexpected value: " + graphName);
 		};
-		return g;
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	private static void createDirectories(String path) {
 		// Make sure all necessary directories exist
 		File directory = new File(path + "/"),

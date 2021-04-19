@@ -26,9 +26,36 @@ package io.github.ethankelly;
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Agent {
+
+	/**
+	 * The vertex attribute of an agent indicates their location on the graph that the model uses. This, in turn, helps
+	 * determine which other agents (vertices) they are connected to, which may indicate a possible route of infection.
+	 */
 	private final int vertex;
+
+	/**
+	 * Peril rating represents the danger they are currently in. The more infected vertices within a certain proximity,
+	 * and the closer infected vertices are to the given agent, the higher the peril rating. Peril is zero if there is
+	 * no path between the vertex and an infected agent and one if the agent is in immediate danger. We assign the peril
+	 * rating of the agent based on the current graph state (as determined in the main model class) - specifically, the
+	 * agent's proximity to infected vertices.
+	 */
 	private double peril;
+
+	/**
+	 * The protection rating of an agent is their intrinsic inclination towards avoidance of contraction in an epidemic
+	 * scenario (e.g. related to how much contact they have daily, how much PPE they wear, etc.). Several methods update
+	 * the method, whenever the peril has been updated (i.e. the state of the graph has changed in some way, peril may
+	 * have changed and so protection also needs to be updated and set to its new value). We do not allow a protection
+	 * of rating over 1, so this method prevents the value being set from being greater than that.
+	 */
 	private double protection;
+
+	/**
+	 * Each agent can be in one of a number of states, namely any of those in the State enum. These indicate which
+	 * compartment of the SIR model the agent belongs to and each has an associated value to make computation simpler
+	 * when updating the graph state and so on.
+	 */
 	private State state;
 
 	/**
@@ -47,9 +74,6 @@ public class Agent {
 	}
 
 	/**
-	 * The vertex attribute of an agent indicates their location on the graph that the model uses. This, in turn, helps
-	 * determine which other agents (vertices) they are connected to, which may indicate a possible route of infection.
-	 *
 	 * @return the vertex location of the agent.
 	 */
 	public int getVertex() {
@@ -57,10 +81,6 @@ public class Agent {
 	}
 
 	/**
-	 * Peril rating represents the danger they are currently in. The more infected vertices within a certain proximity,
-	 * and the closer infected vertices are to the given agent, the higher the peril rating. Peril is zero if there is
-	 * no path between the vertex and an infected agent and one if the agent is in immediate danger.
-	 *
 	 * @return the current peril rating of the agent.
 	 */
 	public double getPeril() {
@@ -68,9 +88,6 @@ public class Agent {
 	}
 
 	/**
-	 * We assign the peril rating of the agent based on the current graph state (as determined in the main model class)
-	 * - specifically, the agent's proximity to infected vertices.
-	 *
 	 * @param peril the peril rating to be set to the current vertex.
 	 */
 	public void setPeril(double peril) {
@@ -78,9 +95,6 @@ public class Agent {
 	}
 
 	/**
-	 * The protection rating of an agent is their intrinsic inclination towards avoidance of contraction in an epidemic
-	 * scenario (e.g. related to how much contact they have daily, how much PPE they wear, etc.).
-	 *
 	 * @return the protection rating of the current agent.
 	 */
 	public double getProtection() {
@@ -88,11 +102,6 @@ public class Agent {
 	}
 
 	/**
-	 * Several methods update the method, whenever the peril has been updated (i.e. the state of the graph has changed
-	 * in some way, peril may have changed and so protection also needs to be updated and set to its new value). We do
-	 * not allow a protection of rating over 1, so this method prevents the value being set from being greater than
-	 * that.
-	 *
 	 * @param protection the new protection to be assigned to the current agent.
 	 */
 	public void setProtection(double protection) {
@@ -100,10 +109,6 @@ public class Agent {
 	}
 
 	/**
-	 * Each agent can be in one of a number of states, namely any of those in the State enum. These indicate which
-	 * compartment of the SIR model the agent belongs to and each has an associated value to make computation simpler
-	 * when updating the graph state and so on.
-	 *
 	 * @return the state to which the current agent belongs.
 	 */
 	public State getState() {
@@ -111,10 +116,6 @@ public class Agent {
 	}
 
 	/**
-	 * For methods that update the state of the graph, they may have to update the state or states of certain agents.
-	 * For instance, if an agent has been defended so that their protection rating is now 1.0, they are moved to the
-	 * protected state.
-	 *
 	 * @param state the state into which we want to move the current agent.
 	 */
 	public void setState(State state) {
@@ -124,7 +125,7 @@ public class Agent {
 
 	/**
 	 * Returns a textual representation of the agent, detailing its vertex location, peril rating, protection rating and
-	 * current state. This is used to print to the console.
+	 * current state, used to print to standard output.
 	 *
 	 * @return a string representation of the agent.
 	 */

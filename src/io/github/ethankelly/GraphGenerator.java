@@ -3,7 +3,6 @@ package io.github.ethankelly;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -17,7 +16,6 @@ import java.util.stream.IntStream;
  *
  * @author Ethan Kelly
  */
-@SuppressWarnings("unused")
 public class GraphGenerator {
 	private static long seed;
 
@@ -78,6 +76,7 @@ public class GraphGenerator {
 				  12 * Star (a tree with a single internal vertex and a given number of leaves)
 				  13 * Regular (regularly uniform k-regular graph)
 				  14 * Tree (uniformly random tree, generated using Prüfer sequence)
+				  15 * A Barabási–Albert-generated preferential attachment graph (can be non-linear)
 				 Enter the number corresponding to your selected graph to generate it.""");
 		int selection = s.nextInt(); // User selection
 		switch (selection) {
@@ -148,6 +147,21 @@ public class GraphGenerator {
 			case 14 -> { // Tree
 				g = tree(numVertices);
 				System.out.println("You have selected a Tree graph.\n" + g);
+			}
+			case 15 -> { // Barabási–Albert Preferential Attachment
+				System.out.println("You have selected a Barabási–Albert-generated preferential attachment graph" +
+				                   "\nPlease enter an initial number of vertices.");
+				int initialNumVertices = s.nextInt();
+				System.out.println("""
+						Please enter a positive offset exponent, a. Some tips:\s
+						 * a ≠ 1 results in non-linear preferential attachment.
+						 * 0 < a < 1 is sub-linear
+						 * a = 1 reduces attachment probability to that of the Barabási–Albert model (linear)
+						 * a > 1 is super-linear.""");
+				int offsetExponent = s.nextInt();
+				System.out.println("Finally, please enter a minimum degree for each vertex in the generated graph.");
+				int minDegree = s.nextInt();
+				g = preferentialAttachment(numVertices, initialNumVertices, offsetExponent, minDegree);
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + selection);
 		}
@@ -525,31 +539,36 @@ public class GraphGenerator {
 		return g;
 	}
 
-	/*
-	TODO PREFERENTIAL ATTACHMENT GRAPH GENERATION
-
-	Input: Number of Nodes N;
-        Initial number of nodes m0;
-        Offset Exponent a;
-        Minimum degree 1 <= d <= m0.
-	Output: scale-free multi-graph G = ({0,....,N-1}, E).
-
-	1) Add m0 nodes to G.
-	2) Connect every node in G to every other node in G, i.e. create a complete graph.
-	3) Create a new node i.
-	4) Pick a node j uniformly at random from the graph G. Set P = (k(j)/k_tot)^a.
-	5) Pick a real number R uniformly at random between 0 and 1.
-	6) If P > R then add j to i's adjacency list.
-	7) Repeat steps 4 - 6 until i has m nodes in its adjacency list.
-	8) Add i to the adjacency list of each node in its adjacency list.
-	9) Add i to to the graph.
-	10) Repeat steps 3 - 9 until there are N nodes in the graph.
+	/**
+	 * Generates a random, scale-free graph using a preferential attachment mechanism via the Barabási–Albert model.
+	 * This algorithm uses a number of vertices N, an initial number of vertices M, an offset exponent a and a minimum
+	 * degree d between 1 and the initial number of vertices. Then, the algorithm for the Barabási–Albert model is as
+	 * follows:
+	 * <ul>
+	 *     <li> Add M vertices to the graph G
+	 *     <li> Connect each vertex to every other vertex in G (create a complete graph).
+	 *     <li> (†) Create a new vertex, i.
+	 *     <li> (*) Select a new vertex j uniformly at random from G and set p = (k(j)/2*numEdges)^a.
+	 *     <li> Select a real number r uniformly at random between 0 and 1.
+	 *     <li> (*) If p > r, add j an edge between i and j.
+	 *     <li> (†) Repeat the steps marked with (*) until i has M vertices adjacent to it.
+	 *     <li> Repeat the steps between the (†) symbols until G has N vertices.
+	 * </ul>
+	 *
+	 * @param numVertices        the total number of vertices to be in the generated graph.
+	 * @param initialNumVertices the initial number of vertices to create in the graph.
+	 * @param offsetExponent     a constant and positive exponent, sued for the non-linear preferential attachment
+	 *                           model.
+	 * @param minDegree          the minimum degree of each vertex in the graph.
+	 * @return a random, scale-free graph with preferential attachment mechanism generated using the Barabási–Albert
+	 * model.
 	 */
-
 	public static Graph preferentialAttachment(int numVertices, int initialNumVertices, double offsetExponent, int minDegree) {
 		// Add initial number of vertex to graph and connect every vertex to every other vertex
 		Graph g = complete(initialNumVertices);
 		g.setName("Preferential Attachment");
+
+		assert minDegree >= 1 && minDegree <= initialNumVertices : "Minimum degree should be an integer between 1 and initial number of vertices";
 
 		while (g.getNumVertices() < numVertices) {
 			// Create a new node i
@@ -557,9 +576,9 @@ public class GraphGenerator {
 			int i = g.getNumVertices() - 1;
 			// Repeat this until i has m vertices adjacent to it
 			while (g.findDegree(i) <= minDegree) {
-				// Pick a node j at random
+				// Pick a vertex j at random
 				int j = g.getRandomVertex();
-				// Set p = (k(j)/2*numEdges).
+				// Set p = (k(j)/2*numEdges)^a.
 				double p = Math.pow(((double) g.findDegree(j) / (double) 2 * g.getNumEdges()), offsetExponent);
 				// Pick a real number r at random between 0 and 1
 				double r = Math.random();
@@ -570,12 +589,17 @@ public class GraphGenerator {
 		return g;
 	}
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws IOException {
+		PrintStream console = System.out;
 		Graph g = preferentialAttachment(20, 10, 1, 4);
 		System.out.println("Final graph: " + g);
+
 		System.setOut(new PrintStream("data/test.csv"));
 		System.out.println(Graph.makeCommaSeparated(g));
 
+		System.setOut(console);
+		Graph h = createGraph();
+		System.out.println(h);
 	}
 
 
