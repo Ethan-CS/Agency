@@ -2,6 +2,7 @@ package io.github.ethankelly;
 
 import io.github.ethankelly.std_lib.StdOut;
 import io.github.ethankelly.std_lib.StdRandom;
+import io.github.ethankelly.std_lib.StdSet;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -206,7 +207,7 @@ public class GraphGenerator {
 		assert numEdges >= 0 : "Too few edges.";
 		Graph g = new Graph(numVertices, "Simple");
 		g.setNumEdges(0);
-		Set<Edge> set = new Set<>();
+		StdSet<Edge> set = new StdSet<>();
 		while (g.getNumEdges() < numEdges) {
 			int v = StdRandom.uniform(numVertices);
 			int w = StdRandom.uniform(numVertices);
@@ -287,7 +288,7 @@ public class GraphGenerator {
 		int[] vertices = IntStream.range(0, numVer1 + numVer2).toArray();
 		StdRandom.shuffle(vertices);
 
-		Set<Edge> set = new Set<>();
+		StdSet<Edge> set = new StdSet<>();
 		while (g.getNumEdges() < numEdges) {
 			int i = StdRandom.uniform(numVer1);
 			int j = numVer1 + StdRandom.uniform(numVer2);
@@ -526,7 +527,7 @@ public class GraphGenerator {
 		IntStream.range(0, numVertices - 2).forEach(i -> degree[prufer[i]]++);
 
 		// Minimum priority queue object pq contains all vertices of degree 1
-		Set.MinPriorityQueue<Integer> pq = new Set.MinPriorityQueue<>();
+		StdSet.MinPriorityQueue<Integer> pq = new StdSet.MinPriorityQueue<>();
 		IntStream.range(0, numVertices).filter(v -> degree[v] == 1).forEach(pq::insert);
 
 		// Repeatedly call delMin() (removes and returns smallest key on the priority queue)

@@ -1,6 +1,4 @@
-package io.github.ethankelly;
-
-import io.github.ethankelly.std_lib.StdOut;
+package io.github.ethankelly.std_lib;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -30,13 +28,13 @@ import java.util.TreeSet;
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 @SuppressWarnings("rawtypes")
-public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
+public class StdSet<Key extends Comparable<Key>> implements Iterable<Key> {
 	private final TreeSet<Key> set;
 
 	/**
 	 * Initialises an empty set.
 	 */
-	public Set() {
+	public StdSet() {
 		set = new TreeSet<>();
 	}
 
@@ -45,7 +43,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 *
 	 * @param x the set to copy.
 	 */
-	public Set(Set<Key> x) {
+	public StdSet(StdSet<Key> x) {
 		set = new TreeSet<>(x.set);
 	}
 
@@ -53,7 +51,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 * Unit tests the {@code SET} data type.
 	 */
 	public static void testMethods() {
-		Set<String> set = new Set<>();
+		StdSet<String> set = new StdSet<>();
 		StdOut.println("set = " + set);
 
 		// insert some keys
@@ -99,7 +97,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 		}
 
 		StdOut.println();
-		Set<String> set2 = new Set<>(set);
+		StdSet<String> set2 = new StdSet<>(set);
 		StdOut.println(set.equals(set2));
 	}
 
@@ -233,9 +231,9 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 * @return the union of this set and that set.
 	 * @throws IllegalArgumentException if {@code that} is {@code null}.
 	 */
-	public Set<Key> union(Set<Key> that) {
+	public StdSet<Key> union(StdSet<Key> that) {
 		if (that == null) throw new IllegalArgumentException("called union() with a null argument");
-		Set<Key> c = new Set<>();
+		StdSet<Key> c = new StdSet<>();
 		for (Key x : this) {
 			c.add(x);
 		}
@@ -252,9 +250,9 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 * @return the intersection of this set and that set.
 	 * @throws IllegalArgumentException if {@code that} is {@code null}.
 	 */
-	public Set<Key> intersects(Set<Key> that) {
+	public StdSet<Key> intersects(StdSet<Key> that) {
 		if (that == null) throw new IllegalArgumentException("called intersects() with a null argument");
-		Set<Key> c = new Set<>();
+		StdSet<Key> c = new StdSet<>();
 		if (this.size() < that.size()) {
 			for (Key x : this) {
 				if (that.contains(x)) c.add(x);
@@ -280,7 +278,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 		if (other == this) return true;
 		if (other == null) return false;
 		if (other.getClass() != this.getClass()) return false;
-		Set that = (Set) other;
+		StdSet that = (StdSet) other;
 		return this.set.equals(that.set);
 	}
 

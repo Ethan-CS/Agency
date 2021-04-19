@@ -1,6 +1,5 @@
 package io.github.ethankelly;
 
-
 import java.util.Random;
 import java.util.stream.IntStream;
 

@@ -1,5 +1,8 @@
-package io.github.ethankelly;
+package io.github.ethankelly.std_lib;
 
+import io.github.ethankelly.Graph;
+import io.github.ethankelly.Model;
+import io.github.ethankelly.Protection;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -21,7 +24,7 @@ import java.io.*;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-public class Chart extends ApplicationFrame {
+public class StdChart extends ApplicationFrame {
 	@Serial
 	private static final long serialVersionUID = 1L;
 	// The chart object
@@ -36,7 +39,7 @@ public class Chart extends ApplicationFrame {
 	 * @param path           the path to the resources folder (i.e. directory containing model results).
 	 * @throws IOException if the specified files do not exist.
 	 */
-	public Chart(String title, Graph graph, String filter, Protection protectionType, String path, int round) throws IOException {
+	public StdChart(String title, Graph graph, String filter, Protection protectionType, String path, int round) throws IOException {
 		super(title);
 		String graphName = graph.getName();
 		CategoryDataset dataset = Model.getResults(filter, path, round);

@@ -1,5 +1,7 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.std_lib.StdChart;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,7 +24,7 @@ public class Print {
 	public static void printWinData(String graphName, String allocation, List<long[]> defence) throws FileNotFoundException {
 		String s = MessageFormat.format("/{0}Winner.csv", allocation);
 
-		System.setOut(new PrintStream(new FileOutputStream(Main.PATH + s)));
+		System.setOut(new PrintStream(new FileOutputStream(Driver.PATH + s)));
 		if (GraphGenerator.requiresProbToGenerate(graphName)) {
 			System.out.println("P VALUE,PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 		} else if (GraphGenerator.requiresEdgesToGenerate(graphName)) {
@@ -43,7 +45,7 @@ public class Print {
 								{0},{1},PROTECTION,{4}
 								""",
 						String.format("%.2f", (float) (Math.ceil(
-								(float) (i + 1) / Main.NUM_GRAPHS) / Main.P_INCREMENTS) * Main.MAX_PROBABILITY),
+								(float) (i + 1) / Driver.NUM_GRAPHS) / Driver.P_INCREMENTS) * Driver.MAX_PROBABILITY),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
@@ -56,7 +58,7 @@ public class Print {
 								{0},{1},PROTECTION,{4}
 								""",
 						((Math.ceil(
-								(float) ((i + 1)) / Main.NUM_GRAPHS) / (Main.MAX_EDGES / Main.EDGE_INCREMENTS)) * Main.MAX_EDGES),
+								(float) ((i + 1)) / Driver.NUM_GRAPHS) / (Driver.MAX_EDGES / Driver.EDGE_INCREMENTS)) * Driver.MAX_EDGES),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
@@ -68,7 +70,7 @@ public class Print {
 								{0},{1},DEGREE,{3}
 								{0},{1},PROTECTION,{4}
 								""",
-						((Math.ceil((float) (i + 1) / Main.NUM_GRAPHS) / Main.K_INCREMENTS) * Main.MAX_K),
+						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS) / Driver.K_INCREMENTS) * Driver.MAX_K),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
@@ -80,7 +82,7 @@ public class Print {
 								{0},{1},DEGREE,{3}
 								{0},{1},PROTECTION,{4}
 								""",
-						((Math.ceil((float) (i + 1) / Main.NUM_GRAPHS))),
+						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS))),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
@@ -173,9 +175,9 @@ public class Print {
 		System.out.println(Winner.getWinners(filePath + "Data.csv", graphFile)[2]);
 
 		for (Model model : models) {
-			new Chart("Defence Strategy Comparison", model.getGraph(), "INFECTED", protection, filePath, thisRound);
-			new Chart("Defence Strategy Comparison", model.getGraph(), "PROTECTED", protection, filePath, thisRound);
-			new Chart("Defence Strategy Comparison", model.getGraph(), "END TURN", protection, filePath, thisRound);
+			new StdChart("Defence Strategy Comparison", model.getGraph(), "INFECTED", protection, filePath, thisRound);
+			new StdChart("Defence Strategy Comparison", model.getGraph(), "PROTECTED", protection, filePath, thisRound);
+			new StdChart("Defence Strategy Comparison", model.getGraph(), "END TURN", protection, filePath, thisRound);
 		}
 	}
 

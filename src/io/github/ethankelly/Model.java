@@ -145,7 +145,7 @@ public class Model {
 	                                     PrintStream overallWin,
 	                                     PrintStream overallWinData) throws IOException {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
-		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Main.NUM_GRAPHS;
+		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
 
 		createDirectories(path);
 
@@ -192,15 +192,15 @@ public class Model {
 
 			// Update the overall results in the Main class attributes
 			for (int j = 0; j < winRandom.length; j++) {
-				Main.winRandom[j] += winRandom[j];
-				Main.winMixed[j] += winMixed[j];
-				Main.winDeterministic[j] += winDeterministic[j];
+				Driver.winRandom[j] += winRandom[j];
+				Driver.winMixed[j] += winMixed[j];
+				Driver.winDeterministic[j] += winDeterministic[j];
 			}
 
 			// Add to the list of winning results
-			Main.random.add(winRandom);
-			Main.mixed.add(winMixed);
-			Main.deterministic.add(winDeterministic);
+			Driver.random.add(winRandom);
+			Driver.mixed.add(winMixed);
+			Driver.deterministic.add(winDeterministic);
 
 			System.out.println(Winner.getReadableOverallWinners(graphName, winRandom, winMixed, winDeterministic));
 
@@ -215,22 +215,22 @@ public class Model {
 	private static Graph getGraph(String graphName) {
 		// Generate the graph corresponding to the supplied graph name
 		return switch (graphName.toLowerCase()) {
-			case "complete" -> GraphGenerator.complete(Main.NUM_VERTICES);
-			case "tree" -> GraphGenerator.tree(Main.NUM_VERTICES);
-			case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Main.NUM_VERTICES);
-			case "path" -> GraphGenerator.path(Main.NUM_VERTICES);
-			case "cycle" -> GraphGenerator.cycle(Main.NUM_VERTICES);
-			case "star" -> GraphGenerator.star(Main.NUM_VERTICES);
-			case "wheel" -> GraphGenerator.wheel(Main.NUM_VERTICES);
-			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Main.NUM_VERTICES, Main.P);
-			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.P);
-			case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2);
-			case "regular", "k-regular" -> GraphGenerator.regular(Main.NUM_VERTICES, Main.K);
-			case "simple" -> GraphGenerator.simple(Main.NUM_VERTICES, Main.NUM_EDGES);
-			case "bipartite" -> GraphGenerator.bipartite(Main.NUM_VERTICES_1, Main.NUM_VERTICES_2, Main.NUM_EDGES);
-			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Main.NUM_VERTICES, Main.NUM_EDGES);
-			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Main.NUM_VERTICES, Main.NUM_EDGES);
-			case "preferential attachment", "barabási–albert" -> GraphGenerator.preferentialAttachment(Main.NUM_VERTICES, Main.INITIAL_NUM_VERTICES, Main.OFFSET_EXP, Main.MIN_DEGREE);
+			case "complete" -> GraphGenerator.complete(Driver.NUM_VERTICES);
+			case "tree" -> GraphGenerator.tree(Driver.NUM_VERTICES);
+			case "binary-tree", "binary tree" -> GraphGenerator.binaryTree(Driver.NUM_VERTICES);
+			case "path" -> GraphGenerator.path(Driver.NUM_VERTICES);
+			case "cycle" -> GraphGenerator.cycle(Driver.NUM_VERTICES);
+			case "star" -> GraphGenerator.star(Driver.NUM_VERTICES);
+			case "wheel" -> GraphGenerator.wheel(Driver.NUM_VERTICES);
+			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Driver.NUM_VERTICES, Driver.P);
+			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, Driver.P);
+			case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2);
+			case "regular", "k-regular" -> GraphGenerator.regular(Driver.NUM_VERTICES, Driver.K);
+			case "simple" -> GraphGenerator.simple(Driver.NUM_VERTICES, Driver.NUM_EDGES);
+			case "bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, Driver.NUM_EDGES);
+			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Driver.NUM_VERTICES, Driver.NUM_EDGES);
+			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Driver.NUM_VERTICES, Driver.NUM_EDGES);
+			case "preferential attachment", "barabási–albert" -> GraphGenerator.preferentialAttachment(Driver.NUM_VERTICES, Driver.INITIAL_NUM_VERTICES, Driver.OFFSET_EXP, Driver.MIN_DEGREE);
 			default -> throw new IllegalStateException("Unexpected value: " + graphName);
 		};
 	}
