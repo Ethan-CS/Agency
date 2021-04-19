@@ -7,8 +7,8 @@ import java.util.List;
 
 public class Main {
 	/* General */
-	public static final int NUM_VERTICES = 50; // Number of vertices
-	public static final int NUM_GRAPHS = 10; // Number of graphs to generate in each increment
+	public static final int NUM_VERTICES = 20; // Number of vertices
+	public static final int NUM_GRAPHS = 1; // Number of graphs to generate in each increment
 	/* Erdős–Rényi graphs */
 	public static final int P_INCREMENTS = 20; // Increments to vary probability over.
 	public static final double MAX_PROBABILITY = 0.20; // Maximum probability

@@ -1,5 +1,7 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.std_lib.StdOut;
+
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -52,7 +54,7 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 	 */
 	public static void testMethods() {
 		Set<String> set = new Set<>();
-		Std.StdOut.println("set = " + set);
+		StdOut.println("set = " + set);
 
 		// insert some keys
 		set.add("www.cs.princeton.edu");
@@ -75,30 +77,30 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 		set.add("www.iitb.ac.in");
 
 
-		Std.StdOut.println(set.contains("www.cs.princeton.edu"));
-		Std.StdOut.println(!set.contains("www.harvardsucks.com"));
-		Std.StdOut.println(set.contains("www.simpsons.com"));
-		Std.StdOut.println();
+		StdOut.println(set.contains("www.cs.princeton.edu"));
+		StdOut.println(!set.contains("www.harvardsucks.com"));
+		StdOut.println(set.contains("www.simpsons.com"));
+		StdOut.println();
 
-		Std.StdOut.println("ceiling(www.simpsonr.com) = " + set.ceiling("www.simpsonr.com"));
-		Std.StdOut.println("ceiling(www.simpsons.com) = " + set.ceiling("www.simpsons.com"));
-		Std.StdOut.println("ceiling(www.simpsont.com) = " + set.ceiling("www.simpsont.com"));
-		Std.StdOut.println("floor(www.simpsonr.com)   = " + set.floor("www.simpsonr.com"));
-		Std.StdOut.println("floor(www.simpsons.com)   = " + set.floor("www.simpsons.com"));
-		Std.StdOut.println("floor(www.simpsont.com)   = " + set.floor("www.simpsont.com"));
-		Std.StdOut.println();
+		StdOut.println("ceiling(www.simpsonr.com) = " + set.ceiling("www.simpsonr.com"));
+		StdOut.println("ceiling(www.simpsons.com) = " + set.ceiling("www.simpsons.com"));
+		StdOut.println("ceiling(www.simpsont.com) = " + set.ceiling("www.simpsont.com"));
+		StdOut.println("floor(www.simpsonr.com)   = " + set.floor("www.simpsonr.com"));
+		StdOut.println("floor(www.simpsons.com)   = " + set.floor("www.simpsons.com"));
+		StdOut.println("floor(www.simpsont.com)   = " + set.floor("www.simpsont.com"));
+		StdOut.println();
 
-		Std.StdOut.println("set = " + set);
-		Std.StdOut.println();
+		StdOut.println("set = " + set);
+		StdOut.println();
 
 		// print out all keys in this set in lexicographic order
 		for (String s : set) {
-			Std.StdOut.println(s);
+			StdOut.println(s);
 		}
 
-		Std.StdOut.println();
+		StdOut.println();
 		Set<String> set2 = new Set<>(set);
-		Std.StdOut.println(set.equals(set2));
+		StdOut.println(set.equals(set2));
 	}
 
 	/**
@@ -388,8 +390,8 @@ public class Set<Key extends Comparable<Key>> implements Iterable<Key> {
 			MinPriorityQueue<Integer> pq = new MinPriorityQueue<>();
 			int[] toAdd = new int[] {0, 1, 1, 2, 3, 5, 8, 13, 21};
 			for (int i : toAdd) pq.insert(i);
-			Std.StdOut.print(pq.delMin() + " ");
-			Std.StdOut.println("(" + pq.size() + " left on pq)");
+			StdOut.print(pq.delMin() + " ");
+			StdOut.println("(" + pq.size() + " left on pq)");
 		}
 
 		/**

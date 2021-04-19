@@ -26,9 +26,27 @@ import java.util.stream.IntStream;
 @SuppressWarnings("unused")
 public class Graph {
 
+	/**
+	 * The name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
+	 * tree or a simple graph.
+	 */
 	private String name;
+
+	/**
+	 * The number of vertices (nodes) in the graph object.
+	 */
 	private int numVertices;
+
+	/**
+	 * The number of edges in the graph object.
+	 */
 	private int numEdges;
+
+	/**
+	 * An adjacency matrix represents a (finite) graph by indicating whether a pair of vertices share an edge between
+	 * them. At the intersection of row i, column j, if the value is 1 there is an edge from i to j and zero means there
+	 * is no such edge.
+	 */
 	private boolean[][] adjMatrix;
 
 	/**
@@ -180,20 +198,13 @@ public class Graph {
 	}
 
 	/**
-	 * Sets the number of vertices in a given graph.
-	 *
-	 * @param numVertices the number of vertices to be included in the graph.
+	 * @param numVertices the number of vertices to be included in the current graph.
 	 */
 	public void setNumVertices(int numVertices) {
 		this.numVertices = numVertices;
 	}
 
 	/**
-	 * An adjacency matrix represents a (finite) graph by indicating whether a pair of vertices share an edge between
-	 * them. At the intersection of row i, column j, if the value is 1 there is an edge from i to j and if it's zero
-	 * then there is no such edge. In our uses, graphs will mostly be bidirectional, meaning this value will be the same
-	 * in row i, column j and row j, column i.
-	 *
 	 * @return the adjacency matrix of the graph
 	 */
 	public boolean[][] getAdjMatrix() {
@@ -201,8 +212,6 @@ public class Graph {
 	}
 
 	/**
-	 * Some methods update the adjacency matrix when called - this method makes this update.
-	 *
 	 * @param adjMatrix the updated version of the adjacency matrix to set.
 	 */
 	public void setAdjMatrix(boolean[][] adjMatrix) {
@@ -226,8 +235,10 @@ public class Graph {
 	 * @param numVertices the number of vertices to append to the graph.
 	 */
 	public void appendVertices(int numVertices) {
-		if (numVertices < 0) throw new IllegalArgumentException("Number of vertices to add must be a positive integer");
+		assert numVertices >= 0 : "Number of vertices to add must be a positive integer";
+		// Create a new graph object with the new number of vertices
 		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
+		// Ensure all original edges are in the new graph instance
 		for (int i = 0; i < this.getNumVertices(); i++) {
 			for (int j = 0; j < this.getNumVertices(); j++) {
 				if (this.isEdge(i, j)) that.addEdge(i, j);
@@ -238,9 +249,6 @@ public class Graph {
 	}
 
 	/**
-	 * The name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
-	 * tree or a simple graph.
-	 *
 	 * @return the name of the current graph.
 	 */
 	public String getName() {
@@ -248,9 +256,6 @@ public class Graph {
 	}
 
 	/**
-	 * She name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
-	 * tree or a simple graph. This method sets the name of the graph to the specified name.
-	 *
 	 * @param name the name to assign to the current graph.
 	 */
 	public void setName(String name) {
@@ -274,9 +279,7 @@ public class Graph {
 	}
 
 	/**
-	 * Given a number of edges to associate with a given graph, updates the associated attribute.
-	 *
-	 * @param numEdges the number of edges to associate with the given graph.
+	 * @param numEdges the number of edges to associate with the current graph.
 	 */
 	public void setNumEdges(int numEdges) {
 		this.numEdges = numEdges;
