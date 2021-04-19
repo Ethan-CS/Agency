@@ -9,6 +9,7 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.IntStream;
@@ -81,6 +82,7 @@ public class GraphGenerator {
 				  13 * Regular (regularly uniform k-regular graph)
 				  14 * Tree (uniformly random tree, generated using Prüfer sequence)
 				  15 * A Barabási–Albert-generated preferential attachment graph (can be non-linear)
+				  16 * A Watts-Strogatz model generated small-world graph.
 				 Enter the number corresponding to your selected graph to generate it.""");
 		int selection = s.nextInt(); // User selection
 		switch (selection) {
@@ -155,17 +157,51 @@ public class GraphGenerator {
 			case 15 -> { // Barabási–Albert Preferential Attachment
 				System.out.println("You have selected a Barabási–Albert-generated preferential attachment graph" +
 				                   "\nPlease enter an initial number of vertices.");
-				int initialNumVertices = s.nextInt();
+				int initialNumVertices = 0;
+				try {
+					initialNumVertices = s.nextInt();
+				} catch (InputMismatchException e) {
+					System.out.println("The initial number of vertices should be a positive integer" + e);
+				}
 				System.out.println("""
 						Please enter a positive offset exponent, a. Some tips:\s
 						 * a ≠ 1 results in non-linear preferential attachment.
 						 * 0 < a < 1 is sub-linear
 						 * a = 1 reduces attachment probability to that of the Barabási–Albert model (linear)
 						 * a > 1 is super-linear.""");
-				int offsetExponent = s.nextInt();
+				double offsetExponent = 0;
+				try {
+					offsetExponent = s.nextInt();
+				} catch (InputMismatchException e) {
+					System.out.println("The offset exponent should be a floating point value" + e);
+				}
 				System.out.println("Finally, please enter a minimum degree for each vertex in the generated graph.");
-				int minDegree = s.nextInt();
+				int minDegree = 0;
+				try {
+					minDegree = s.nextInt();
+				} catch (InputMismatchException e) {
+					System.out.println("The minimum degree should be a positive integer" + e);
+				}
 				g = preferentialAttachment(numVertices, initialNumVertices, offsetExponent, minDegree);
+			}
+			case 16 -> { // Watts-Strogatz (small-world)
+				System.out.println("You have selected a Watts-Strogatz-generated graph (with mall-world properties)." +
+				                   "\nPlease enter the number of closest neighbours each vertex should attach to" +
+				                   "initially.");
+				int k = 0;
+				try {
+					k = s.nextInt();
+				} catch (InputMismatchException e) {
+					System.out.println("This should have been a positive integer" + e);
+				}
+				System.out.println("Please enter the probability of rewiring each edge in the graph.");
+				float p = 0;
+				try {
+					p = s.nextFloat();
+				} catch (InputMismatchException e) {
+					System.out.println("This should have been a floating point (decimal) value" + e);
+				}
+				g = wattsStrogatzGraphGenerator(numVertices, k, p);
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + selection);
 		}
