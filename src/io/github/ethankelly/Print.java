@@ -1,5 +1,7 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.model_params.AgentParams;
+import io.github.ethankelly.model_params.AllocationParams;
 import io.github.ethankelly.std_lib.StdChart;
 
 import java.io.FileNotFoundException;
@@ -47,9 +49,9 @@ public class Print {
 						String.format("%.2f", (float) (Math.ceil(
 								(float) (i + 1) / Driver.NUM_GRAPHS) / Driver.P_INCREMENTS) * Driver.MAX_PROBABILITY),
 						allocation.toUpperCase(),
-						array[Defence.PROXIMITY.getValue()],
-						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
+						array[AgentParams.Defence.PROXIMITY.getValue()],
+						array[AgentParams.Defence.DEGREE.getValue()],
+						array[AgentParams.Defence.PROTECTION.getValue()]
 				);
 			} else if (GraphGenerator.requiresEdgesToGenerate(graphName)) {
 				message = MessageFormat.format("""
@@ -60,9 +62,9 @@ public class Print {
 						((Math.ceil(
 								(float) ((i + 1)) / Driver.NUM_GRAPHS) / (Driver.MAX_EDGES / Driver.EDGE_INCREMENTS)) * Driver.MAX_EDGES),
 						allocation.toUpperCase(),
-						array[Defence.PROXIMITY.getValue()],
-						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
+						array[AgentParams.Defence.PROXIMITY.getValue()],
+						array[AgentParams.Defence.DEGREE.getValue()],
+						array[AgentParams.Defence.PROTECTION.getValue()]
 				);
 			} else if (GraphGenerator.requiresKToGenerate(graphName)) {
 				message = MessageFormat.format("""
@@ -72,9 +74,9 @@ public class Print {
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS) / Driver.K_INCREMENTS) * Driver.MAX_K),
 						allocation.toUpperCase(),
-						array[Defence.PROXIMITY.getValue()],
-						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
+						array[AgentParams.Defence.PROXIMITY.getValue()],
+						array[AgentParams.Defence.DEGREE.getValue()],
+						array[AgentParams.Defence.PROTECTION.getValue()]
 				);
 			} else if (graphName.equalsIgnoreCase("Preferential Attachment")) {
 				message = MessageFormat.format("""
@@ -84,9 +86,9 @@ public class Print {
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS))),
 						allocation.toUpperCase(),
-						array[Defence.PROXIMITY.getValue()],
-						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
+						array[AgentParams.Defence.PROXIMITY.getValue()],
+						array[AgentParams.Defence.DEGREE.getValue()],
+						array[AgentParams.Defence.PROTECTION.getValue()]
 				);
 			} else {
 				message = MessageFormat.format("""
@@ -95,9 +97,9 @@ public class Print {
 								{0},PROTECTION,{3}
 								""",
 						allocation.toUpperCase(),
-						array[Defence.PROXIMITY.getValue()],
-						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
+						array[AgentParams.Defence.PROXIMITY.getValue()],
+						array[AgentParams.Defence.DEGREE.getValue()],
+						array[AgentParams.Defence.PROTECTION.getValue()]
 				);
 			}
 			System.out.print(message);
@@ -122,8 +124,8 @@ public class Print {
 	                                           PrintStream[] data,
 	                                           PrintStream[] winner) throws IOException {
 
-		for (int j = 0; j < Protection.values().length; j++) {
-			String[] modelResults = Model.runModels(models, Protection.getProtection(j));
+		for (int j = 0; j < AllocationParams.Protection.values().length; j++) {
+			String[] modelResults = Model.runModels(models, AllocationParams.Protection.getProtection(j));
 
 			System.setOut(data[j]);
 			System.out.println(modelResults[0]);
@@ -150,7 +152,7 @@ public class Print {
 	 */
 	@SuppressWarnings("unused")
 	public static void printModelOutput(Model[] models,
-	                                    Protection protection,
+	                                    AllocationParams.Protection protection,
 	                                    String filePath,
 	                                    int thisRound,
 	                                    PrintStream readable,

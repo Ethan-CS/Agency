@@ -1,5 +1,6 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.model_params.AgentParams;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -58,9 +59,9 @@ public class Winner {
 		// Initialise an array with size equal to the number of strategies used in the models.
 		long[] toReturn = new long[Model.NUM_STRATEGIES];
 		// Add each result to the appropriate position in the array
-		toReturn[Defence.PROXIMITY.getValue()] = proximity;
-		toReturn[Defence.DEGREE.getValue()] = degree;
-		toReturn[Defence.PROTECTION.getValue()] = protection;
+		toReturn[AgentParams.Defence.PROXIMITY.getValue()] = proximity;
+		toReturn[AgentParams.Defence.DEGREE.getValue()] = degree;
+		toReturn[AgentParams.Defence.PROTECTION.getValue()] = protection;
 
 		return toReturn;
 	}
@@ -313,17 +314,17 @@ public class Winner {
 	public static String getReadableOverallWinners(String graphName, long[] winRandom, long[] winMixed, long[] winDeterministic) {
 		return "# " + graphName + " " + "Model Results\n\n" +
 		       "## Random\n" +
-		       " * " + Defence.PROXIMITY + ": " + winRandom[Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + Defence.DEGREE + ": " + winRandom[Defence.DEGREE.getValue()] + "\n" +
-		       " * " + Defence.PROTECTION + ": " + winRandom[Defence.PROTECTION.getValue()] +
+		       " * " + AgentParams.Defence.PROXIMITY + ": " + winRandom[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.DEGREE + ": " + winRandom[AgentParams.Defence.DEGREE.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.PROTECTION + ": " + winRandom[AgentParams.Defence.PROTECTION.getValue()] +
 		       "\n\n## Mixed\n" +
-		       " * " + Defence.PROXIMITY + ": " + winMixed[Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + Defence.DEGREE + ": " + winMixed[Defence.DEGREE.getValue()] + "\n" +
-		       " * " + Defence.PROTECTION + ": " + winMixed[Defence.PROTECTION.getValue()] +
+		       " * " + AgentParams.Defence.PROXIMITY + ": " + winMixed[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.DEGREE + ": " + winMixed[AgentParams.Defence.DEGREE.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.PROTECTION + ": " + winMixed[AgentParams.Defence.PROTECTION.getValue()] +
 		       "\n\n## Deterministic\n" +
-		       " * " + Defence.PROXIMITY + ": " + winDeterministic[Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + Defence.DEGREE + ": " + winDeterministic[Defence.DEGREE.getValue()] + "\n" +
-		       " * " + Defence.PROTECTION + ": " + winDeterministic[Defence.PROTECTION.getValue()] + "\n\n";
+		       " * " + AgentParams.Defence.PROXIMITY + ": " + winDeterministic[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.DEGREE + ": " + winDeterministic[AgentParams.Defence.DEGREE.getValue()] + "\n" +
+		       " * " + AgentParams.Defence.PROTECTION + ": " + winDeterministic[AgentParams.Defence.PROTECTION.getValue()] + "\n\n";
 	}
 
 	/**
@@ -348,14 +349,14 @@ public class Winner {
 						DETERMINISTIC,PROXIMITY,{6}
 						DETERMINISTIC,DEGREE,{7}
 						DETERMINISTIC,PROTECTION,{8}""",
-				winRandom[Defence.PROXIMITY.getValue()],
-				winRandom[Defence.DEGREE.getValue()],
-				winRandom[Defence.PROTECTION.getValue()],
-				winMixed[Defence.PROXIMITY.getValue()],
-				winMixed[Defence.DEGREE.getValue()],
-				winMixed[Defence.PROTECTION.getValue()],
-				winDeterministic[Defence.PROXIMITY.getValue()],
-				winDeterministic[Defence.DEGREE.getValue()],
-				winDeterministic[Defence.PROTECTION.getValue()]);
+				winRandom[AgentParams.Defence.PROXIMITY.getValue()],
+				winRandom[AgentParams.Defence.DEGREE.getValue()],
+				winRandom[AgentParams.Defence.PROTECTION.getValue()],
+				winMixed[AgentParams.Defence.PROXIMITY.getValue()],
+				winMixed[AgentParams.Defence.DEGREE.getValue()],
+				winMixed[AgentParams.Defence.PROTECTION.getValue()],
+				winDeterministic[AgentParams.Defence.PROXIMITY.getValue()],
+				winDeterministic[AgentParams.Defence.DEGREE.getValue()],
+				winDeterministic[AgentParams.Defence.PROTECTION.getValue()]);
 	}
 }

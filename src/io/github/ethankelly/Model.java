@@ -1,5 +1,7 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.model_params.AgentParams;
+import io.github.ethankelly.model_params.AllocationParams;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.jfree.data.category.CategoryDataset;
@@ -31,7 +33,7 @@ import java.util.stream.IntStream;
  */
 public class Model {
 	// The number of strategies that can be used to deploy defence
-	public static final int NUM_STRATEGIES = Defence.values().length;
+	public static final int NUM_STRATEGIES = AgentParams.Defence.values().length;
 	// Underlying graph the model runs on
 	private Graph graph;
 	// Agents assigned to each graph vertex
@@ -84,7 +86,7 @@ public class Model {
 	 * the second element a human-readable string to print to a human-readable file (provided this would not be
 	 * excessively large).
 	 */
-	public static String[] runModels(Model[] models, Protection protectionType) {
+	public static String[] runModels(Model[] models, AllocationParams.Protection protectionType) {
 		// Print headings for data CSV file
 		StringBuilder data = new StringBuilder();
 		StringBuilder readable = new StringBuilder();
@@ -105,7 +107,7 @@ public class Model {
 
 			for (int j = 0; j < models.length; j++) {
 				// Run the models
-				String[] result = models[j].runTest(totalDefence, probInfection, Defence.getDefence(j));
+				String[] result = models[j].runTest(totalDefence, probInfection, AgentParams.Defence.getDefence(j));
 				// 0 - data, 1 - readable
 				data.append(result[0]).append("\n");
 				readable.append(result[1]).append("\n");
@@ -258,7 +260,7 @@ public class Model {
 	 */
 	private List<Agent> assignAgents(int numVertices) {
 		List<Agent> agents = IntStream.range(0, numVertices)
-				.mapToObj(i -> new Agent(i, 0.0, 0.0, State.SUSCEPTIBLE))
+				.mapToObj(i -> new Agent(i, 0.0, 0.0, AgentParams.State.SUSCEPTIBLE))
 				.collect(Collectors.toList());
 		this.agents = agents;
 		return agents;
@@ -316,15 +318,15 @@ public class Model {
 	 *                       be determined randomly, deterministically using proximity to infection or a blend of both
 	 *                       determinations).
 	 */
-	public void initialiseModel(int outbreak, Protection protectionType) {
+	public void initialiseModel(int outbreak, AllocationParams.Protection protectionType) {
 		// Initialise a list of agents given the starting state of the graph..
 		for (int j = 0; j < this.getNumVertices(); j++) {
-			this.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+			this.getAgents().set(j, new Agent(j, 0, 0, AgentParams.State.SUSCEPTIBLE));
 			this.getAgents().get(j).setPeril(this.getAgents().get(j).perilRating(new int[] {outbreak}, this.getGraph()));
 			this.getAgents().get(j).setProtection(this.getAgents().get(j).protectionRating(protectionType));
 			this.getAgents().get(j).setState(this.getAgents().get(j).findState(new int[] {outbreak}, this));
 		}
-		this.getAgents().get(outbreak).setState(State.INFECTED);
+		this.getAgents().get(outbreak).setState(AgentParams.State.INFECTED);
 	}
 
 	/**
@@ -335,12 +337,12 @@ public class Model {
 	 */
 	public void initialiseIdenticalModel(int outbreak, Model that) {
 		for (int j = 0; j < this.getNumVertices(); j++) {
-			this.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
+			this.getAgents().set(j, new Agent(j, 0, 0, AgentParams.State.SUSCEPTIBLE));
 			this.getAgents().get(j).setPeril(that.getAgents().get(j).getPeril());
 			this.getAgents().get(j).setProtection(that.getAgents().get(j).getProtection());
 			this.getAgents().get(j).setState(this.getAgents().get(j).findState(new int[] {outbreak}, this));
 		}
-		this.getAgents().get(outbreak).setState(State.INFECTED);
+		this.getAgents().get(outbreak).setState(AgentParams.State.INFECTED);
 	}
 
 	/**
@@ -354,7 +356,7 @@ public class Model {
 	 * @return a string array - string at the first position is the human readable result of the test to be printed to a
 	 * Markdown file, the string at the second position is the machine readable result to be printed to a CSV file.
 	 */
-	public String[] runTest(double totalDefence, double probabilityOfInfection, Defence whichDefence) {
+	public String[] runTest(double totalDefence, double probabilityOfInfection, AgentParams.Defence whichDefence) {
 		StringBuilder data = new StringBuilder();
 		StringBuilder readable = new StringBuilder();
 
@@ -481,7 +483,7 @@ public class Model {
 	 * @param whichDefence a value corresponding to the defence strategy to use.
 	 * @return the strategy to deploy based on the defence we have chosen.
 	 */
-	public double[] runDefence(double totalDefence, Defence whichDefence) {
+	public double[] runDefence(double totalDefence, AgentParams.Defence whichDefence) {
 		// Find the agents to defend by first finding the susceptible agents (only ones we are interested in defending)
 		List<Agent> susceptibleAgents = this.getSusceptible();
 		List<Agent> toDefend = getToDefend(whichDefence);
@@ -498,7 +500,7 @@ public class Model {
 				if (this.getAgents().get(i).getProtection() + eachDefence > 1) {
 					double increase = 1 - this.getAgents().get(i).getProtection();
 					strategy[i] = increase;
-					this.getAgents().get(i).setState(State.PROTECTED);
+					this.getAgents().get(i).setState(AgentParams.State.PROTECTED);
 					susceptibleAgents.remove(this.getAgents().get(i));
 					toDefend.remove(this.getAgents().get(i));
 					// Update the remaining defence.
@@ -521,7 +523,7 @@ public class Model {
 							double increase = 1 - nextDefence.getProtection();
 							strategy[nextDefence.getVertex()] += increase;
 							// Remove fully defended agents from the susceptible state and add to protected state.
-							this.getAgents().get(nextDefence.getVertex()).setState(State.PROTECTED);
+							this.getAgents().get(nextDefence.getVertex()).setState(AgentParams.State.PROTECTED);
 							susceptibleAgents.remove(nextDefence);
 							toDefend.remove(nextDefence);
 							totalDefence -= (increase - previous);
@@ -541,7 +543,7 @@ public class Model {
 	 * Helper method - given a defence strategy, chooses the appropriate method to determine what should be defended
 	 * and returns the result of the selected method.
 	 */
-	private List<Agent> getToDefend(Defence whichDefence) {
+	private List<Agent> getToDefend(AgentParams.Defence whichDefence) {
 		return switch (whichDefence) {
 			case PROXIMITY -> findHighestPeril();
 			case DEGREE -> findHighestDegree();
@@ -560,7 +562,7 @@ public class Model {
 	private List<Agent> findHighestPeril() {
 		List<Agent> susceptibleAgents =
 				this.getAgents().stream().filter(
-						agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
 		List<Agent> toDefend = new ArrayList<>();
 		// Find the agent or agents with highest peril rating(s) in order to increase their protection.
 		double highestPeril = 0.0;
@@ -603,7 +605,7 @@ public class Model {
 	private List<Agent> findHighestDegree() {
 		List<Agent> susceptibleAgents =
 				this.getAgents().stream().filter(
-						agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
 
 		List<Agent> highestDegrees = new ArrayList<>();
 
@@ -650,7 +652,7 @@ public class Model {
 	private List<Agent> findHighestProtection() {
 		List<Agent> susceptibleAgents =
 				this.getAgents().stream().filter(
-						agent -> agent.getState() == State.SUSCEPTIBLE).collect(Collectors.toList());
+						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
 
 		List<Agent> highestProtection = new ArrayList<>();
 		// Cycle through all agents, reassign highest protection value everytime we find a greater protection rating
@@ -709,7 +711,7 @@ public class Model {
 						getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
 						willInfect(probabilityOfInfection, susceptibleAgent.getProtection())).map(infectedAgent ->
 						susceptibleAgent).forEach(toInfect::add));
-		toInfect.forEach(agent -> agent.setState(State.INFECTED));
+		toInfect.forEach(agent -> agent.setState(AgentParams.State.INFECTED));
 		return toInfect.stream().distinct().collect(Collectors.toList());
 	}
 
@@ -775,7 +777,7 @@ public class Model {
 		List<Agent> susceptibleAgents = new ArrayList<>();
 
 		for (Agent agent : agents) {
-			if (agent.getState() == State.SUSCEPTIBLE)
+			if (agent.getState() == AgentParams.State.SUSCEPTIBLE)
 				susceptibleAgents.add(agent);
 		}
 		return susceptibleAgents;
@@ -792,7 +794,7 @@ public class Model {
 		List<Agent> infectedAgents = new ArrayList<>();
 
 		for (Agent agent : agents) {
-			if (agent.getState() == State.INFECTED)
+			if (agent.getState() == AgentParams.State.INFECTED)
 				infectedAgents.add(agent);
 		}
 		return infectedAgents;
@@ -811,7 +813,7 @@ public class Model {
 		List<Agent> recoveredAgents = new ArrayList<>();
 
 		for (Agent agent : agents) {
-			if (agent.getState() == State.RECOVERED)
+			if (agent.getState() == AgentParams.State.RECOVERED)
 				recoveredAgents.add(agent);
 		}
 		return recoveredAgents;
@@ -830,7 +832,7 @@ public class Model {
 		List<Agent> protectedAgents = new ArrayList<>();
 
 		for (Agent agent : agents) {
-			if (agent.getState() == State.PROTECTED)
+			if (agent.getState() == AgentParams.State.PROTECTED)
 				protectedAgents.add(agent);
 		}
 		return protectedAgents;

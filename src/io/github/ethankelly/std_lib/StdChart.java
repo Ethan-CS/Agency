@@ -2,7 +2,7 @@ package io.github.ethankelly.std_lib;
 
 import io.github.ethankelly.Graph;
 import io.github.ethankelly.Model;
-import io.github.ethankelly.Protection;
+import io.github.ethankelly.model_params.AllocationParams;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -39,7 +39,7 @@ public class StdChart extends ApplicationFrame {
 	 * @param path           the path to the resources folder (i.e. directory containing model results).
 	 * @throws IOException if the specified files do not exist.
 	 */
-	public StdChart(String title, Graph graph, String filter, Protection protectionType, String path, int round) throws IOException {
+	public StdChart(String title, Graph graph, String filter, AllocationParams.Protection protectionType, String path, int round) throws IOException {
 		super(title);
 		String graphName = graph.getName();
 		CategoryDataset dataset = Model.getResults(filter, path, round);

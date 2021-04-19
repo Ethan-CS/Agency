@@ -1,6 +1,9 @@
 package io.github.ethankelly;
 
 
+import io.github.ethankelly.model_params.AgentParams;
+import io.github.ethankelly.model_params.AllocationParams;
+
 /**
  * The {@code Agency} class represents agents and instantiates their attributes for use in compartmental graph models of
  * contagion. This class is significant since agency is the basis and purpose of the model we are developing. Each agent
@@ -56,7 +59,7 @@ public class Agent {
 	 * compartment of the SIR model the agent belongs to and each has an associated value to make computation simpler
 	 * when updating the graph state and so on.
 	 */
-	private State state;
+	private AgentParams.State state;
 
 	/**
 	 * Class constructor.
@@ -66,7 +69,7 @@ public class Agent {
 	 * @param protection the initial protection rating of the agent (partially random, increases with peril).
 	 * @param state      the initial state of the agent.
 	 */
-	public Agent(int vertex, double peril, double protection, State state) {
+	public Agent(int vertex, double peril, double protection, AgentParams.State state) {
 		this.vertex = vertex;
 		this.peril = peril;
 		this.protection = protection;
@@ -111,14 +114,14 @@ public class Agent {
 	/**
 	 * @return the state to which the current agent belongs.
 	 */
-	public State getState() {
+	public AgentParams.State getState() {
 		return state;
 	}
 
 	/**
 	 * @param state the state into which we want to move the current agent.
 	 */
-	public void setState(State state) {
+	public void setState(AgentParams.State state) {
 		this.state = state;
 	}
 
@@ -145,7 +148,7 @@ public class Agent {
 	 * @param protectionType the method of protection determination we use (fully random, fully deterministic or mixed)
 	 * @return the updated protection rating attribute.
 	 */
-	public double protectionRating(Protection protectionType) {
+	public double protectionRating(AllocationParams.Protection protectionType) {
 		double peril = this.getPeril();
 		double baseline = Math.random();
 		double protection;
@@ -200,20 +203,20 @@ public class Agent {
 	 * @param model the current model.
 	 * @return the updated state of the agent we have determined for the current model situation.
 	 */
-	public State findState(int[] fires, Model model) {
+	public AgentParams.State findState(int[] fires, Model model) {
 		int vertex = getVertex();
 		double peril = model.getAgents().get(vertex).getPeril();
 		double protection = model.getAgents().get(vertex).getProtection();
-		State toSet = State.SUSCEPTIBLE;
+		AgentParams.State toSet = AgentParams.State.SUSCEPTIBLE;
 
 		for (int fire : fires) {
 			if (vertex == fire) {
-				toSet = State.INFECTED;
+				toSet = AgentParams.State.INFECTED;
 				break;
 			}
 		}
 		if (protection == 1.0 || peril == 0) {
-			toSet = State.PROTECTED;
+			toSet = AgentParams.State.PROTECTED;
 		}
 
 		setState(toSet);
