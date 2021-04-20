@@ -1,6 +1,7 @@
 package io.github.ethankelly;
 
 
+import io.github.ethankelly.graphs.Graph;
 import io.github.ethankelly.model_params.AgentParams;
 import io.github.ethankelly.model_params.AllocationParams;
 
@@ -161,8 +162,9 @@ public class Agent {
 				else protection = (peril == 0) ? baseline : (baseline * (1 / peril));
 			}
 			case DETERMINISTIC -> { // Fully deterministic protection rating
-				if (peril < 1) protection = peril;
-				else protection = 0.999;
+//				if (peril < 1) protection = peril;
+//				else protection = 0.999;
+				protection = 0.95 * peril;
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + protectionType);
 		}

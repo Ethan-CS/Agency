@@ -1,7 +1,11 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.graphs.Graph;
+import io.github.ethankelly.graphs.GraphGenerator;
 import io.github.ethankelly.model_params.AgentParams;
 import io.github.ethankelly.model_params.AllocationParams;
+import io.github.ethankelly.modelling.ModelEngine;
+import io.github.ethankelly.std_lib.StdRandom;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.jfree.data.category.CategoryDataset;
@@ -12,7 +16,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,71 +49,112 @@ public class Model {
 	 */
 	public Model(Graph graph) {
 		this.graph = graph;
-		// Logical test to see whether printing to readable output is feasible
-		Print.printReadable = graph.getNumVertices() < 25;
 		// This ensures only one instance is created, which we then update,
 		// rather than creating multiple instances and so on.
 		this.agents = assignAgents(graph.getNumVertices());
 	}
 
-	/**
-	 * Asks the user to input (in the standard input) a number of vertices to generate a graph and returns it as an int
-	 * value.
-	 *
-	 * @return the user input number of edges.
-	 */
-	public static int inputVertices() {
-		Scanner s = new Scanner(System.in);
-		System.out.println("Enter number of vertices:");
-		return s.nextInt();  // Return user input
-	}
 
-	/**
-	 * Asks the user to input (in the standard input) a number of edges to generate a graph and returns it as an int
-	 * value.
-	 *
-	 * @return the user input number of edges.
-	 */
-	public static int inputEdges() {
-		Scanner s = new Scanner(System.in);
-		System.out.println("Enter number of edges:");
-		return s.nextInt(); // Return user input
+	public static void runMultiGraphModel(String graphName,
+	                                      String path,
+	                                      PrintStream overallWinData) throws IOException {
+		// Check if we're dealing with the complete graph, in which case we only need to run models once.
+		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
+		createDirectories(path);
+		String[] allocationPaths = new String[] {
+				path + "/Random/Random",
+				path + "/Mixed/Mixed",
+				path + "/Deterministic/Deterministic"
+		};
+		for (int i = 0; i < bound; i++) {
+			PrintStream[] data = new PrintStream[allocationPaths.length];
+			PrintStream[] readable = new PrintStream[allocationPaths.length];
+			PrintStream[] winner = new PrintStream[allocationPaths.length];
+			for (int j = 0; j < allocationPaths.length; j++) {
+				data[j] = new PrintStream(allocationPaths[j] + "Data" + i + ".csv");
+				if (Print.printReadable) readable[j] = new PrintStream(allocationPaths[j] + "Readable" + i + ".md");
+				winner[j] = new PrintStream(allocationPaths[j] + "Winner" + i + ".csv");
+				// Print headings to each win file to avoid duplicated headings when written to again later
+				System.setOut(winner[j]);
+				System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
+			}
+			// Graph CSV file
+			Graph g = getGraph(graphName);
+			System.setOut(new PrintStream(path + "/Graph" + i + ".csv"));
+			System.out.println(Graph.makeCommaSeparated(g));
+
+			for (int j = 0; j < AllocationParams.Protection.values().length; j++) {
+				String[] modelResults = Model.runModels(g, AllocationParams.Protection.getProtection(j));
+				System.setOut(data[j]);
+				System.out.println(modelResults[0]);
+				if (Print.printReadable) {
+					System.setOut(readable[j]);
+					System.out.println(modelResults[1]);
+				}
+				System.setOut(winner[j]);
+				System.out.println(Winner.getWinners(
+						allocationPaths[j] + "Data" + i + ".csv",
+						path + "/Graph" + i + ".csv")[1]);
+			}
+		}
+
+		for (int i = 0; i < bound; i++) {
+			// Print the human readable winning strategy results to the winner readable file
+			long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
+			long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
+			long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
+			// Update the overall results in the Main class attributes
+			for (int j = 0; j < winRandom.length; j++) {
+				ModelEngine.winRandom[j] += winRandom[j];
+				ModelEngine.winMixed[j] += winMixed[j];
+				ModelEngine.winDeterministic[j] += winDeterministic[j];
+			}
+			// Add to the list of winning results
+			ModelEngine.random.add(winRandom);
+			ModelEngine.mixed.add(winMixed);
+			ModelEngine.deterministic.add(winDeterministic);
+			// Print the machine readable winning strategy results to the winner data file
+			System.setOut(overallWinData);
+			System.out.println(Winner.getCsvOverallWinners(winRandom, winMixed, winDeterministic)
+			);
+		}
+
 	}
 
 	/**
 	 * This method is used to run three models in turn, examining each of the currently available defence strategies.
 	 *
-	 * @param models         the array of models to run in parallel.
+	 * @param g              the graph underpinning our current models.
 	 * @param protectionType the method of protection allocation we use.
 	 * @return a string array of size 2, the first element being a machine-readable string to print to a CSV file and
 	 * the second element a human-readable string to print to a human-readable file (provided this would not be
 	 * excessively large).
 	 */
-	public static String[] runModels(Model[] models, AllocationParams.Protection protectionType) {
+	public static String[] runModels(Graph g, AllocationParams.Protection protectionType) {
 		// Print headings for data CSV file
 		StringBuilder data = new StringBuilder();
 		StringBuilder readable = new StringBuilder();
 		data.append("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED\n");
+		if (Print.printReadable) readable.append(new Model(g));
 
-		// Set defence and infection probabilities to 1
-		double totalDefence = 1.0, probInfection = 1.0;
-		// If graph is small enough, print readable results
-		readable.append(models[0].toString(totalDefence, probInfection));
+		// Initialise three models on the generated graph
+		Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
+
 		for (int i = 0; i < models[0].getNumVertices(); i++) {
-			// Initialise model agents
-			models[0].initialiseModel(i, protectionType);
-			for (int j = 1; j < models.length; j++) {
-				models[j].initialiseIdenticalModel(i, models[0]);
-			}
+			// Initialise models
+			Model m = new Model(models[0].getGraph());
+			m.initialiseModel(i, protectionType);
+			for (Model model : models) model.initialiseIdenticalModel(i, m);
 			// Add agent information to the readable string value
-			readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
+			if (Print.printReadable)
+				readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
 
-			for (int j = 0; j < models.length; j++) {
+			for (int j = 0; j < AllocationParams.Protection.values().length; j++) {
 				// Run the models
-				String[] result = models[j].runTest(totalDefence, probInfection, AgentParams.Defence.getDefence(j));
+				String[] result = models[j].runTest(Driver.DEFENCE_QUOTA, Driver.PROB_OF_INFECTION, AgentParams.Defence.getDefence(j));
 				// 0 - data, 1 - readable
 				data.append(result[0]).append("\n");
-				readable.append(result[1]).append("\n");
+				if (Print.printReadable) readable.append(result[1]).append("\n");
 			}
 
 		}
@@ -128,9 +172,9 @@ public class Model {
 	 * @return the results of the model that have been obtained from the CSV file.
 	 * @throws IOException if a specified file does not exist.
 	 */
-	public static CategoryDataset getResults(String filter,
-	                                         String path,
-	                                         int i) throws IOException {
+	public static CategoryDataset getResultsFromCSV(String filter,
+	                                                String path,
+	                                                int i) throws IOException {
 		// Read in the model defence results and associated graph
 		Reader in = new FileReader(path + "Data" + i + ".csv");
 		List<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in).getRecords();
@@ -142,77 +186,7 @@ public class Model {
 		return data;
 	}
 
-	public static void runMultiGraphTest(String graphName,
-	                                     String path,
-	                                     PrintStream overallWin,
-	                                     PrintStream overallWinData) throws IOException {
-		// Check if we're dealing with the complete graph, in which case we only need to run models once.
-		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
 
-		createDirectories(path);
-
-		for (int i = 0; i < bound; i++) {
-			// Graph CSV file
-			PrintStream graphFile = new PrintStream(path + "/Graph" + i + ".csv");
-			// Data files
-			PrintStream[] data = new PrintStream[] {new PrintStream(path + "/Random/RandomData" + i + ".csv"),
-					new PrintStream(path + "/Mixed/MixedData" + i + ".csv"),
-					new PrintStream(path + "/Deterministic/DeterministicData" + i + ".csv")};
-
-			PrintStream[] winner = new PrintStream[] {new PrintStream(path + "/Random/RandomWinner" + i + ".csv"),
-					new PrintStream(path + "/Mixed/MixedWinner" + i + ".csv"),
-					new PrintStream(path + "/Deterministic/DeterministicWinner" + i + ".csv")};
-
-			// Winning files (print headings to each one, to avoid duplicated headings when written to again later)
-			Arrays.stream(winner).forEach(ps -> {
-				System.setOut(ps);
-				System.out.println("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED");
-			});
-
-			Graph g = getGraph(graphName);
-
-			// Print the generated graph to the appropriate file
-			System.setOut(graphFile);
-			System.out.println(Graph.makeCommaSeparated(g));
-
-			// Initialise three models on the generated graph
-			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
-
-			// Run the models three times (for each protection allocation)
-			Print.printOverallModelOutput(models,
-					path + "/Random/Random", path + "/Graph" + i + ".csv",
-					i, data, winner);
-		}
-
-
-		for (int i = 0; i < bound; i++) {
-			System.setOut(overallWin);
-			// Print the human readable winning strategy results to the winner readable file
-			long[] winRandom = Winner.getBestStrategies(path + "/Random/RandomWinner");
-			long[] winMixed = Winner.getBestStrategies(path + "/Mixed/MixedWinner");
-			long[] winDeterministic = Winner.getBestStrategies(path + "/Deterministic/DeterministicWinner");
-
-			// Update the overall results in the Main class attributes
-			for (int j = 0; j < winRandom.length; j++) {
-				Driver.winRandom[j] += winRandom[j];
-				Driver.winMixed[j] += winMixed[j];
-				Driver.winDeterministic[j] += winDeterministic[j];
-			}
-
-			// Add to the list of winning results
-			Driver.random.add(winRandom);
-			Driver.mixed.add(winMixed);
-			Driver.deterministic.add(winDeterministic);
-
-			System.out.println(Winner.getReadableOverallWinners(graphName, winRandom, winMixed, winDeterministic));
-
-			// Print the machine readable winning strategy results to the winner data file
-			System.setOut(overallWinData);
-			System.out.println(Winner.getCsvOverallWinners(winRandom, winMixed, winDeterministic)
-			);
-		}
-
-	}
 
 	private static Graph getGraph(String graphName) {
 		// Generate the graph corresponding to the supplied graph name
@@ -224,15 +198,15 @@ public class Model {
 			case "cycle" -> GraphGenerator.cycle(Driver.NUM_VERTICES);
 			case "star" -> GraphGenerator.star(Driver.NUM_VERTICES);
 			case "wheel" -> GraphGenerator.wheel(Driver.NUM_VERTICES);
-			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Driver.NUM_VERTICES, Driver.P);
-			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, Driver.P);
+			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> GraphGenerator.erdosRenyi(Driver.NUM_VERTICES, ModelEngine.P);
+			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, ModelEngine.P);
 			case "complete-bipartite", "complete bipartite" -> GraphGenerator.completeBipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2);
-			case "regular", "k-regular" -> GraphGenerator.regular(Driver.NUM_VERTICES, Driver.K);
-			case "simple" -> GraphGenerator.simple(Driver.NUM_VERTICES, Driver.NUM_EDGES);
-			case "bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, Driver.NUM_EDGES);
-			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Driver.NUM_VERTICES, Driver.NUM_EDGES);
-			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Driver.NUM_VERTICES, Driver.NUM_EDGES);
-			case "preferential attachment", "barabási–albert" -> GraphGenerator.preferentialAttachment(Driver.NUM_VERTICES, Driver.INITIAL_NUM_VERTICES, Driver.OFFSET_EXP, Driver.MIN_DEGREE);
+			case "regular", "k-regular" -> GraphGenerator.regular(Driver.NUM_VERTICES, ModelEngine.K);
+			case "simple" -> GraphGenerator.simple(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "bipartite" -> GraphGenerator.bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, ModelEngine.NUM_EDGES);
+			case "eulerian-path", "eulerian path" -> GraphGenerator.eulerianPath(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "eulerian-cycle", "eulerian cycle" -> GraphGenerator.eulerianCycle(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "preferential attachment", "barabási–albert" -> GraphGenerator.preferentialAttachment(Driver.NUM_VERTICES, Driver.INITIAL_NUM_VERTICES, Driver.OFFSET_EXP, ModelEngine.MIN_DEGREE);
 			default -> throw new IllegalStateException("Unexpected value: " + graphName);
 		};
 	}
@@ -269,11 +243,10 @@ public class Model {
 	/**
 	 * Prints the details of the current model in a human-readable format (i.e. Markdown).
 	 *
-	 * @param totalDefence  the total defence quota assigned to the model.
-	 * @param probInfection the probability with which the infection we are modelling propagates.
 	 * @return a string to print to a Markdown file to describe the current model in a human-readable way.
 	 */
-	public String toString(double totalDefence, double probInfection) {
+	@Override
+	public String toString() {
 		Graph g = this.getGraph();
 		StringBuilder s = new StringBuilder();
 		s.append("# Readable results of SIRP defence strategies on a random graph\n");
@@ -304,8 +277,8 @@ public class Model {
 
 		s.append("\n## Model values");
 		s.append("\nThe values used in the model are:\n * Total defence quota each turn: ")
-				.append(totalDefence).append("\n * Probability with which the infection propagates: ")
-				.append(probInfection);
+				.append(Driver.DEFENCE_QUOTA).append("\n * Probability with which the infection propagates: ")
+				.append(Driver.PROB_OF_INFECTION);
 
 		return String.valueOf(s);
 	}
@@ -382,6 +355,7 @@ public class Model {
 
 		int turn = 0;
 		while (true) {
+
 			if (!this.getSusceptible().isEmpty()) {
 				// Print the strategy we performed. Each increase is to
 				// 2 dp when printed, but maintains full length in usage.
@@ -393,7 +367,6 @@ public class Model {
 				for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
 				readable.append("\n\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
 				readable.append(this.getSIRP());
-
 				turn++;
 			} else {
 				readable.append("\n\n__Nothing more to protect.__\n\nEnding model with ")
@@ -402,14 +375,15 @@ public class Model {
 						.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
 				break;
 			}
+
 			if (!this.getSusceptible().isEmpty()) {
 				List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
-				if (!toInfect.isEmpty()) {
+				if (toInfect.size() == 0) {
+					readable.append("\n\n_Nothing infected._");
+				} else {
 					readable.append("\n\n_Infecting:_ ");
 					toInfect.stream().map(agent -> agent.getVertex() + " ").forEach(readable::append);
 					readable.append("\n\n");
-				} else {
-					readable.append("\n\n_Nothing infected._");
 				}
 				readable.append(this.getSIRP());
 				turn++;
@@ -497,14 +471,14 @@ public class Model {
 			if (toDefend.contains(this.getAgents().get(i))) {
 				// If increasing protection by the calculated amount will take protection over 1, take the defence
 				// up to 1 and then redistribute the remaining defence quota amongst the other agents to defend.
-				if (this.getAgents().get(i).getProtection() + eachDefence > 1) {
+				if (this.getAgents().get(i).getProtection() + eachDefence >= 1) {
 					double increase = 1 - this.getAgents().get(i).getProtection();
 					strategy[i] = increase;
 					this.getAgents().get(i).setState(AgentParams.State.PROTECTED);
 					susceptibleAgents.remove(this.getAgents().get(i));
 					toDefend.remove(this.getAgents().get(i));
 					// Update the remaining defence.
-					totalDefence -= strategy[i];
+					totalDefence = totalDefence - strategy[i];
 				} else {
 					strategy[i] += eachDefence;
 					break;
@@ -516,7 +490,7 @@ public class Model {
 					toDefend.addAll(nextToDefend);
 					eachDefence = totalDefence / (toDefend.size());
 					for (Agent nextDefence : nextToDefend) {
-						if (nextDefence.getProtection() + eachDefence > 1) {
+						if (nextDefence.getProtection() + eachDefence >= 1) {
 							// Again, if increasing protection by the calculated amount will take protection over 1,
 							// take the defence up to 1.0 and then redistribute remaining quota.
 							double previous = strategy[nextDefence.getVertex()];
@@ -526,7 +500,7 @@ public class Model {
 							this.getAgents().get(nextDefence.getVertex()).setState(AgentParams.State.PROTECTED);
 							susceptibleAgents.remove(nextDefence);
 							toDefend.remove(nextDefence);
-							totalDefence -= (increase - previous);
+							totalDefence = totalDefence - (increase - previous);
 						} else {
 							strategy[nextDefence.getVertex()] += totalDefence;
 							break loop;
@@ -535,7 +509,7 @@ public class Model {
 				}
 			}
 		}
-		updatePeril(strategy);
+		updateRatings(strategy);
 		return strategy;
 	}
 
@@ -545,9 +519,9 @@ public class Model {
 	 */
 	private List<Agent> getToDefend(AgentParams.Defence whichDefence) {
 		return switch (whichDefence) {
-			case PROXIMITY -> findHighestPeril();
-			case DEGREE -> findHighestDegree();
-			case PROTECTION -> findHighestProtection();
+			case PROXIMITY -> findHighestPeril(getSusceptible(), true);
+			case DEGREE -> findHighestDegree(getSusceptible(), true);
+			case PROTECTION -> findHighestProtection(getSusceptible());
 		};
 	}
 
@@ -559,10 +533,7 @@ public class Model {
 	 * which of the choices has the highest degree. If there is more than one such candidate, we select the
 	 * lexicographically first agent.
 	 */
-	private List<Agent> findHighestPeril() {
-		List<Agent> susceptibleAgents =
-				this.getAgents().stream().filter(
-						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
+	private List<Agent> findHighestPeril(List<Agent> susceptibleAgents, boolean breakTies) {
 		List<Agent> toDefend = new ArrayList<>();
 		// Find the agent or agents with highest peril rating(s) in order to increase their protection.
 		double highestPeril = 0.0;
@@ -578,23 +549,7 @@ public class Model {
 		}
 		// Tie-breaker: if we have more than one vertex with highest peril rating in the model,
 		// Choose the agent at vertex with greatest degree and defend that one.
-		if (toDefend.size() > 1) {
-			int highestDegree = 0;
-			for (Agent agent : toDefend) {
-				int thisDegree = this.graph.findDegree(agent.getVertex());
-				if (thisDegree > highestDegree) highestDegree = thisDegree;
-			}
-			for (Agent agent : toDefend) {
-				int thisDegree = this.graph.findDegree(agent.getVertex());
-				if (thisDegree == highestDegree) {
-					// There may be more than one suitable candidate - select the
-					// lexicographically first vertex to defend relative agent.
-					toDefend.clear();
-					toDefend.add(agent);
-					break;
-				}
-			}
-		}
+		if (toDefend.size() > 1 && breakTies) toDefend = findHighestDegree(toDefend, false);
 		return toDefend;
 	}
 
@@ -602,12 +557,8 @@ public class Model {
 	 * Helper method: finds the highest degree vertex of the currently susceptible vertices. Here, if we have multiple
 	 * candidates for highest degree vertex, we break ties based on their proximity to the closest infected agent.
 	 */
-	private List<Agent> findHighestDegree() {
-		List<Agent> susceptibleAgents =
-				this.getAgents().stream().filter(
-						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
-
-		List<Agent> highestDegrees = new ArrayList<>();
+	private List<Agent> findHighestDegree(List<Agent> susceptibleAgents, boolean breakTies) {
+		List<Agent> toDefend = new ArrayList<>();
 
 		int highestDegree = 0;
 		for (Agent agent : susceptibleAgents) {
@@ -619,27 +570,13 @@ public class Model {
 		for (Agent agent : susceptibleAgents) {
 			int thisDegree = this.graph.findDegree(agent.getVertex());
 			if (thisDegree == highestDegree) {
-				highestDegrees.add(agent);
+				toDefend.add(agent);
 			}
 		}
 		// Tie-breaker: if we have more than one vertex with highest degree in the graph,
 		// Choose the agent with greatest peril rating and defend that one.
-		if (highestDegrees.size() > 1) {
-			double greatestPeril = 0.0;
-			for (Agent agent : highestDegrees) {
-				if (agent.getPeril() > greatestPeril) greatestPeril = agent.getPeril();
-			}
-			for (Agent agent : highestDegrees) {
-				if (agent.getPeril() == greatestPeril) {
-					// There may be more than one suitable candidate - select the
-					// lexicographically first vertex to defend relative agent.
-					highestDegrees.clear();
-					highestDegrees.add(agent);
-					break;
-				}
-			}
-		}
-		return highestDegrees;
+		if (toDefend.size() > 1 && breakTies) toDefend = findHighestPeril(toDefend, false);
+		return toDefend;
 	}
 
 	/*
@@ -649,11 +586,7 @@ public class Model {
 	 * cheapest ways to fully protect agents, so there is usually a good deal of defence quota available that will be
 	 * distributed across several candidates for cheapest protection increase.
 	 */
-	private List<Agent> findHighestProtection() {
-		List<Agent> susceptibleAgents =
-				this.getAgents().stream().filter(
-						agent -> agent.getState() == AgentParams.State.SUSCEPTIBLE).collect(Collectors.toList());
-
+	private List<Agent> findHighestProtection(List<Agent> susceptibleAgents) {
 		List<Agent> highestProtection = new ArrayList<>();
 		// Cycle through all agents, reassign highest protection value everytime we find a greater protection rating
 		double highProtection = 0.0;
@@ -674,7 +607,7 @@ public class Model {
 	/*
 	Helper method: updates the peril ratings of the current model given a particular strategy
  */
-	private void updatePeril(double[] strategy) {
+	private void updateRatings(double[] strategy) {
 		// Get the currently infected vertices, so we can re-calculate peril and assign states.
 		int[] fires = new int[this.getNumVertices()];
 		List<Agent> onFire = this.getInfected();
@@ -685,8 +618,11 @@ public class Model {
 		fires = Arrays.copyOf(fires, k);
 
 		for (int j = 0; j < this.getNumVertices(); j++) {
+			agents.get(j).setPeril(agents.get(j).perilRating(fires, this.getGraph()));
 			agents.get(j).setProtection(agents.get(j).getProtection() + strategy[j]);
-			agents.get(j).setState(agents.get(j).findState(fires, this));
+			if (agents.get(j).getState().equals(AgentParams.State.SUSCEPTIBLE)) {
+				agents.get(j).setState(agents.get(j).findState(fires, this));
+			}
 		}
 	}
 
@@ -706,12 +642,16 @@ public class Model {
 		// For each susceptible agent, if it shares an edge with an infected edge, try the probabilities and see
 		// if the susceptible agent becomes infected (represented by adding them to the toInfect list of agents).
 		List<Agent> toInfect = new ArrayList<>();
-		susceptibleAgents.forEach(susceptibleAgent ->
-				infectedAgents.stream().filter(infectedAgent ->
-						getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
-						willInfect(probabilityOfInfection, susceptibleAgent.getProtection())).map(infectedAgent ->
-						susceptibleAgent).forEach(toInfect::add));
-		toInfect.forEach(agent -> agent.setState(AgentParams.State.INFECTED));
+		for (Agent susceptibleAgent : susceptibleAgents) {
+			for (Agent infectedAgent : infectedAgents) {
+				if (getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
+				    willInfect(probabilityOfInfection, susceptibleAgent.getProtection()) &&
+				    !toInfect.contains(susceptibleAgent)) {
+					toInfect.add(susceptibleAgent);
+				}
+			}
+		}
+		this.updateRatings(new double[this.getNumVertices()]);
 		return toInfect.stream().distinct().collect(Collectors.toList());
 	}
 
@@ -720,7 +660,10 @@ public class Model {
 	 * become infected, determines whether it will become infected.
 	 */
 	private boolean willInfect(double probInfection, double defence) {
-		return (2 - probInfection - (1 - defence) < 1);
+		boolean infects = StdRandom.uniform() <= probInfection;
+		boolean contracts = !(StdRandom.uniform() < defence);
+
+		return infects && contracts;
 	}
 
 	/**

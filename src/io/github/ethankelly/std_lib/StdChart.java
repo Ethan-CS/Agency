@@ -1,7 +1,7 @@
 package io.github.ethankelly.std_lib;
 
-import io.github.ethankelly.Graph;
 import io.github.ethankelly.Model;
+import io.github.ethankelly.graphs.Graph;
 import io.github.ethankelly.model_params.AllocationParams;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -42,7 +42,7 @@ public class StdChart extends ApplicationFrame {
 	public StdChart(String title, Graph graph, String filter, AllocationParams.Protection protectionType, String path, int round) throws IOException {
 		super(title);
 		String graphName = graph.getName();
-		CategoryDataset dataset = Model.getResults(filter, path, round);
+		CategoryDataset dataset = Model.getResultsFromCSV(filter, path, round);
 		chart = createChart(dataset, filter);
 		String name;
 		switch (protectionType) {
