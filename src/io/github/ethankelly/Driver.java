@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Driver {
 	/* General */
-	public static final int NUM_VERTICES = 25; // Number of vertices
+	public static final int NUM_VERTICES = 50; // Number of vertices
 	public static final int NUM_GRAPHS = 10; // Number of graphs to generate in each increment
 	public static final double DEFENCE_QUOTA = 1;
 	public static final double PROB_OF_INFECTION = 1;
@@ -27,6 +27,7 @@ public class Driver {
 
 	/* Barabási–Albert preferential attachment graphs */
 	public static final int INITIAL_NUM_VERTICES = 10;
+
 	/* Watts-Strogatz (small-world) graph */
 	public static final int MIN_WS_DEGREE = 5;
 	public static final double OFFSET_EXP = 1.0;
@@ -40,12 +41,14 @@ public class Driver {
 
 	public static void main(String[] args) throws IOException {
 		// Logical test to see whether printing to readable output is feasible
-		Print.printReadable = NUM_VERTICES < 20;
+		Print.printReadable = false;
 		System.out.println("  ******* NEW GRAPH ******* ");
-		GRAPH_NAME = args[0];
-		System.out.println(GRAPH_NAME);
-		ModelEngine.runModelFromType();
-
+		String[] graphs = new String[]{"Erdős–Rényi", "Preferential Attachment", "Watts-Strogatz"};
+		for (String graph : graphs) {
+			GRAPH_NAME = graph;
+			System.out.println(GRAPH_NAME);
+			ModelEngine.runModelFromType();
+		}
 	}
 
 }

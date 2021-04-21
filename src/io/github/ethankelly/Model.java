@@ -51,7 +51,9 @@ public class Model {
 		this.graph = graph;
 		// This ensures only one instance is created, which we then update,
 		// rather than creating multiple instances and so on.
-		this.agents = assignAgents(graph.getNumVertices());
+		this.agents = IntStream.range(0, graph.getNumVertices())
+				.mapToObj(i -> new Agent(i, 0.0, 0.0, AgentParams.State.SUSCEPTIBLE))
+				.collect(Collectors.toList());
 	}
 
 
@@ -60,12 +62,11 @@ public class Model {
 	                                      PrintStream overallWinData) throws IOException {
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
+
 		createDirectories(path);
 		String[] allocationPaths = new String[] {
-				path + "/Random/Random",
-				path + "/Mixed/Mixed",
-				path + "/Deterministic/Deterministic"
-		};
+				path + "/Random/Random", path + "/Mixed/Mixed", path + "/Deterministic/Deterministic"};
+
 		for (int i = 0; i < bound; i++) {
 			PrintStream[] data = new PrintStream[allocationPaths.length];
 			PrintStream[] readable = new PrintStream[allocationPaths.length];
@@ -137,26 +138,22 @@ public class Model {
 		data.append("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED\n");
 		if (Print.printReadable) readable.append(new Model(g));
 
-		// Initialise three models on the generated graph
-		Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
-
-		for (int i = 0; i < models[0].getNumVertices(); i++) {
+		for (int i = 0; i < g.getNumVertices(); i++) {
+			// Initialise three models on the generated graph
+			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
 			// Initialise models
 			Model m = new Model(models[0].getGraph());
 			m.initialiseModel(i, protectionType);
 			for (Model model : models) model.initialiseIdenticalModel(i, m);
 			// Add agent information to the readable string value
-			if (Print.printReadable)
-				readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
-
+			if (Print.printReadable) readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
 			for (int j = 0; j < AllocationParams.Protection.values().length; j++) {
 				// Run the models
-				String[] result = models[j].runTest(Driver.DEFENCE_QUOTA, Driver.PROB_OF_INFECTION, AgentParams.Defence.getDefence(j));
+				String[] result = models[j].runTest(AgentParams.Defence.getDefence(j));
 				// 0 - data, 1 - readable
 				data.append(result[0]).append("\n");
 				if (Print.printReadable) readable.append(result[1]).append("\n");
 			}
-
 		}
 		return new String[] {String.valueOf(data), String.valueOf(readable)};
 	}
@@ -224,20 +221,6 @@ public class Model {
 			mixed.mkdir();
 			deter.mkdir();
 		}
-	}
-
-	/*
-	 * We set the list of agents by creating a new agent for each vertex and setting peril and protection initially to
-	 * zero and state to susceptible. We then go on to assign the actual ratings and states to each agent once we
-	 * initialise the graph and decide on a vertex location for the outbreak to begin at. This method is called only
-	 * once, at the start of the method when we do not have an instance of the field yet.
-	 */
-	private List<Agent> assignAgents(int numVertices) {
-		List<Agent> agents = IntStream.range(0, numVertices)
-				.mapToObj(i -> new Agent(i, 0.0, 0.0, AgentParams.State.SUSCEPTIBLE))
-				.collect(Collectors.toList());
-		this.agents = agents;
-		return agents;
 	}
 
 	/**
@@ -322,36 +305,35 @@ public class Model {
 	 * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
 	 * method and verify that the model runs as expected by printing to a file in a human-readable way.
 	 *
-	 * @param totalDefence           the total amount of protection improvement that can be distributed to susceptible
-	 *                               vertices each defensive turn.
-	 * @param probabilityOfInfection the probability with which the infection propagates.
 	 * @param whichDefence           the choice of defence strategy.
 	 * @return a string array - string at the first position is the human readable result of the test to be printed to a
 	 * Markdown file, the string at the second position is the machine readable result to be printed to a CSV file.
 	 */
-	public String[] runTest(double totalDefence, double probabilityOfInfection, AgentParams.Defence whichDefence) {
+	public String[] runTest(AgentParams.Defence whichDefence) {
 		StringBuilder data = new StringBuilder();
 		StringBuilder readable = new StringBuilder();
+		double totalDefence = Driver.DEFENCE_QUOTA;
+		double probOfInfection = Driver.PROB_OF_INFECTION;
 
 		int outbreak = this.getInfected().get(0).getVertex(); // TODO more than one outbreak?
 		data.append(outbreak).append(",");
 		switch (whichDefence) {
 			case PROXIMITY -> {
-				readable.append("\n#### Proximity to Infection Defence\n");
+				if (Print.printReadable) readable.append("\n#### Proximity to Infection Defence\n");
 				data.append("PROXIMITY,");
 			}
 			case DEGREE -> {
-				readable.append("\n#### Greatest Degree Defence\n");
+				if (Print.printReadable) readable.append("\n#### Greatest Degree Defence\n");
 				data.append("DEGREE,");
 			}
 			case PROTECTION -> {
-				readable.append("\n#### Highest Protection Defence\n");
+				if (Print.printReadable) readable.append("\n#### Highest Protection Defence\n");
 				data.append("PROTECTION,");
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
 		}
 
-		readable.append(this.getSIRP());
+		if (Print.printReadable) readable.append(this.getSIRP());
 
 		int turn = 0;
 		while (true) {
@@ -365,33 +347,44 @@ public class Model {
 				DecimalFormat df = new DecimalFormat("0.00");
 				int i = 0;
 				for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-				readable.append("\n\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
-				readable.append(this.getSIRP());
+				if (Print.printReadable) {
+					readable.append("\n\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
+					readable.append(this.getSIRP());
+				}
 				turn++;
 			} else {
-				readable.append("\n\n__Nothing more to protect.__\n\nEnding model with ")
-						.append(this.getProtected().size()).append(" protected and ")
-						.append(this.getInfected().size()).append(" infected vertices in ")
-						.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
+				if (Print.printReadable) {
+					readable.append("\n\n__Nothing more to protect.__\n\nEnding model with ")
+							.append(this.getProtected().size()).append(" protected and ")
+							.append(this.getInfected().size()).append(" infected vertices in ")
+							.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
+				}
 				break;
 			}
 
 			if (!this.getSusceptible().isEmpty()) {
-				List<Agent> toInfect = this.findNextBurning(probabilityOfInfection);
-				if (toInfect.size() == 0) {
+				List<Agent> toInfect = this.findNextBurning(probOfInfection);
+				if (toInfect.size() == 0 && Print.printReadable) {
 					readable.append("\n\n_Nothing infected._");
 				} else {
-					readable.append("\n\n_Infecting:_ ");
-					toInfect.stream().map(agent -> agent.getVertex() + " ").forEach(readable::append);
-					readable.append("\n\n");
+					if (Print.printReadable) {
+						readable.append("\n\n_Infecting:_ ");
+						toInfect.stream().map(agent -> agent.getVertex() + " ").forEach(readable::append);
+						readable.append("\n\n");
+					}
+					for (Agent agent : toInfect) {
+						this.getAgents().get(agent.getVertex()).setState(AgentParams.State.INFECTED);
+					}
 				}
-				readable.append(this.getSIRP());
+				if (Print.printReadable) readable.append(this.getSIRP());
 				turn++;
 			} else {
-				readable.append("\n\n__Nothing more to infect.__\n\nEnding model with ")
-						.append(this.getProtected().size()).append(" protected and ")
-						.append(this.getInfected().size()).append(" infected vertices in ")
-						.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
+				if (Print.printReadable) {
+					readable.append("\n\n__Nothing more to infect.__\n\nEnding model with ")
+							.append(this.getProtected().size()).append(" protected and ")
+							.append(this.getInfected().size()).append(" infected vertices in ")
+							.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
+				}
 				break;
 			}
 		}
@@ -420,7 +413,6 @@ public class Model {
 		Arrays.setAll(recovered, i -> this.getRecovered().get(i).getVertex());
 		int[] defended = new int[this.getProtected().size()];
 		Arrays.setAll(defended, i -> this.getProtected().get(i).getVertex());
-
 		// Return each array as a string (via a string builder)
 		s.append(" * S: ").append(Arrays.toString(susceptible)).append("\n * I: ")
 				.append(Arrays.toString(infected)).append("\n * R: ").append(Arrays.toString(recovered))
@@ -634,19 +626,19 @@ public class Model {
 	 * @return the vertices that the method determines should be burned.
 	 */
 	public List<Agent> findNextBurning(double probabilityOfInfection) {
-		// Find the currently infected (burning) vertices
+		// Find the currently infected vertices
 		List<Agent> infectedAgents = this.getInfected();
-		// Find the susceptible agents (the only agents we could infect).
+		// Find the susceptible agents (only agents we could infect).
 		List<Agent> susceptibleAgents = this.getSusceptible();
 
-		// For each susceptible agent, if it shares an edge with an infected edge, try the probabilities and see
+		// For each susceptible agent, if it shares an edge with an infected agent, try the probabilities and see
 		// if the susceptible agent becomes infected (represented by adding them to the toInfect list of agents).
 		List<Agent> toInfect = new ArrayList<>();
 		for (Agent susceptibleAgent : susceptibleAgents) {
 			for (Agent infectedAgent : infectedAgents) {
-				if (getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
-				    willInfect(probabilityOfInfection, susceptibleAgent.getProtection()) &&
-				    !toInfect.contains(susceptibleAgent)) {
+				if (!toInfect.contains(susceptibleAgent) &&
+						getGraph().isEdge(susceptibleAgent.getVertex(), infectedAgent.getVertex()) &&
+						willInfect(probabilityOfInfection, susceptibleAgent.getProtection())) {
 					toInfect.add(susceptibleAgent);
 				}
 			}
@@ -667,8 +659,7 @@ public class Model {
 	}
 
 	/**
-	 * Being a graph (or network) model, we associate each model with a {@code Graph} object. The graph a given model
-	 * utilises is saved and stored as an attribute of the model, hence the use of getters and setters to access it.
+	 * Being a graph (or network) model, we associate each model with a {@code Graph} object.
 	 *
 	 * @return the graph on which the model is based.
 	 */
@@ -677,8 +668,7 @@ public class Model {
 	}
 
 	/**
-	 * Sets a graph to the model attribute - that is, to store a graph object that we instantiate as a permanent
-	 * attribute to the model we are working on.
+	 * Store a graph object that we instantiate as a permanent attribute to the model we are working on.
 	 *
 	 * @param graph the graph to associate as an attribute to the current model.
 	 */
@@ -688,7 +678,7 @@ public class Model {
 
 	/**
 	 * We maintain a list of agents, one per vertex, that form the basis of the model. Each agent has the usual
-	 * attributes of an agent object: a vertex (where it lives), a peril rating, a protection rating and a state
+	 * attributes of an agent object: a vertex location, peril rating, protection rating and a state
 	 * (susceptible, infected, recovered or protected).
 	 *
 	 * @return the current list of agents.

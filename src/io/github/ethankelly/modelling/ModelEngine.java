@@ -109,7 +109,7 @@ public class ModelEngine {
 		dir.mkdirs();
 		// Loop through the probabilities (dictated by increments)
 		float prob = (float) (Driver.MAX_PROBABILITY / Driver.P_INCREMENTS);
-		while (P <= Driver.MAX_PROBABILITY) {
+		while (P < Driver.MAX_PROBABILITY) {
 			P = prob;
 			PrintStream winData = new PrintStream(PATH + "/" + String.format("%.2f", prob) + "WinnerData.csv");
 
