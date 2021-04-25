@@ -1,6 +1,6 @@
 package io.github.ethankelly;
 
-import io.github.ethankelly.model_params.AgentParams;
+import io.github.ethankelly.params.Defence;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -32,10 +32,8 @@ public class Winner {
 		long protection = 0;
 		long proximity = 0;
 		long degree = 0;
-
 		// Make sure we only loop for as many times as we need! (Once for complete graph)
 		int bound = dataFilePath.toLowerCase().contains("complete") ? 1 : Driver.NUM_GRAPHS;
-
 		// Loop through each graph model that was run
 		for (int i = 0; i < bound; i++) {
 			// Read in the model defence results
@@ -55,13 +53,12 @@ public class Winner {
 				}
 			}
 		}
-
 		// Initialise an array with size equal to the number of strategies used in the models.
 		long[] toReturn = new long[Model.NUM_STRATEGIES];
 		// Add each result to the appropriate position in the array
-		toReturn[AgentParams.Defence.PROXIMITY.getValue()] = proximity;
-		toReturn[AgentParams.Defence.DEGREE.getValue()] = degree;
-		toReturn[AgentParams.Defence.PROTECTION.getValue()] = protection;
+		toReturn[Defence.PROXIMITY.getValue()] = proximity;
+		toReturn[Defence.DEGREE.getValue()] = degree;
+		toReturn[Defence.PROTECTION.getValue()] = protection;
 
 		return toReturn;
 	}
@@ -156,9 +153,7 @@ public class Winner {
 	// HELPER METHODS USED TO DETERMINE WINNERS. //
 	////////////////////////////////////////////////
 
-	/*
-	    Helper method - gets the winners in a human readable format.
-	 */
+	// Gets the winners in a human readable format.
 	private static String getReadableOverallWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
 		StringBuilder s = new StringBuilder();
@@ -175,9 +170,7 @@ public class Winner {
 		return String.valueOf(s);
 	}
 
-	/*
-	    Helper method - gets the winners in a machine-readable CSV format.
-	 */
+	// Gets the winners in a machine-readable CSV format.
 	private static String getCsvOverallWinners(List<CSVRecord> winners) {
 		StringBuilder m = new StringBuilder();
 		for (CSVRecord w : winners) {
@@ -189,10 +182,8 @@ public class Winner {
 		return String.valueOf(m);
 	}
 
-	/*
-	    Helper method - returns the winners in LaTeX code (namely a tabular environment).
-	 */
-	@SuppressWarnings("SpellCheckingInspection") // IDE spellcheck doesn't like TeX code too much
+	// Returns the winners in LaTeX code (namely a tabular environment).
+	@SuppressWarnings("SpellCheckingInspection") // IDE spellcheck doesn't like TeX code...
 	private static String getTexTableWinners(List<CSVRecord> winners) {
 		// Initialise string builder to construct string to return.
 		StringBuilder t = new StringBuilder();
@@ -222,9 +213,7 @@ public class Winner {
 		return String.valueOf(t);
 	}
 
-	/*
-	    Returns the records with the fewest infections per outbreak (may be more than one for each)
-	 */
+	// Returns the records with the fewest infections per outbreak (may be more than one for each)
 	private static List<CSVRecord> findFewestInfected(List<List<CSVRecord>> byOutbreak, int highestInfected) {
 		List<CSVRecord> leastInfected = new ArrayList<>();
 		int smallest;
@@ -245,9 +234,7 @@ public class Winner {
 		return leastInfected;
 	}
 
-	/*
-	    Returns the records with the smallest turn counts per outbreak (may be more than one for each)
-	 */
+	// Returns the records with the smallest turn counts per outbreak (may be more than one for each)
 	private static List<CSVRecord> findSmallestTurnCount(List<List<CSVRecord>> byOutbreak, int highestTurnCount) {
 		List<CSVRecord> smallestTurnCounts = new ArrayList<>();
 		for (List<CSVRecord> list : byOutbreak) {
@@ -265,9 +252,7 @@ public class Winner {
 		return smallestTurnCounts;
 	}
 
-	/*
-		Returns the records with the greatest number of protections per outbreak (may be more than one)
-	 */
+	// Returns the records with the greatest number of protections per outbreak (may be more than one)
 	private static List<CSVRecord> findMostProtected(List<List<CSVRecord>> byOutbreak) {
 		List<CSVRecord> mostProtected = new ArrayList<>();
 		for (List<CSVRecord> list : byOutbreak) {
@@ -285,9 +270,7 @@ public class Winner {
 		return mostProtected;
 	}
 
-	/*
-	    Used for formatting outputs - capitalises a given word.
-	 */
+	// Used for formatting outputs - capitalises a given word.
 	private static String capitaliseWord(String str) {
 		String[] words = str.split("\\s");
 		StringBuilder capitalizeWord = new StringBuilder();
@@ -298,33 +281,6 @@ public class Winner {
 			capitalizeWord.append(first.toUpperCase()).append(afterFirst).append(" ");
 		}
 		return capitalizeWord.toString().trim();
-	}
-
-	/**
-	 * Returns a human-readable string representing the overall winners when various models have been run on a given
-	 * graph class. Each array parameter represents the number of times the named defence strategy won on the graph and
-	 * sub-categorised by defence strategies Proximity, Degree and Protection.
-	 *
-	 * @param graphName        the type of graph on which the models have been run.
-	 * @param winRandom        the random protection allocation winners, for each of the three defence strategies.
-	 * @param winMixed         the mixed protection allocation win data.
-	 * @param winDeterministic the deterministic protection allocation win data.
-	 * @return a human-readable (markdown-formatted) string representing a summary of a multi-graph test.
-	 */
-	public static String getReadableOverallWinners(String graphName, long[] winRandom, long[] winMixed, long[] winDeterministic) {
-		return "# " + graphName + " " + "Model Results\n\n" +
-		       "## Random\n" +
-		       " * " + AgentParams.Defence.PROXIMITY + ": " + winRandom[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.DEGREE + ": " + winRandom[AgentParams.Defence.DEGREE.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.PROTECTION + ": " + winRandom[AgentParams.Defence.PROTECTION.getValue()] +
-		       "\n\n## Mixed\n" +
-		       " * " + AgentParams.Defence.PROXIMITY + ": " + winMixed[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.DEGREE + ": " + winMixed[AgentParams.Defence.DEGREE.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.PROTECTION + ": " + winMixed[AgentParams.Defence.PROTECTION.getValue()] +
-		       "\n\n## Deterministic\n" +
-		       " * " + AgentParams.Defence.PROXIMITY + ": " + winDeterministic[AgentParams.Defence.PROXIMITY.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.DEGREE + ": " + winDeterministic[AgentParams.Defence.DEGREE.getValue()] + "\n" +
-		       " * " + AgentParams.Defence.PROTECTION + ": " + winDeterministic[AgentParams.Defence.PROTECTION.getValue()] + "\n\n";
 	}
 
 	/**
@@ -349,14 +305,14 @@ public class Winner {
 						DETERMINISTIC,PROXIMITY,{6}
 						DETERMINISTIC,DEGREE,{7}
 						DETERMINISTIC,PROTECTION,{8}""",
-				winRandom[AgentParams.Defence.PROXIMITY.getValue()],
-				winRandom[AgentParams.Defence.DEGREE.getValue()],
-				winRandom[AgentParams.Defence.PROTECTION.getValue()],
-				winMixed[AgentParams.Defence.PROXIMITY.getValue()],
-				winMixed[AgentParams.Defence.DEGREE.getValue()],
-				winMixed[AgentParams.Defence.PROTECTION.getValue()],
-				winDeterministic[AgentParams.Defence.PROXIMITY.getValue()],
-				winDeterministic[AgentParams.Defence.DEGREE.getValue()],
-				winDeterministic[AgentParams.Defence.PROTECTION.getValue()]);
+				winRandom[Defence.PROXIMITY.getValue()],
+				winRandom[Defence.DEGREE.getValue()],
+				winRandom[Defence.PROTECTION.getValue()],
+				winMixed[Defence.PROXIMITY.getValue()],
+				winMixed[Defence.DEGREE.getValue()],
+				winMixed[Defence.PROTECTION.getValue()],
+				winDeterministic[Defence.PROXIMITY.getValue()],
+				winDeterministic[Defence.DEGREE.getValue()],
+				winDeterministic[Defence.PROTECTION.getValue()]);
 	}
 }

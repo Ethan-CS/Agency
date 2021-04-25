@@ -3,7 +3,6 @@ package io.github.ethankelly.graphs;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-
 /**
  * The {@code Graph} class represents a graph - a collection of vertices connected by edges in some meaningful
  * configuration. While the basis for the model is agency, this agency is represented as interactions of vertices of a
@@ -22,17 +21,15 @@ import java.util.stream.IntStream;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-@SuppressWarnings("unused")
 public class Graph {
 
 	/**
-	 * The name of the graph is used to indicate what type of graph structure we specified in generation, for instance a
-	 * tree or a simple graph.
+	 * Indicates the type of graph structure we specified in generation.
 	 */
 	private String name;
 
 	/**
-	 * The number of vertices (nodes) in the graph object.
+	 * The number of vertices (nodes) in the graph.
 	 */
 	private int numVertices;
 
@@ -43,8 +40,7 @@ public class Graph {
 
 	/**
 	 * An adjacency matrix represents a (finite) graph by indicating whether a pair of vertices share an edge between
-	 * them. At the intersection of row i, column j, if the value is 1 there is an edge from i to j and zero means there
-	 * is no such edge.
+	 * them.
 	 */
 	private boolean[][] adjMatrix;
 
@@ -72,8 +68,6 @@ public class Graph {
 		boolean[][] matrix = g.getAdjMatrix();
 		// Initialise string builder - this will create the string to return
 		StringBuilder s = new StringBuilder();
-		IntStream.range(0, n - 1).forEach(k -> s.append(k).append(","));
-		s.append(n - 1).append("\n");
 		for (int i = 0; i < n; i++) {
 			boolean[] booleans = matrix[i];
 			for (int k = 0; k < booleans.length - 1; k++) {
@@ -104,7 +98,7 @@ public class Graph {
 	 * @param shortestPathSet array containing whether a shortest path exists from v to each vertex.
 	 * @return the index of the minimum value path distance from the path array.
 	 */
-	public int minDistance(int[] pathArray, Boolean[] shortestPathSet) {
+	public int minDistance(int[] pathArray, boolean[] shortestPathSet) {
 		int min = Integer.MAX_VALUE, minIndex = -1;
 		for (int i = 0; i < getNumVertices(); i++) {
 			if (!shortestPathSet[i] && pathArray[i] <= min) {
@@ -127,19 +121,13 @@ public class Graph {
 		int[][] matrix = new int[n][n];
 
 		// Convert adjacency matrix from boolean to integer (true -> 1, false -> 0)
-		// For ease of computation further into this method
-		for (int i = 0; i < n; i++)
-			for (int j = 0; j < n; j++)
-				if (adjMatrix[i][j]) matrix[i][j] = 1;
+		for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) if (adjMatrix[i][j]) matrix[i][j] = 1;
 
+		// Shortest path array contains vertices that have a shortest path,
+		// Path array contains the numerical shortest paths
+		boolean[] shortestPathSet = new boolean[n];
 		int[] pathArray = new int[n];
-
-		// Shortest path set contains vertices that have a shortest path, i.e. shortestPathSet[i] is true
-		// if i has a shortest path to the parameter 'vertex' and false otherwise.
-		Boolean[] shortestPathSet = new Boolean[n];
-
 		// Initially all distances are HUGE and shortestPathSet[] set to false
-		// I.e. no vertices have a shortest path to the parameter 'vertex'
 		for (int i = 0; i < n; i++) {
 			pathArray[i] = Integer.MAX_VALUE;
 			shortestPathSet[i] = false;
@@ -153,12 +141,12 @@ public class Graph {
 			shortestPathSet[u] = true;
 			// If vertex v is not in shortestPathSet yet, then update it
 			for (int v = 0; v < n; v++)
-				if (!shortestPathSet[v] && matrix[u][v] != 0 && pathArray[u] !=
-				                                                Integer.MAX_VALUE && pathArray[u]
-				                                                                     + matrix[u][v] < pathArray[v])
+				if (!shortestPathSet[v] && matrix[u][v] != 0 &&
+				    pathArray[u] != Integer.MAX_VALUE && pathArray[u] + matrix[u][v] < pathArray[v]) {
 					pathArray[v] = pathArray[u] + matrix[u][v];
+				}
 		}
-		// Return the array of minimum distances to each vertex from the parameter 'vertex'
+		// Return the array of minimum distances to each vertex from the param vertex
 		return pathArray;
 	}
 
@@ -187,6 +175,7 @@ public class Graph {
 		adjMat[i][j] = false;
 		adjMat[j][i] = false;
 		this.setAdjMatrix(adjMat);
+		this.setNumEdges(getNumEdges() - 1);
 	}
 
 	/**
@@ -207,7 +196,7 @@ public class Graph {
 	 * @return the adjacency matrix of the graph
 	 */
 	public boolean[][] getAdjMatrix() {
-		return adjMatrix;
+		return this.adjMatrix;
 	}
 
 	/**
@@ -225,7 +214,7 @@ public class Graph {
 	 * @return true if i and j share an edge, false otherwise
 	 */
 	public boolean isEdge(int i, int j) {
-		return getAdjMatrix()[i][j] || getAdjMatrix()[j][i];
+		return this.getAdjMatrix()[i][j] || this.getAdjMatrix()[j][i];
 	}
 
 	/**
@@ -239,9 +228,7 @@ public class Graph {
 		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
 		// Ensure all original edges are in the new graph instance
 		for (int i = 0; i < this.getNumVertices(); i++) {
-			for (int j = 0; j < this.getNumVertices(); j++) {
-				if (this.isEdge(i, j)) that.addEdge(i, j);
-			}
+			for (int j = 0; j < this.getNumVertices(); j++) if (this.isEdge(i, j)) that.addEdge(i, j);
 		}
 		this.setNumVertices(that.getNumVertices());
 		this.setAdjMatrix(that.getAdjMatrix());
@@ -296,9 +283,7 @@ public class Graph {
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < n; i++) {
 			s.append(i).append(": ");
-			for (boolean j : matrix[i]) {
-				s.append(j ? 1 : 0).append(" ");
-			}
+			for (boolean j : matrix[i]) s.append(j ? 1 : 0).append(" ");
 			s.append("\n\n");
 		}
 		return s.toString();

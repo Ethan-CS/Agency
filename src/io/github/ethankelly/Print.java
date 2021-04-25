@@ -1,7 +1,7 @@
 package io.github.ethankelly;
 
 import io.github.ethankelly.graphs.GraphGenerator;
-import io.github.ethankelly.model_params.AgentParams;
+import io.github.ethankelly.params.Defence;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -24,7 +24,7 @@ public class Print {
 	public static void printWinData(String graphName, String allocation, List<long[]> defence) throws FileNotFoundException {
 		String s = MessageFormat.format("/{0}Winner.csv", allocation);
 
-		System.setOut(new PrintStream(new FileOutputStream(io.github.ethankelly.modelling.ModelEngine.PATH + s)));
+		System.setOut(new PrintStream(new FileOutputStream(ModelEngine.PATH + s)));
 		if (GraphGenerator.requiresProbToGenerate(graphName)) {
 			System.out.println("P VALUE,PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 		} else if (GraphGenerator.requiresEdgesToGenerate(graphName)) {
@@ -47,9 +47,9 @@ public class Print {
 						String.format("%.2f", (float) (Math.ceil(
 								(float) (i + 1) / Driver.NUM_GRAPHS) / Driver.P_INCREMENTS) * Driver.MAX_PROBABILITY),
 						allocation.toUpperCase(),
-						array[AgentParams.Defence.PROXIMITY.getValue()],
-						array[AgentParams.Defence.DEGREE.getValue()],
-						array[AgentParams.Defence.PROTECTION.getValue()]
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
 				);
 			} else if (GraphGenerator.requiresEdgesToGenerate(graphName)) {
 				message = MessageFormat.format("""
@@ -60,9 +60,9 @@ public class Print {
 						((Math.ceil(
 								(float) ((i + 1)) / Driver.NUM_GRAPHS) / (Driver.MAX_EDGES / Driver.EDGE_INCREMENTS)) * Driver.MAX_EDGES),
 						allocation.toUpperCase(),
-						array[AgentParams.Defence.PROXIMITY.getValue()],
-						array[AgentParams.Defence.DEGREE.getValue()],
-						array[AgentParams.Defence.PROTECTION.getValue()]
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
 				);
 			} else if (GraphGenerator.requiresKToGenerate(graphName)) {
 				message = MessageFormat.format("""
@@ -72,9 +72,9 @@ public class Print {
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS) / Driver.K_INCREMENTS) * Driver.MAX_K),
 						allocation.toUpperCase(),
-						array[AgentParams.Defence.PROXIMITY.getValue()],
-						array[AgentParams.Defence.DEGREE.getValue()],
-						array[AgentParams.Defence.PROTECTION.getValue()]
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
 				);
 			} else if (graphName.equalsIgnoreCase("Preferential Attachment")) {
 				message = MessageFormat.format("""
@@ -84,9 +84,9 @@ public class Print {
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS))),
 						allocation.toUpperCase(),
-						array[AgentParams.Defence.PROXIMITY.getValue()],
-						array[AgentParams.Defence.DEGREE.getValue()],
-						array[AgentParams.Defence.PROTECTION.getValue()]
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
 				);
 			} else {
 				message = MessageFormat.format("""
@@ -95,9 +95,9 @@ public class Print {
 								{0},PROTECTION,{3}
 								""",
 						allocation.toUpperCase(),
-						array[AgentParams.Defence.PROXIMITY.getValue()],
-						array[AgentParams.Defence.DEGREE.getValue()],
-						array[AgentParams.Defence.PROTECTION.getValue()]
+						array[Defence.PROXIMITY.getValue()],
+						array[Defence.DEGREE.getValue()],
+						array[Defence.PROTECTION.getValue()]
 				);
 			}
 			System.out.print(message);
