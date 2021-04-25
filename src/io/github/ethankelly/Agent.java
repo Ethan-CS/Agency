@@ -2,8 +2,10 @@ package io.github.ethankelly;
 
 
 import io.github.ethankelly.graphs.Graph;
-import io.github.ethankelly.model_params.AgentParams;
-import io.github.ethankelly.model_params.AllocationParams;
+import io.github.ethankelly.params.Protection;
+import io.github.ethankelly.params.State;
+
+import java.util.Arrays;
 
 /**
  * The {@code Agency} class represents agents and instantiates their attributes for use in compartmental graph models of
@@ -15,52 +17,37 @@ import io.github.ethankelly.model_params.AllocationParams;
  *     <li> The protection rating, which is partially random but increases with peril
  *     <li> The state of the vertex - whether it is susceptible to infection, infected, recovered or defended.
  * </ul>
- *
- * <p>
- *     Each agent's attributes are based on the initial state of the graph. In the model,
- *     we choose at random an initial vertex to be the 'setOutbreak' or source node. At time 0,
- *     only the source node is infected and all others are susceptible or protected, if
- *     there is no path between them and the source node for instance. An agent can
- *     transition to the protected state by having a protection rating of 1, which happens
- *     in different ways depending on context, such as via influence exerted or because the
- *     peril rating is also high and the baseline random protection was fairly high to begin with.
- *     At each time-step, we need to determine any changes to state, protection and peril.
- * </p>
+ * Each agent's attributes are based on the initial state of the graph. In the model, we choose (either at random or
+ * sequentially) a vertex to be the source node. At time 0, only the source node is infected and all others are
+ * susceptible or protected, if there is no path between them and the source node for instance. An agent can transition
+ * to the protected state by having a protection rating of 1, which happens in different ways depending on context, such
+ * as via influence exerted or because the peril rating is also high and the baseline random protection was fairly high
+ * to begin with. At each time-step, we need to determine any changes to state, protection and peril.
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Agent {
 
 	/**
-	 * The vertex attribute of an agent indicates their location on the graph that the model uses. This, in turn, helps
-	 * determine which other agents (vertices) they are connected to, which may indicate a possible route of infection.
+	 * Indicates the agent's location on the graph that the model uses.
 	 */
 	private final int vertex;
 
 	/**
-	 * Peril rating represents the danger they are currently in. The more infected vertices within a certain proximity,
-	 * and the closer infected vertices are to the given agent, the higher the peril rating. Peril is zero if there is
-	 * no path between the vertex and an infected agent and one if the agent is in immediate danger. We assign the peril
-	 * rating of the agent based on the current graph state (as determined in the main model class) - specifically, the
-	 * agent's proximity to infected vertices.
+	 * Represents the danger the agent is currently in. The more infected vertices within a certain proximity, and the
+	 * closer infected vertices are to the given agent, the higher the peril.
 	 */
 	private double peril;
 
 	/**
-	 * The protection rating of an agent is their intrinsic inclination towards avoidance of contraction in an epidemic
-	 * scenario (e.g. related to how much contact they have daily, how much PPE they wear, etc.). Several methods update
-	 * the method, whenever the peril has been updated (i.e. the state of the graph has changed in some way, peril may
-	 * have changed and so protection also needs to be updated and set to its new value). We do not allow a protection
-	 * of rating over 1, so this method prevents the value being set from being greater than that.
+	 * The agent's intrinsic inclination towards avoidance of contraction in an epidemic scenario.
 	 */
 	private double protection;
 
 	/**
-	 * Each agent can be in one of a number of states, namely any of those in the State enum. These indicate which
-	 * compartment of the SIR model the agent belongs to and each has an associated value to make computation simpler
-	 * when updating the graph state and so on.
+	 * Each agent can be in one of a number of states indicating which compartment of the model the agent belongs to.
 	 */
-	private AgentParams.State state;
+	private State state;
 
 	/**
 	 * Class constructor.
@@ -70,7 +57,7 @@ public class Agent {
 	 * @param protection the initial protection rating of the agent (partially random, increases with peril).
 	 * @param state      the initial state of the agent.
 	 */
-	public Agent(int vertex, double peril, double protection, AgentParams.State state) {
+	public Agent(int vertex, double peril, double protection, State state) {
 		this.vertex = vertex;
 		this.peril = peril;
 		this.protection = protection;
@@ -81,14 +68,14 @@ public class Agent {
 	 * @return the vertex location of the agent.
 	 */
 	public int getVertex() {
-		return vertex;
+		return this.vertex;
 	}
 
 	/**
 	 * @return the current peril rating of the agent.
 	 */
 	public double getPeril() {
-		return peril;
+		return this.peril;
 	}
 
 	/**
@@ -102,27 +89,28 @@ public class Agent {
 	 * @return the protection rating of the current agent.
 	 */
 	public double getProtection() {
-		return protection;
+		return this.protection;
 	}
 
 	/**
 	 * @param protection the new protection to be assigned to the current agent.
 	 */
 	public void setProtection(double protection) {
-		this.protection = protection > 1 ? 1 : protection;
+		assert protection <= 1 && protection >= 0;
+		this.protection = protection;
 	}
 
 	/**
 	 * @return the state to which the current agent belongs.
 	 */
-	public AgentParams.State getState() {
-		return state;
+	public State getState() {
+		return this.state;
 	}
 
 	/**
 	 * @param state the state into which we want to move the current agent.
 	 */
-	public void setState(AgentParams.State state) {
+	public void setState(State state) {
 		this.state = state;
 	}
 
@@ -149,24 +137,18 @@ public class Agent {
 	 * @param protectionType the method of protection determination we use (fully random, fully deterministic or mixed)
 	 * @return the updated protection rating attribute.
 	 */
-	public double protectionRating(AllocationParams.Protection protectionType) {
-		double peril = this.getPeril();
-		double baseline = Math.random();
+	public double protectionRating(Protection protectionType) {
+		double peril = this.getPeril(); // How close infection is to the agent
 		double protection;
-
 		switch (protectionType) {
-			case RANDOM -> // Fully random protection rating
-					protection = baseline;
-			case MIXED -> { // Partially random, partially deterministic protection rating
+			case RANDOM -> protection = Math.random();
+			case MIXED -> {
+				double baseline = Math.random(); // Baseline random number
 				if (baseline * (1 / peril) > 1) protection = 1;
 				else protection = (peril == 0) ? baseline : (baseline * (1 / peril));
 			}
-			case DETERMINISTIC -> { // Fully deterministic protection rating
-//				if (peril < 1) protection = peril;
-//				else protection = 0.999;
-				protection = 0.95 * peril;
-			}
-			default -> throw new IllegalStateException("Unexpected value: " + protectionType);
+			case DETERMINISTIC -> protection = 0.9 * peril;
+			default -> throw new IllegalStateException("Unexpected protection type: " + protectionType);
 		}
 		this.setProtection(protection);
 		return protection;
@@ -181,17 +163,20 @@ public class Agent {
 	 * @param g     the graph associated with the model.
 	 * @return the updated peril rating, based on proximity to infection (0 - no danger, 1 - imminent danger).
 	 */
-	public double perilRating(int[] fires, Graph g) {
+	public double findPerilRating(int[] fires, Graph g) {
 		double peril;
 
-		int[] leastDistancePath = g.shortestPath(getVertex());
-		double leastDist = leastDistancePath[fires[0]];
-		//TODO make this work for more than one fire location - find closest fire, find shortest path to it
-
+		int[] shortestPath = g.shortestPath(getVertex());
+		double leastDist = shortestPath[fires[0]];
+		for (int fire : fires) {
+			if (shortestPath[fire] < leastDist && shortestPath[fire] != Integer.MAX_VALUE) {
+				leastDist = shortestPath[fire];
+			}
+		}
 		if (leastDist == 0) peril = 1.0;
-		else peril = leastDist == Integer.MAX_VALUE ? 0.0 : 1 / leastDist;
+		else peril = leastDist == Integer.MAX_VALUE ? 0.0 : (1 / leastDist);
 
-		setPeril(peril);
+		this.setPeril(peril);
 		return peril;
 	}
 
@@ -205,22 +190,12 @@ public class Agent {
 	 * @param model the current model.
 	 * @return the updated state of the agent we have determined for the current model situation.
 	 */
-	public AgentParams.State findState(int[] fires, Model model) {
+	public State findState(int[] fires, Model model) {
 		int vertex = getVertex();
 		double peril = model.getAgents().get(vertex).getPeril();
 		double protection = model.getAgents().get(vertex).getProtection();
-		AgentParams.State toSet = AgentParams.State.SUSCEPTIBLE;
-
-		for (int fire : fires) {
-			if (vertex == fire) {
-				toSet = AgentParams.State.INFECTED;
-				break;
-			}
-		}
-		if (protection == 1.0 || peril == 0) {
-			toSet = AgentParams.State.PROTECTED;
-		}
-
+		State toSet = Arrays.stream(fires).anyMatch(fire -> vertex == fire) ? State.INFECTED : State.SUSCEPTIBLE;
+		if (protection == 1.0 || peril == 0) toSet = State.PROTECTED;
 		setState(toSet);
 		return toSet;
 	}
