@@ -9,7 +9,7 @@ public class Driver {
 	/**
 	 * Number of vertices in each generated graph.
 	 */
-	public static final int NUM_VERTICES = 50;
+	public static final int NUM_VERTICES = 20;
 	/**
 	 * The number of graphs to generate per increment (where appropriate).
 	 */
@@ -25,11 +25,11 @@ public class Driver {
 	/**
 	 * The maximum probability to generate graphs for models.
 	 */
-	public static final double MAX_PROBABILITY = 1;
+	public static final double MAX_PROBABILITY = 0.9;
 	/**
 	 * The number of increments in the range of probabilities we wish to consider.
 	 */
-	public static final int P_INCREMENTS = 20;
+	public static final int P_INCREMENTS = 9;
 	/**
 	 * Partition of the vertices into two sections.
 	 */
@@ -56,11 +56,10 @@ public class Driver {
 	 *
 	 * @param args the graph type to use in the model.
 	 */
-
 	public static void main(String[] args) throws IOException {
 		// Logical test to see whether printing to readable output is feasible
 		Print.printReadable = false;
-		String[] graphs = new String[] {"Preferential Attachment"};
+		String[] graphs = new String[] {"Erdos Renyi"};
 		for (String graph : graphs) {
 			GRAPH_NAME = graph;
 			ModelEngine.runModelFromType();

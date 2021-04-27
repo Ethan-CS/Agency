@@ -1,6 +1,7 @@
 package io.github.ethankelly;
 
 import io.github.ethankelly.graphs.GraphGenerator;
+import io.github.ethankelly.params.Defence;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,8 +26,7 @@ public class ModelEngine {
 	 */
 	public static float P;
 	/**
-	 * Minimum degree for preferential attachment graphs (generated using the Barabási–Albert model or its non-linear
-	 * extension).
+	 * Minimum degree for preferential attachment graphs (generated using the Barabási–Albert model).
 	 */
 	public static int MIN_DEGREE;
 	/**
@@ -39,9 +39,9 @@ public class ModelEngine {
 	public static String PATH;
 
 	/* Store overall results */
-	public static long[] winRandom = new long[3];
-	public static long[] winMixed = new long[3];
-	public static long[] winDeterministic = new long[3];
+	public static long[] winRandom = new long[Defence.values().length];
+	public static long[] winMixed = new long[Defence.values().length];
+	public static long[] winDeterministic = new long[Defence.values().length];
 	public static List<long[]> random = new ArrayList<>();
 	public static List<long[]> mixed = new ArrayList<>();
 	public static List<long[]> deterministic = new ArrayList<>();
@@ -59,12 +59,7 @@ public class ModelEngine {
 			PrintStream winData = new PrintStream(PATH + "/" + count + "WinnerData.csv");
 			Model.runMultiGraphModel("Preferential Attachment", PATH + "/" + count, winData);
 
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("\nRunning with minimum degree = " + count);
-			System.out.println("--- Results ---" +
-			                   "\nRandom: " + Arrays.toString(winRandom) +
-			                   "\nMixed: " + Arrays.toString(winMixed) +
-			                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+			printCurrentResults("\nRunning with minimum degree = " + count);
 			MIN_DEGREE = count;
 			count += 1;
 		}
@@ -80,12 +75,10 @@ public class ModelEngine {
 		PrintStream winData = new PrintStream(PATH + "/WinnerData.csv");
 		Model.runMultiGraphModel(graphName, PATH + "/", winData);
 
-		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-		System.out.println("--- Results ---" +
-		                   "\nRandom: " + Arrays.toString(winRandom) +
-		                   "\nMixed: " + Arrays.toString(winMixed) +
-		                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+		printCurrentResults("");
 	}
+
+
 
 	static void runIntParamModels(String graphName, int max, int min, int increment) throws IOException {
 		// Write an appropriate path name for storing data and results
@@ -103,12 +96,7 @@ public class ModelEngine {
 		while (count < max) {
 			PrintStream winData = new PrintStream(PATH + "/" + count + "WinnerData.csv");
 			Model.runMultiGraphModel(graphName, PATH + "/" + count, winData);
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("\nRunning with " + paramType + " = " + count);
-			System.out.println("--- Results ---" +
-			                   "\nRandom: " + Arrays.toString(winRandom) +
-			                   "\nMixed: " + Arrays.toString(winMixed) +
-			                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+			printCurrentResults("\nRunning with " + paramType + " = " + count);
 			if (GraphGenerator.requiresEdgesToGenerate(graphName)) NUM_EDGES = count;
 			else if (GraphGenerator.requiresKToGenerate(graphName)) K = count;
 			count += increment;
@@ -133,16 +121,18 @@ public class ModelEngine {
 
 			Model.runMultiGraphModel(graphName, PATH + "/" +
 			                                    String.format("%.2f", prob), winData);
-
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("\nRunning with p = " + String.format("%.2f", prob));
-			System.out.println("--- Results ---" +
-			                   "\nRandom: " + Arrays.toString(winRandom) +
-			                   "\nMixed: " + Arrays.toString(winMixed) +
-			                   "\nDeterministic: " + Arrays.toString(winDeterministic));
-
+			printCurrentResults("\nRunning with p = " + String.format("%.2f", prob));
 			prob += (Driver.MAX_PROBABILITY / Driver.P_INCREMENTS);
 		}
+	}
+
+	private static void printCurrentResults(String extraParam) {
+		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+		if (!extraParam.isEmpty()) System.out.println(extraParam);
+		System.out.println("--- Results ---" +
+		                   "\nRandom: " + Arrays.toString(winRandom) +
+		                   "\nMixed: " + Arrays.toString(winMixed) +
+		                   "\nDeterministic: " + Arrays.toString(winDeterministic));
 	}
 
 	public static void runModelFromType() throws IOException {

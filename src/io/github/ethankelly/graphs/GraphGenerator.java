@@ -221,7 +221,7 @@ public class GraphGenerator {
 
 		for (int row = 0; row < numVertices; row++) { // Row in matrix
 			for (int column = 0; column < numVertices; column++) { // Entry in row
-				if (Integer.parseInt((matrix.get(row)).get(column)) == 1 && !g.isEdge(row, column))
+				if (Integer.parseInt((matrix.get(row)).get(column)) == 1 && !g.hasEdge(row, column))
 					g.addEdge(row, column);
 			}
 		}
@@ -653,7 +653,7 @@ public class GraphGenerator {
 		// For each vertex, rewire each of its edges with probability p
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
-				if (g.isEdge(i, j)) {
+				if (g.hasEdge(i, j)) {
 					if (Random.uniform() <= p) {
 						int randVertex;
 						do {

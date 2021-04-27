@@ -22,25 +22,20 @@ import java.util.stream.IntStream;
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
 public class Graph {
-
 	/**
-	 * Indicates the type of graph structure we specified in generation.
+	 * The type of graph structure we specified in generation.
 	 */
 	private String name;
-
 	/**
 	 * The number of vertices (nodes) in the graph.
 	 */
 	private int numVertices;
-
 	/**
 	 * The number of edges in the graph object.
 	 */
 	private int numEdges;
-
 	/**
-	 * An adjacency matrix represents a (finite) graph by indicating whether a pair of vertices share an edge between
-	 * them.
+	 * Represents a (finite) graph as a matrix with true at (i, j) if i and j share an edge, false otherwise.
 	 */
 	private boolean[][] adjMatrix;
 
@@ -56,6 +51,13 @@ public class Graph {
 		this.name = name;
 	}
 
+	public static void main(String[] args) {
+		Graph complete = GraphGenerator.complete(10);
+		Graph preferential = GraphGenerator.preferentialAttachment(10, 5, 1, 1);
+		System.out.println(complete.findDegreeDistribution());
+		System.out.println(preferential.findDegreeDistribution());
+	}
+
 	/**
 	 * Returns a string (via a string builder) to print a graph as comma separated values, with the first line being a
 	 * header, to parse in other files.
@@ -68,14 +70,16 @@ public class Graph {
 		boolean[][] matrix = g.getAdjMatrix();
 		// Initialise string builder - this will create the string to return
 		StringBuilder s = new StringBuilder();
+		s.append(0);
+		IntStream.range(1, g.getNumVertices()).forEach(v -> s.append(",").append(v));
+		s.append("\n");
 		for (int i = 0; i < n; i++) {
 			boolean[] booleans = matrix[i];
 			for (int k = 0; k < booleans.length - 1; k++) {
 				boolean j = booleans[k];
 				s.append(j ? 1 : 0).append(",");
 			}
-			s.append(matrix[i][n - 1] ? 1 : 0);
-			s.append("\n");
+			s.append(matrix[i][n - 1] ? 1 : 0).append("\n");
 		}
 		return String.valueOf(s);
 	}
@@ -87,7 +91,7 @@ public class Graph {
 	 * @return the degree of the specified vertex.
 	 */
 	public int findDegree(int vertex) {
-		return (int) IntStream.range(0, this.getNumVertices()).filter(i -> this.isEdge(vertex, i)).count();
+		return (int) IntStream.range(0, this.getNumVertices()).filter(i -> this.hasEdge(vertex, i)).count();
 	}
 
 	/**
@@ -109,45 +113,12 @@ public class Graph {
 		return minIndex;
 	}
 
-	/**
-	 * Given the current state of the model, calculates the shortest paths from a given vertex to every other vertex
-	 *
-	 * @param vertex the vertex relative to which we want to calculate paths.
-	 * @return the shortest path to each other vertex in the graph (if one exists).
-	 */
-	public int[] shortestPath(int vertex) {
-		int n = this.getNumVertices();
-		boolean[][] adjMatrix = this.getAdjMatrix();
-		int[][] matrix = new int[n][n];
+	public String findDegreeDistribution() {
+		StringBuilder degreesAsString = new StringBuilder();
+		degreesAsString.append(findDegree(0));
+		IntStream.range(1, this.getNumVertices()).forEach(v -> degreesAsString.append(",").append(findDegree(v)));
 
-		// Convert adjacency matrix from boolean to integer (true -> 1, false -> 0)
-		for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) if (adjMatrix[i][j]) matrix[i][j] = 1;
-
-		// Shortest path array contains vertices that have a shortest path,
-		// Path array contains the numerical shortest paths
-		boolean[] shortestPathSet = new boolean[n];
-		int[] pathArray = new int[n];
-		// Initially all distances are HUGE and shortestPathSet[] set to false
-		for (int i = 0; i < n; i++) {
-			pathArray[i] = Integer.MAX_VALUE;
-			shortestPathSet[i] = false;
-		}
-		pathArray[vertex] = 0; // Path between vertex and itself is always 0
-
-		// Find shortest path for all vertices
-		for (int count = 0; count < n - 1; count++) {
-			// Call minDistance to find the vertex v with minimum distance to the parameter 'vertex'
-			int u = minDistance(pathArray, shortestPathSet);
-			shortestPathSet[u] = true;
-			// If vertex v is not in shortestPathSet yet, then update it
-			for (int v = 0; v < n; v++)
-				if (!shortestPathSet[v] && matrix[u][v] != 0 &&
-				    pathArray[u] != Integer.MAX_VALUE && pathArray[u] + matrix[u][v] < pathArray[v]) {
-					pathArray[v] = pathArray[u] + matrix[u][v];
-				}
-		}
-		// Return the array of minimum distances to each vertex from the param vertex
-		return pathArray;
+		return String.valueOf(degreesAsString);
 	}
 
 	/**
@@ -179,6 +150,78 @@ public class Graph {
 	}
 
 	/**
+	 * Given the current state of the model, calculates the shortest paths from a given vertex to every other vertex
+	 *
+	 * @param vertex the vertex relative to which we want to calculate paths.
+	 * @return the shortest path to each other vertex in the graph (if one exists).
+	 */
+	public int[] shortestPath(int vertex) {
+		int n = this.getNumVertices();
+		boolean[][] adjMatrix = this.getAdjMatrix();
+		int[][] matrix = new int[n][n];
+		// Convert adjacency matrix from boolean to integer (true -> 1, false -> 0)
+		for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) if (adjMatrix[i][j]) matrix[i][j] = 1;
+		// Shortest path array contains vertices that have a shortest path,
+		// Path array contains the numerical shortest paths
+		boolean[] shortestPathSet = new boolean[n];
+		int[] pathArray = new int[n];
+		// Initially all distances are HUGE and shortestPathSet[] set to false
+		for (int i = 0; i < n; i++) {
+			pathArray[i] = Integer.MAX_VALUE;
+			shortestPathSet[i] = false;
+		}
+		pathArray[vertex] = 0; // Path between vertex and itself is always 0
+		// Find shortest path for all vertices
+		// Call minDistance to find the vertex v with minimum distance to the parameter 'vertex'
+		// If vertex v is not in shortestPathSet yet, then update it
+		IntStream.range(0, n - 1).map(count -> minDistance(pathArray, shortestPathSet)).forEach(u -> {
+			shortestPathSet[u] = true;
+			IntStream.range(0, n).filter(v ->
+					!shortestPathSet[v] && matrix[u][v] != 0 && pathArray[u] != Integer.MAX_VALUE &&
+					pathArray[u] + matrix[u][v] < pathArray[v]).forEach(v -> pathArray[v] = pathArray[u] + matrix[u][v]);
+		});
+		// Return the array of minimum distances to each vertex from the param vertex
+		return pathArray;
+	}
+
+	/**
+	 * Determines whether there exists an edge between two vertices in a graph.
+	 *
+	 * @param i first vertex
+	 * @param j second vertex
+	 * @return true if i and j share an edge, false otherwise
+	 */
+	public boolean hasEdge(int i, int j) {
+		return this.getAdjMatrix()[i][j] || this.getAdjMatrix()[j][i];
+	}
+
+	/**
+	 * Adds a given number of vertices to the current graph.
+	 *
+	 * @param numVertices the number of vertices to append to the graph.
+	 */
+	public void appendVertices(int numVertices) {
+		assert numVertices >= 0 : "Number of vertices to add must be a positive integer";
+		// Create a new graph object with the new number of vertices
+		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
+		// Ensure all original edges are in the new graph instance
+		for (int i = 0; i < this.getNumVertices(); i++) {
+			for (int j = 0; j < this.getNumVertices(); j++) if (this.hasEdge(i, j)) that.addEdge(i, j);
+		}
+		this.setNumVertices(that.getNumVertices());
+		this.setAdjMatrix(that.getAdjMatrix());
+	}
+
+	/**
+	 * Selects a random vertex from the set of vertices to begin the outbreak.
+	 *
+	 * @return a pseudo-randomly selected vertex.
+	 */
+	public int getRandomVertex() {
+		return new Random().nextInt(this.getNumVertices());
+	}
+
+	/**
 	 * @return The number of vertices in the graph.
 	 */
 	public int getNumVertices() {
@@ -200,41 +243,6 @@ public class Graph {
 	}
 
 	/**
-	 * @param adjMatrix the updated version of the adjacency matrix to set.
-	 */
-	public void setAdjMatrix(boolean[][] adjMatrix) {
-		this.adjMatrix = adjMatrix;
-	}
-
-	/**
-	 * Determines whether there exists an edge between two vertices in a graph.
-	 *
-	 * @param i first vertex
-	 * @param j second vertex
-	 * @return true if i and j share an edge, false otherwise
-	 */
-	public boolean isEdge(int i, int j) {
-		return this.getAdjMatrix()[i][j] || this.getAdjMatrix()[j][i];
-	}
-
-	/**
-	 * Adds a given number of vertices to the current graph.
-	 *
-	 * @param numVertices the number of vertices to append to the graph.
-	 */
-	public void appendVertices(int numVertices) {
-		assert numVertices >= 0 : "Number of vertices to add must be a positive integer";
-		// Create a new graph object with the new number of vertices
-		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
-		// Ensure all original edges are in the new graph instance
-		for (int i = 0; i < this.getNumVertices(); i++) {
-			for (int j = 0; j < this.getNumVertices(); j++) if (this.isEdge(i, j)) that.addEdge(i, j);
-		}
-		this.setNumVertices(that.getNumVertices());
-		this.setAdjMatrix(that.getAdjMatrix());
-	}
-
-	/**
 	 * @return the name of the current graph.
 	 */
 	public String getName() {
@@ -246,15 +254,6 @@ public class Graph {
 	 */
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	/**
-	 * Selects a random vertex from the set of vertices to begin the setOutbreak.
-	 *
-	 * @return a pseudo-randomly selected vertex between 0 and numVertices to be the source node.
-	 */
-	public int getRandomVertex() {
-		return new Random().nextInt(this.getNumVertices());
 	}
 
 	/**
@@ -272,6 +271,13 @@ public class Graph {
 	}
 
 	/**
+	 * @param adjMatrix the updated version of the adjacency matrix to set.
+	 */
+	public void setAdjMatrix(boolean[][] adjMatrix) {
+		this.adjMatrix = adjMatrix;
+	}
+
+	/**
 	 * Returns a textual representation of a graph as an adjacency matrix to be printed to the standard output.
 	 *
 	 * @return a string representation of the graph.
@@ -281,11 +287,11 @@ public class Graph {
 		int n = getNumVertices();
 		boolean[][] matrix = getAdjMatrix();
 		StringBuilder s = new StringBuilder();
-		for (int i = 0; i < n; i++) {
+		IntStream.range(0, n).forEach(i -> {
 			s.append(i).append(": ");
 			for (boolean j : matrix[i]) s.append(j ? 1 : 0).append(" ");
 			s.append("\n\n");
-		}
+		});
 		return s.toString();
 	}
 }

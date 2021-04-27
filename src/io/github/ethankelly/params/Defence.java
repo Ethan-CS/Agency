@@ -20,7 +20,11 @@ public enum Defence {
 	/**
 	 * Highest protection-based defence strategy.
 	 */
-	PROTECTION(2);
+	PROTECTION(2),
+	/**
+	 * Random protection strategy.
+	 */
+	RANDOM(3);
 
 	private final int value;
 
@@ -38,6 +42,7 @@ public enum Defence {
 			case 0 -> PROXIMITY;
 			case 1 -> DEGREE;
 			case 2 -> PROTECTION;
+			case 3 -> RANDOM;
 			default -> throw new IllegalStateException("Unexpected value: " + i);
 		};
 	}

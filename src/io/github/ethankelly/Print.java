@@ -43,14 +43,15 @@ public class Print {
 								{0},{1},PROXIMITY,{2}
 								{0},{1},DEGREE,{3}
 								{0},{1},PROTECTION,{4}
+								{0},{1},RANDOM,{5}
 								""",
 						String.format("%.2f", (float) (Math.ceil(
 								(float) (i + 1) / Driver.NUM_GRAPHS) / Driver.P_INCREMENTS) * Driver.MAX_PROBABILITY),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
-				);
+						array[Defence.PROTECTION.getValue()],
+						array[Defence.RANDOM.getValue()]);
 			} else if (GraphGenerator.requiresEdgesToGenerate(graphName)) {
 				message = MessageFormat.format("""
 								{0},{1},PROXIMITY,{2}
@@ -62,43 +63,46 @@ public class Print {
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
-				);
+						array[Defence.PROTECTION.getValue()],
+						array[Defence.RANDOM.getValue()]);
 			} else if (GraphGenerator.requiresKToGenerate(graphName)) {
 				message = MessageFormat.format("""
 								{0},{1},PROXIMITY,{2}
 								{0},{1},DEGREE,{3}
 								{0},{1},PROTECTION,{4}
+								{0},{1},RANDOM,{5}
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS) / Driver.K_INCREMENTS) * Driver.MAX_K),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
-				);
+						array[Defence.PROTECTION.getValue()],
+						array[Defence.RANDOM.getValue()]);
 			} else if (graphName.equalsIgnoreCase("Preferential Attachment")) {
 				message = MessageFormat.format("""
 								{0},{1},PROXIMITY,{2}
 								{0},{1},DEGREE,{3}
 								{0},{1},PROTECTION,{4}
+								{0},{1},RANDOM,{5}
 								""",
 						((Math.ceil((float) (i + 1) / Driver.NUM_GRAPHS))),
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
-				);
+						array[Defence.PROTECTION.getValue()],
+						array[Defence.RANDOM.getValue()]);
 			} else {
 				message = MessageFormat.format("""
 								{0},PROXIMITY,{1}
 								{0},DEGREE,{2}
 								{0},PROTECTION,{3}
+								{0},RANDOM,{4}
 								""",
 						allocation.toUpperCase(),
 						array[Defence.PROXIMITY.getValue()],
 						array[Defence.DEGREE.getValue()],
-						array[Defence.PROTECTION.getValue()]
-				);
+						array[Defence.PROTECTION.getValue()],
+						array[Defence.RANDOM.getValue()]);
 			}
 			System.out.print(message);
 		}

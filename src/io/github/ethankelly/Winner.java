@@ -24,23 +24,24 @@ public class Winner {
 	 * Reads in the winning strategy csv files from one or more model instances and returns a summary of the number of
 	 * times each strategy performed best.
 	 *
-	 * @param dataFilePath the path to the winner csv files to be parsed.
+	 * @param winFilePath the path to the winning csv files to be parsed.
 	 * @return an array of values representing the numbers of times each strategy won.
 	 * @throws IOException if the specified file does not exist or cannot be accessed.
 	 */
-	public static long[] getBestStrategies(String dataFilePath) throws IOException {
+	public static long[] getBestStrategies(String winFilePath) throws IOException {
 		long protection = 0;
 		long proximity = 0;
 		long degree = 0;
+		long random = 0;
 		// Make sure we only loop for as many times as we need! (Once for complete graph)
-		int bound = dataFilePath.toLowerCase().contains("complete") ? 1 : Driver.NUM_GRAPHS;
+		int bound = winFilePath.toLowerCase().contains("complete") ? 1 : Driver.NUM_GRAPHS;
 		// Loop through each graph model that was run
 		for (int i = 0; i < bound; i++) {
 			// Read in the model defence results
 			List<CSVRecord> records = CSVFormat
 					.DEFAULT
 					.withFirstRecordAsHeader()
-					.parse(new FileReader(dataFilePath + i + ".csv"))
+					.parse(new FileReader(winFilePath + i + ".csv"))
 					.getRecords();
 			// For each winning strategy, find the strategy that won and increment the relevant counter
 			for (CSVRecord record : records) {
@@ -49,6 +50,7 @@ public class Winner {
 					case "PROTECTION" -> protection++;
 					case "PROXIMITY" -> proximity++;
 					case "DEGREE" -> degree++;
+					case "RANDOM" -> random++;
 					default -> throw new IllegalStateException("Unexpected value: " + strategy);
 				}
 			}
@@ -59,6 +61,7 @@ public class Winner {
 		toReturn[Defence.PROXIMITY.getValue()] = proximity;
 		toReturn[Defence.DEGREE.getValue()] = degree;
 		toReturn[Defence.PROTECTION.getValue()] = protection;
+		toReturn[Defence.RANDOM.getValue()] = random;
 
 		return toReturn;
 	}
@@ -295,24 +298,29 @@ public class Winner {
 	 */
 	public static String getCsvOverallWinners(long[] winRandom, long[] winMixed, long[] winDeterministic) {
 		return MessageFormat.format("""
-						PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS
 						RANDOM,PROXIMITY,{0}
 						RANDOM,DEGREE,{1}
 						RANDOM,PROTECTION,{2}
-						MIXED,PROXIMITY,{3}
-						MIXED,DEGREE,{4}
-						MIXED,PROTECTION,{5}
-						DETERMINISTIC,PROXIMITY,{6}
-						DETERMINISTIC,DEGREE,{7}
-						DETERMINISTIC,PROTECTION,{8}""",
+						RANDOM,RANDOM,{3}
+						MIXED,PROXIMITY,{4}
+						MIXED,DEGREE,{5}
+						MIXED,PROTECTION,{6}
+						MIXED,RANDOM,{7}
+						DETERMINISTIC,PROXIMITY,{8}
+						DETERMINISTIC,DEGREE,{9}
+						DETERMINISTIC,PROTECTION,{10}
+						DETERMINISTIC,RANDOM,{11}""",
 				winRandom[Defence.PROXIMITY.getValue()],
 				winRandom[Defence.DEGREE.getValue()],
 				winRandom[Defence.PROTECTION.getValue()],
+				winRandom[Defence.RANDOM.getValue()],
 				winMixed[Defence.PROXIMITY.getValue()],
 				winMixed[Defence.DEGREE.getValue()],
 				winMixed[Defence.PROTECTION.getValue()],
+				winMixed[Defence.RANDOM.getValue()],
 				winDeterministic[Defence.PROXIMITY.getValue()],
 				winDeterministic[Defence.DEGREE.getValue()],
-				winDeterministic[Defence.PROTECTION.getValue()]);
+				winDeterministic[Defence.PROTECTION.getValue()],
+				winDeterministic[Defence.RANDOM.getValue()]);
 	}
 }

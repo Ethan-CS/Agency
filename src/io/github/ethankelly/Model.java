@@ -66,14 +66,20 @@ public class Model {
 	 * @throws IOException if any of the directories cannot be accessed or files not written to.
 	 */
 	public static void runMultiGraphModel(String graphName, String path, PrintStream overallWinData) throws IOException {
-		// Make sure directories exist (if not, create them)
+		// Print heading to total win strategies (to avoid printing several headings throughout the file)
+		System.setOut(overallWinData);
+		System.out.println("PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
+
+		// Make sure directories exist (if not, method called will create them)
 		createDirectories(path);
+
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
 
 		String[] allocationPaths = new String[] {
 				path + "/Random/Random", path + "/Mixed/Mixed", path + "/Deterministic/Deterministic"};
-
+		String degreesFile = path + "/Degrees.csv";
+		PrintStream degrees = new PrintStream(degreesFile);
 		for (int i = 0; i < bound; i++) {
 			// New data, readable and winning files
 			PrintStream[] data = new PrintStream[allocationPaths.length];
@@ -81,9 +87,13 @@ public class Model {
 			PrintStream[] winner = new PrintStream[allocationPaths.length];
 			initialiseOutputFiles(allocationPaths, i, data, readable, winner);
 			// Get required graph and print to file
+			String graphFile = path + "/Graph" + i + ".csv";
 			Graph g = getGraph(graphName);
-			System.setOut(new PrintStream(path + "/Graph" + i + ".csv"));
+			System.setOut(new PrintStream(graphFile));
 			System.out.println(Graph.makeCommaSeparated(g));
+			// Print degree distribution for this graph
+			System.setOut(degrees);
+			System.out.println(g.findDegreeDistribution());
 			// Run models and print to relevant output files
 			for (int j = 0; j < Protection.values().length; j++) {
 				String[] modelResults = Model.runModels(g, Protection.getProtection(j)); // Running models
@@ -96,7 +106,7 @@ public class Model {
 					System.out.println(modelResults[1]);
 				}
 				// Print winning strategies
-				String dataFile = allocationPaths[j] + "Data" + i + ".csv", graphFile = path + "/Graph" + i + ".csv";
+				String dataFile = allocationPaths[j] + "Data" + i + ".csv";
 				System.setOut(winner[j]);
 				System.out.println(Winner.getWinners(dataFile, graphFile)[1]);
 			}
@@ -104,11 +114,11 @@ public class Model {
 
 		for (int i = 0; i < bound; i++) {
 			// Get overall winning strategies
-			long[] winRan = Winner.getBestStrategies(path + allocationPaths[0]);
-			long[] winMix = Winner.getBestStrategies(path + allocationPaths[1]);
-			long[] winDet = Winner.getBestStrategies(path + allocationPaths[2]);
+			long[] winRan = Winner.getBestStrategies(allocationPaths[0] + "Winner");
+			long[] winMix = Winner.getBestStrategies(allocationPaths[1] + "Winner");
+			long[] winDet = Winner.getBestStrategies(allocationPaths[2] + "Winner");
 			// Update the overall results
-			for (int j = 0; j < allocationPaths.length; j++) {
+			for (int j = 0; j < Defence.values().length; j++) {
 				ModelEngine.winRandom[j] += winRan[j];
 				ModelEngine.winMixed[j] += winMix[j];
 				ModelEngine.winDeterministic[j] += winDet[j];
@@ -143,8 +153,8 @@ public class Model {
 		if (Print.printReadable) readable.append(new Model(g));
 
 		for (int i = 0; i < g.getNumVertices(); i++) {
-			// Initialise three models on the generated graph
-			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g)};
+			// Initialise parallel models on the generated graph
+			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g), new Model(g)};
 			// Initialise models
 			Model m = new Model(models[0].getGraph());
 			m.initialiseModel(i, protectionType);
@@ -152,7 +162,7 @@ public class Model {
 			// Add agent information to the readable string value
 			if (Print.printReadable)
 				readable.append("\n## Outbreak: ").append(i).append("\n").append(Print.printAgents(models[0]));
-			for (int j = 0; j < Protection.values().length; j++) {
+			for (int j = 0; j < Defence.values().length; j++) {
 				// Run the models
 				String[] result = models[j].runTest(Defence.getDefence(j));
 				// 0 - data, 1 - readable
@@ -332,6 +342,10 @@ public class Model {
 			case PROTECTION -> {
 				if (Print.printReadable) readable.append("\n#### Highest Protection Defence\n");
 				data.append("PROTECTION,");
+			}
+			case RANDOM -> {
+				if (Print.printReadable) readable.append("\n#### Random Defence Strategy");
+				data.append("RANDOM,");
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + whichDefence);
 		}
@@ -513,7 +527,16 @@ public class Model {
 			case PROXIMITY -> findHighestPeril(getSusceptible(), true);
 			case DEGREE -> findHighestDegree(getSusceptible(), true);
 			case PROTECTION -> findHighestProtection(getSusceptible());
+			case RANDOM -> findRandomAgent(getSusceptible());
 		};
+	}
+
+	private List<Agent> findRandomAgent(List<Agent> susceptible) {
+		List<Agent> toDefend = new ArrayList<>();
+		Agent randAgent = susceptible.get(Random.uniform(susceptible.size()));
+		toDefend.add(randAgent);
+
+		return toDefend;
 	}
 
 	/*
@@ -621,7 +644,7 @@ public class Model {
 		// try the probabilities and see if the susceptible agent becomes infected.
 		List<Agent> toInfect = new ArrayList<>();
 		susceptibleAgents.forEach(susceptible -> allInfected.stream().filter(infected ->
-				!toInfect.contains(susceptible) && getGraph().isEdge(susceptible.getVertex(), infected.getVertex())
+				!toInfect.contains(susceptible) && getGraph().hasEdge(susceptible.getVertex(), infected.getVertex())
 				&& willInfect(p, susceptible.getProtection())).forEachOrdered(infectedAgent -> toInfect.add(susceptible)));
 
 		this.updateRatings(new double[this.getNumVertices()]);
