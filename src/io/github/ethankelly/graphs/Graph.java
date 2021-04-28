@@ -1,5 +1,7 @@
 package io.github.ethankelly.graphs;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 import java.util.stream.IntStream;
 
@@ -44,10 +46,12 @@ public class Graph {
 	 *
 	 * @param numVertices the number of vertices to create in the graph.
 	 * @param name        a string representing the type of graph the object is.
+	 * @param adjMatrix   represents the graph with true at (i, j) if i and j share an edge (false otherwise).
 	 */
-	public Graph(int numVertices, String name) {
+	public Graph(int numVertices, String name, boolean[][] adjMatrix) {
 		this.numVertices = numVertices;
-		this.adjMatrix = new boolean[numVertices][numVertices];
+		assert adjMatrix.length == numVertices && adjMatrix[0].length == 0 : "Adjacency matrix should be a square matrix with a row and a column per vertex.";
+		this.adjMatrix = adjMatrix;
 		this.name = name;
 	}
 
@@ -203,7 +207,7 @@ public class Graph {
 	public void appendVertices(int numVertices) {
 		assert numVertices >= 0 : "Number of vertices to add must be a positive integer";
 		// Create a new graph object with the new number of vertices
-		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName());
+		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName(), new boolean[numVertices][numVertices]);
 		// Ensure all original edges are in the new graph instance
 		for (int i = 0; i < this.getNumVertices(); i++) {
 			for (int j = 0; j < this.getNumVertices(); j++) if (this.hasEdge(i, j)) that.addEdge(i, j);
@@ -293,5 +297,39 @@ public class Graph {
 			s.append("\n\n");
 		});
 		return s.toString();
+	}
+
+
+	/**
+	 * Makes a copy of the current Graph object.
+	 *
+	 * @return a new graph with identical attributes (number of vertices, name, adjacency matrix and transmission
+	 * matrix) as the current graph.
+	 */
+	@Override
+	public Graph clone() {
+		try {
+			return (Graph) super.clone();
+		} catch (CloneNotSupportedException e) {
+			return new Graph(this.getNumVertices(), this.getName(), this.getAdjMatrix());
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Graph graph = (Graph) o;
+		return getNumVertices() == graph.getNumVertices() &&
+		       getNumEdges() == graph.getNumEdges() &&
+		       Objects.equals(getName(), graph.getName()) &&
+		       Arrays.deepEquals(getAdjMatrix(), graph.getAdjMatrix());
+	}
+
+	@Override
+	public int hashCode() {
+		int result = Objects.hash(getName(), getNumVertices(), getNumEdges());
+		result = 31 * result + Arrays.deepHashCode(getAdjMatrix());
+		return result;
 	}
 }

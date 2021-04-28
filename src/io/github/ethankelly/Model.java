@@ -34,7 +34,7 @@ import java.util.stream.IntStream;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-public class Model {
+public class Model implements Cloneable {
 	/**
 	 * The number of strategies that can be used to deploy defence
 	 */
@@ -43,6 +43,14 @@ public class Model {
 	private Graph graph;
 	// Agents assigned to each graph vertex
 	private List<Agent> agents;
+
+	/**
+	 * Class constructor.
+	 */
+	public Model(Graph graph, List<Agent> agents) {
+		this.graph = graph;
+		this.agents = agents;
+	}
 
 	/**
 	 * Class constructor.
@@ -156,7 +164,7 @@ public class Model {
 			// Initialise parallel models on the generated graph
 			Model[] models = new Model[] {new Model(g), new Model(g), new Model(g), new Model(g)};
 			// Initialise models
-			Model m = new Model(models[0].getGraph());
+			Model m = new Model(g);
 			m.initialiseModel(i, protectionType);
 			for (Model model : models) model.initialiseIdenticalModel(i, m);
 			// Add agent information to the readable string value
@@ -306,6 +314,7 @@ public class Model {
 	 * @param that     the model to initialise attributes to equal.
 	 */
 	public void initialiseIdenticalModel(int outbreak, Model that) {
+		// TODO do this with the new clone() method
 		for (int j = 0; j < this.getNumVertices(); j++) {
 			this.getAgents().set(j, new Agent(j, 0, 0, State.SUSCEPTIBLE));
 			this.getAgents().get(j).setPeril(that.getAgents().get(j).getPeril());
@@ -658,6 +667,33 @@ public class Model {
 		boolean contracts = !(Random.uniform() < defence);
 
 		return infects && contracts;
+	}
+
+	@Override
+	public Model clone() {
+		try {
+			return (Model) super.clone();
+		} catch (CloneNotSupportedException e) {
+			return new Model(this.getGraph(), this.getAgents());
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Model model = (Model) o;
+
+		if (!getGraph().equals(model.getGraph())) return false;
+		return getAgents().equals(model.getAgents());
+	}
+
+	@Override
+	public int hashCode() {
+		int result = getGraph().hashCode();
+		result = 31 * result + getAgents().hashCode();
+		return result;
 	}
 
 	/**

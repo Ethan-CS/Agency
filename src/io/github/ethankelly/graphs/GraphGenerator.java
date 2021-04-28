@@ -217,7 +217,7 @@ public class GraphGenerator {
 				.parse(new FileReader(filePath))
 				.getRecords();
 		int numVertices = matrix.size();
-		Graph g = new Graph(numVertices, "");
+		Graph g = new Graph(numVertices, "", new boolean[numVertices][numVertices]);
 
 		for (int row = 0; row < numVertices; row++) { // Row in matrix
 			for (int column = 0; column < numVertices; column++) { // Entry in row
@@ -241,7 +241,7 @@ public class GraphGenerator {
 	public static Graph simple(int n, int e) {
 		assert e <= n * (n - 1) / 2 : "Too many edges.";
 		assert e >= 0 : "Too few edges.";
-		Graph g = new Graph(n, "Simple");
+		Graph g = new Graph(n, "Simple", new boolean[n][n]);
 		g.setNumEdges(0);
 		Set<Edge> set = new Set<>();
 		while (g.getNumEdges() < e) {
@@ -267,7 +267,7 @@ public class GraphGenerator {
 	 */
 	public static Graph erdosRenyi(int n, double p) {
 		assert !(p < 0.0) && !(p > 1.0) : "Probability must be between 0 and 1";
-		Graph g = new Graph(n, "Erdős–Rényi");
+		Graph g = new Graph(n, "Erdős–Rényi", new boolean[n][n]);
 		for (int v = 0; v < n; v++)
 			for (int w = v + 1; w < n; w++)
 				if (Random.bernoulli(p))
@@ -318,7 +318,7 @@ public class GraphGenerator {
 	public static Graph bipartite(int n1, int n2, int e) {
 		assert e <= n1 * n2 : "Too many edges";
 		assert e >= 0 : "Too few edges";
-		Graph g = new Graph(n1 + n2, "Bipartite");
+		Graph g = new Graph(n1 + n2, "Bipartite", new boolean[n1 + n2][n1 + n2]);
 
 		int[] vertices = IntStream.range(0, n1 + n2).toArray();
 		Random.shuffle(vertices);
@@ -351,7 +351,7 @@ public class GraphGenerator {
 		assert !(p < 0.0) && !(p > 1.0) : "Probability must be between 0 and 1";
 		int[] vertices = IntStream.range(0, n1 + n2).toArray();
 		Random.shuffle(vertices);
-		Graph G = new Graph(n1 + n2, "Erdős–Rényi Bipartite");
+		Graph G = new Graph(n1 + n2, "Erdős–Rényi Bipartite", new boolean[n1 + n2][n1 + n2]);
 		for (int i = 0; i < n1; i++)
 			for (int j = 0; j < n2; j++)
 				if (Random.bernoulli(p))
@@ -367,7 +367,7 @@ public class GraphGenerator {
 	 * @return a path graph on {@code n} vertices
 	 */
 	public static Graph path(int n) {
-		Graph g = new Graph(n, "Path");
+		Graph g = new Graph(n, "Path", new boolean[n][n]);
 		// Generate an array: [0, 1, ..., n] and randomly shuffle it.
 		int[] vertices = IntStream.range(0, n).toArray();
 		Random.shuffle(vertices);
@@ -387,7 +387,7 @@ public class GraphGenerator {
 	 * @return a complete binary tree graph on {@code n} vertices
 	 */
 	public static Graph binaryTree(int n) {
-		Graph g = new Graph(n, "Binary Tree");
+		Graph g = new Graph(n, "Binary Tree", new boolean[n][n]);
 		// Generate an array: [0, 1, ..., n] and randomly shuffle it.
 		int[] vertices = IntStream.range(0, n).toArray();
 		Random.shuffle(vertices);
@@ -407,7 +407,7 @@ public class GraphGenerator {
 	 * @return a cycle graph on {@code n} vertices.
 	 */
 	public static Graph cycle(int n) {
-		Graph g = new Graph(n, "Cycle");
+		Graph g = new Graph(n, "Cycle", new boolean[n][n]);
 		// Generate an array: [0, 1, ..., n] and randomly shuffle it.
 		int[] vertices = IntStream.range(0, n).toArray();
 		Random.shuffle(vertices);
@@ -433,7 +433,7 @@ public class GraphGenerator {
 		// Catch incorrect input of number of edges or vertices
 		assert e >= 0 : "negative number of edges";
 		assert n > 0 : "An Eulerian path must have at least one vertex";
-		Graph g = new Graph(n, "Eulerian Path");
+		Graph g = new Graph(n, "Eulerian Path", new boolean[n][n]);
 		// Fill an array of length equal to the number of edges with uniformly random values
 		int[] vertices = IntStream.range(0, e + 1).map(i -> Random.uniform(n)).toArray();
 		// Connect consecutive (i, i+1) vertices
@@ -453,7 +453,7 @@ public class GraphGenerator {
 	public static Graph eulerianCycle(int n, int e) {
 		assert e > 0 : "An Eulerian cycle must have at least one edge";
 		assert n > 0 : "An Eulerian cycle must have at least one vertex";
-		Graph G = new Graph(n, "Eulerian Cycle");
+		Graph G = new Graph(n, "Eulerian Cycle", new boolean[n][n]);
 		// Fill an array of length equal to the number of edges with uniformly random values
 		int[] vertices = IntStream.range(0, e).map(i -> Random.uniform(n)).toArray();
 		// Connect consecutive (i, i+1) vertices
@@ -473,7 +473,7 @@ public class GraphGenerator {
 	 */
 	public static Graph wheel(int n) {
 		assert n > 1 : "Number of vertices must be at least 2";
-		Graph g = new Graph(n, "Wheel");
+		Graph g = new Graph(n, "Wheel", new boolean[n][n]);
 		// Generate an array: [0, 1, ..., n] and randomly shuffle it.
 		int[] vertices = IntStream.range(0, n).toArray();
 		Random.shuffle(vertices);
@@ -498,7 +498,7 @@ public class GraphGenerator {
 	 */
 	public static Graph star(int n) {
 		assert n > 0 : "Number of vertices must be at least 1";
-		Graph g = new Graph(n, "Star");
+		Graph g = new Graph(n, "Star", new boolean[n][n]);
 		// Generate an array: [0, 1, ..., n] and randomly shuffle it.
 		int[] vertices = IntStream.range(0, n).toArray();
 		Random.shuffle(vertices);
@@ -521,7 +521,7 @@ public class GraphGenerator {
 	 */
 	public static Graph regular(int n, int k) {
 		assert n * k % 2 == 0 : "Number of vertices * k must be even";
-		Graph g = new Graph(n, k + "-Regular");
+		Graph g = new Graph(n, k + "-Regular", new boolean[n][n]);
 
 		// Create k copies of each vertex
 		int[] vertices = new int[n * k];
@@ -546,15 +546,17 @@ public class GraphGenerator {
 	 * @return a uniformly random tree on {@code n} vertices.
 	 */
 	public static Graph tree(int n) {
-		Graph g = new Graph(n, "Tree");
+		Graph g = new Graph(n, "Tree", new boolean[n][n]);
 
 		if (n == 1) return g;
 
-		// Cayley's theorem: there are n^(n-2) labeled trees on n vertices
-		// Prüfer sequence: sequence of n-2 values between 0 and n-1
-		// Prüfer's proof of Cayley's theorem: Prüfer sequences are in 1-1 with labeled trees on n vertices
+		/*
+		 Cayley's theorem: there are n^(n-2) labeled trees on n vertices
+		 Prüfer sequence: sequence of n-2 values between 0 and n-1
+		 Prüfer's proof of Cayley's theorem: Prüfer sequences are in 1-1 with labeled trees on n vertices
+		 Fill a new array of size two less than n with uniformly random integers
+		*/
 
-		// Fill a new array of size two less than n with uniformly random integers
 		int[] prufer = IntStream.range(0, n - 2).map(i -> Random.uniform(n)).toArray();
 
 		// Degree of vertex v = 1 + no. times it appears in Prüfer sequence
