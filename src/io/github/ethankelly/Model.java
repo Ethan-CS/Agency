@@ -39,10 +39,9 @@ public class Model implements Cloneable {
 	 * The number of strategies that can be used to deploy defence
 	 */
 	public static final int NUM_STRATEGIES = Defence.values().length;
-	// Underlying graph the model runs on
-	private Graph graph;
-	// Agents assigned to each graph vertex
-	private List<Agent> agents;
+
+	private Graph graph; // Underlying graph the model runs on
+	private List<Agent> agents; // Agents assigned to each graph vertex
 
 	/**
 	 * Class constructor.
@@ -78,8 +77,7 @@ public class Model implements Cloneable {
 		System.setOut(overallWinData);
 		System.out.println("PROTECTION ALLOCATION,DEFENCE STRATEGY,NUMBER OF WINS");
 
-		// Make sure directories exist (if not, method called will create them)
-		createDirectories(path);
+		makeDirs(path); // Make sure directories exist (if not, create them)
 
 		// Check if we're dealing with the complete graph, in which case we only need to run models once.
 		int bound = graphName.equalsIgnoreCase("complete") ? 1 : Driver.NUM_GRAPHS;
@@ -232,7 +230,7 @@ public class Model implements Cloneable {
 	}
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
-	private static void createDirectories(String path) {
+	private static void makeDirs(String path) {
 		// Make sure all necessary directories exist
 		File directory = new File(path + "/"),
 				random = new File(path + "/Random/"),

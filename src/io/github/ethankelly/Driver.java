@@ -9,7 +9,7 @@ public class Driver {
 	/**
 	 * Number of vertices in each generated graph.
 	 */
-	public static final int NUM_VERTICES = 25;
+	public static final int NUM_VERTICES = 50;
 	/**
 	 * The number of graphs to generate per increment (where appropriate).
 	 */
@@ -43,7 +43,7 @@ public class Driver {
 	public static final int MIN_K = 1;
 	public static final int K_INCREMENTS = 1;
 	/* Barabási–Albert preferential attachment graphs */
-	public static final int INITIAL_NUM_VERTICES = 10;
+	public static final int INITIAL_NUM_VERTICES = 15;
 	public static final double OFFSET_EXP = 1.0;
 	public static final int MAX_MIN_BA_DEGREE = 5;
 	/**
