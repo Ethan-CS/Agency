@@ -207,7 +207,8 @@ public class Graph {
 	public void appendVertices(int numVertices) {
 		assert numVertices >= 0 : "Number of vertices to add must be a positive integer";
 		// Create a new graph object with the new number of vertices
-		Graph that = new Graph(this.getNumVertices() + numVertices, this.getName(), new boolean[numVertices][numVertices]);
+		int newNumVert = this.getNumVertices() + numVertices;
+		Graph that = new Graph(newNumVert, this.getName(), new boolean[newNumVert][newNumVert]);
 		// Ensure all original edges are in the new graph instance
 		for (int i = 0; i < this.getNumVertices(); i++) {
 			for (int j = 0; j < this.getNumVertices(); j++) if (this.hasEdge(i, j)) that.addEdge(i, j);
