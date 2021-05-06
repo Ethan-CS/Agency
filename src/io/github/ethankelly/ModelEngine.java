@@ -46,7 +46,33 @@ public class ModelEngine {
 	public static List<long[]> mixed = new ArrayList<>();
 	public static List<long[]> deterministic = new ArrayList<>();
 
-	static void runPreferentialAttachmentModels() throws IOException {
+	public static void runModelFromType() throws IOException {
+		if (GraphGenerator.requiresProbToGenerate(Driver.GRAPH_NAME)) {
+			// We generate this graph type with a probability
+			System.out.println("Identified a graph requiring a probability.");
+			runProbModels(Driver.GRAPH_NAME);
+		} else if (GraphGenerator.requiresEdgesToGenerate(Driver.GRAPH_NAME)) {
+			// These all require a number of edges
+			System.out.println("Identified a graph requiring a number of edges.");
+			runIntParamModels(Driver.GRAPH_NAME, Driver.MAX_EDGES, Driver.MIN_EDGES, Driver.EDGE_INCREMENTS);
+		} else if (Driver.GRAPH_NAME.equalsIgnoreCase("Regular")) {
+			// This requires a value of k
+			System.out.println("Identified a graph requiring a value of k.");
+			runIntParamModels(Driver.GRAPH_NAME, Driver.MAX_K, Driver.MIN_K, Driver.K_INCREMENTS);
+		} else if (Driver.GRAPH_NAME.equalsIgnoreCase("preferential attachment")) {
+			// Barabási–Albert-generated preferential attachment graph
+			System.out.println("Identified a Barabási–Albert-generated preferential attachment graph");
+			runPrefAttachModels();
+		} else {
+			System.out.println("Identified a graph requiring no further parameters.");
+			runNoExtraParamModels(Driver.GRAPH_NAME);
+		}
+		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Random", random);
+		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Mixed", mixed);
+		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Deterministic", deterministic);
+	}
+
+	static void runPrefAttachModels() throws IOException {
 		// Write an appropriate path name for storing data and results
 		PATH = "data/Preferential Attachment 1 - " + Driver.MAX_MIN_BA_DEGREE;
 		// Make sure directory exists
@@ -78,8 +104,6 @@ public class ModelEngine {
 		printCurrentResults("");
 	}
 
-
-
 	static void runIntParamModels(String graphName, int max, int min, int increment) throws IOException {
 		// Write an appropriate path name for storing data and results
 		PATH = "data/" + graphName + " " + min + "-" + max;
@@ -103,7 +127,6 @@ public class ModelEngine {
 		}
 	}
 
-	//@SuppressWarnings("SameParameterValue")
 	static void runProbModels(String graphName) throws IOException {
 		// Write an appropriate path name for storing data and results
 		PATH = "data/" + graphName + " " +
@@ -133,31 +156,5 @@ public class ModelEngine {
 		                   "\nRandom: " + Arrays.toString(winRandom) +
 		                   "\nMixed: " + Arrays.toString(winMixed) +
 		                   "\nDeterministic: " + Arrays.toString(winDeterministic));
-	}
-
-	public static void runModelFromType() throws IOException {
-		if (GraphGenerator.requiresProbToGenerate(Driver.GRAPH_NAME)) {
-			// We generate this graph type with a probability
-			System.out.println("Identified a graph requiring a probability.");
-			runProbModels(Driver.GRAPH_NAME);
-		} else if (GraphGenerator.requiresEdgesToGenerate(Driver.GRAPH_NAME)) {
-			// These all require a number of edges
-			System.out.println("Identified a graph requiring a number of edges.");
-			runIntParamModels(Driver.GRAPH_NAME, Driver.MAX_EDGES, Driver.MIN_EDGES, Driver.EDGE_INCREMENTS);
-		} else if (Driver.GRAPH_NAME.equalsIgnoreCase("Regular")) {
-			// This requires a value of k
-			System.out.println("Identified a graph requiring a value of k.");
-			runIntParamModels(Driver.GRAPH_NAME, Driver.MAX_K, Driver.MIN_K, Driver.K_INCREMENTS);
-		} else if (Driver.GRAPH_NAME.equalsIgnoreCase("preferential attachment")) {
-			// Barabási–Albert-generated preferential attachment graph
-			System.out.println("Identified a Barabási–Albert-generated preferential attachment graph");
-			runPreferentialAttachmentModels();
-		} else {
-			System.out.println("Identified a graph requiring no further parameters.");
-			runNoExtraParamModels(Driver.GRAPH_NAME);
-		}
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Random", random);
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Mixed", mixed);
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Deterministic", deterministic);
 	}
 }
