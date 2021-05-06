@@ -6,6 +6,7 @@ import io.github.ethankelly.params.Protection;
 import io.github.ethankelly.params.State;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * The {@code Agency} class represents agents and instantiates their attributes for use in compartmental graph models of
@@ -195,8 +196,24 @@ public class Agent {
 		double peril = model.getAgents().get(vertex).getPeril();
 		double protection = model.getAgents().get(vertex).getProtection();
 		State toSet = Arrays.stream(fires).anyMatch(fire -> vertex == fire) ? State.INFECTED : State.SUSCEPTIBLE;
-		if (protection == 1.0 || peril == 0) toSet = State.PROTECTED;
+		if (protection == 1.0 || peril == 0) {
+			toSet = State.PROTECTED;
+			this.setProtection(1);
+		}
 		setState(toSet);
 		return toSet;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Agent agent = (Agent) o;
+		return getVertex() == agent.getVertex() && Double.compare(agent.getPeril(), getPeril()) == 0 && Double.compare(agent.getProtection(), getProtection()) == 0 && getState() == agent.getState();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getVertex(), getPeril(), getProtection(), getState());
 	}
 }

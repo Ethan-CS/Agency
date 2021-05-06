@@ -50,7 +50,7 @@ public class Graph {
 	 */
 	public Graph(int numVertices, String name, boolean[][] adjMatrix) {
 		this.numVertices = numVertices;
-		assert adjMatrix.length == numVertices && adjMatrix[0].length == 0 : "Adjacency matrix should be a square matrix with a row and a column per vertex.";
+		assert adjMatrix.length == numVertices && adjMatrix[0].length == numVertices : "Adjacency matrix should be a square matrix with a row and a column per vertex.";
 		this.adjMatrix = adjMatrix;
 		this.name = name;
 	}

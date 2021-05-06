@@ -369,10 +369,8 @@ public class Model implements Cloneable {
 		return strategy;
 	}
 
-	/*
-	 * Helper method - given a defence strategy, chooses the appropriate method to determine what should be defended
-	 * and returns the result of the selected method.
-	 */
+	// Helper method - given a defence strategy, chooses the appropriate method to determine what should be defended
+	// and returns the result of the selected method.
 	private List<Agent> getToDefend(Defence whichDefence) {
 		return switch (whichDefence) {
 			case PROXIMITY -> findHighestPeril(getSusceptible(), true);
@@ -414,7 +412,7 @@ public class Model implements Cloneable {
 	// for highest degree vertex, we break ties based on their proximity to the closest infected agent.
 	private List<Agent> findHighestDegree(List<Agent> susceptibleAgents, boolean breakTies) {
 		List<Agent> toDefend = new ArrayList<>();
-
+		// Find the highest degree of all susceptible agents
 		int highestDegree = 0;
 		for (Agent agent : susceptibleAgents) {
 			int thisDegree = this.graph.findDegree(agent.getVertex());
@@ -422,14 +420,14 @@ public class Model implements Cloneable {
 				highestDegree = thisDegree;
 			}
 		}
+		// Traverse susceptible agents again, adding any with degree equal to highest degree we just found
 		for (Agent agent : susceptibleAgents) {
 			int thisDegree = this.graph.findDegree(agent.getVertex());
 			if (thisDegree == highestDegree) {
 				toDefend.add(agent);
 			}
 		}
-		// Tie-breaker: if we have more than one vertex with highest degree in the graph,
-		// Choose the agent with greatest peril rating and defend that one.
+		// Tie-breaker: if we have more than one vertex with highest degree, defend the one with greatest peril rating
 		if (toDefend.size() > 1 && breakTies) toDefend = findHighestPeril(toDefend, false);
 		return toDefend;
 	}
