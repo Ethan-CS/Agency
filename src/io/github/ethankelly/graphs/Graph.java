@@ -1,5 +1,6 @@
 package io.github.ethankelly.graphs;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
@@ -23,7 +24,7 @@ import java.util.stream.IntStream;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-public class Graph {
+public class Graph implements Cloneable, Serializable {
 	/**
 	 * The type of graph structure we specified in generation.
 	 */
@@ -49,10 +50,11 @@ public class Graph {
 	 * @param adjMatrix   represents the graph with true at (i, j) if i and j share an edge (false otherwise).
 	 */
 	public Graph(int numVertices, String name, boolean[][] adjMatrix) {
+		assert adjMatrix.length == numVertices && adjMatrix[0].length == numVertices :
+				"Adjacency matrix should be a square matrix with a row and a column per vertex.";
 		this.numVertices = numVertices;
-		assert adjMatrix.length == numVertices && adjMatrix[0].length == numVertices : "Adjacency matrix should be a square matrix with a row and a column per vertex.";
-		this.adjMatrix = adjMatrix;
 		this.name = name;
+		this.adjMatrix = adjMatrix;
 	}
 
 	public static void main(String[] args) {

@@ -33,6 +33,7 @@ public class Winner {
 		long proximity = 0;
 		long degree = 0;
 		long random = 0;
+		long none = 0;
 		// Make sure we only loop for as many times as we need! (Once for complete graph)
 		int bound = winFilePath.toLowerCase().contains("complete") ? 1 : Driver.NUM_GRAPHS;
 		// Loop through each graph model that was run
@@ -51,17 +52,19 @@ public class Winner {
 					case "PROXIMITY" -> proximity++;
 					case "DEGREE" -> degree++;
 					case "RANDOM" -> random++;
-					default -> throw new IllegalStateException("Unexpected value: " + strategy);
+					case "NO DEFENCE" -> none++;
+					default -> throw new IllegalStateException("Unexpected defence strategy: " + strategy);
 				}
 			}
 		}
 		// Initialise an array with size equal to the number of strategies used in the models.
-		long[] toReturn = new long[Model.NUM_STRATEGIES];
+		long[] toReturn = new long[Defence.values().length];
 		// Add each result to the appropriate position in the array
 		toReturn[Defence.PROXIMITY.getValue()] = proximity;
 		toReturn[Defence.DEGREE.getValue()] = degree;
 		toReturn[Defence.PROTECTION.getValue()] = protection;
 		toReturn[Defence.RANDOM.getValue()] = random;
+		toReturn[Defence.NO_DEFENCE.getValue()] = none;
 
 		return toReturn;
 	}

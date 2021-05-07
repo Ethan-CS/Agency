@@ -19,8 +19,7 @@ class ModelTest {
 	@BeforeEach
 	void setUp() {
 		testGraph.appendVertices(1); // Append a vertex, so we have an automatically protected agent
-		m = new Model(testGraph); // Initialise the model object
-		m.initialiseModel(2, Protection.DETERMINISTIC); // Initialise the agents based on initial outbreak at 2
+		m = new Model(testGraph, 2, Protection.DETERMINISTIC); // Initialise the model object
 	}
 
 	@Test
@@ -57,4 +56,11 @@ class ModelTest {
 		Assertions.assertEquals(m.getProtected(), protect);
 	}
 
+	@Test
+	void testClone() {
+		Model n = m.clone();
+		Assertions.assertEquals(m, n);
+		n.getAgents().get(1).setState(State.INFECTED);
+		Assertions.assertNotEquals(m, n);
+	}
 }
