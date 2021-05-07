@@ -5,7 +5,6 @@ import io.github.ethankelly.graphs.Graph;
 import io.github.ethankelly.params.Protection;
 import io.github.ethankelly.params.State;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -27,7 +26,7 @@ import java.util.Objects;
  *
  * @author <a href="mailto:e.kelly.1@research.gla.ac.uk">Ethan Kelly</a>
  */
-public class Agent {
+public class Agent implements Cloneable {
 
 	/**
 	 * Indicates the agent's location on the graph that the model uses.
@@ -182,26 +181,18 @@ public class Agent {
 	}
 
 	/**
-	 * Given an agent and the agents that are currently infected, we determine the state based on whether a path exists
-	 * between the agent and an infected vertex. If no such path exists, we say the agent is protected. If one exists,
-	 * they are susceptible. If the distance to an infected vertex is zero, then they are infected themselves. If they
-	 * have been infected for a given number of turns, the agent becomes recovered for a further given number of turns.
+	 * Creates and returns a copy of this object.
 	 *
-	 * @param fires all currently infected (burning) vertices.
-	 * @param model the current model.
-	 * @return the updated state of the agent we have determined for the current model situation.
+	 * @return a clone of this instance.
+	 * @see Cloneable
 	 */
-	public State findState(int[] fires, Model model) {
-		int vertex = getVertex();
-		double peril = model.getAgents().get(vertex).getPeril();
-		double protection = model.getAgents().get(vertex).getProtection();
-		State toSet = Arrays.stream(fires).anyMatch(fire -> vertex == fire) ? State.INFECTED : State.SUSCEPTIBLE;
-		if (protection == 1.0 || peril == 0) {
-			toSet = State.PROTECTED;
-			this.setProtection(1);
+	@Override
+	protected Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			return new Agent(this.vertex, this.peril, this.protection, this.state);
 		}
-		setState(toSet);
-		return toSet;
 	}
 
 	@Override
@@ -209,7 +200,10 @@ public class Agent {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Agent agent = (Agent) o;
-		return getVertex() == agent.getVertex() && Double.compare(agent.getPeril(), getPeril()) == 0 && Double.compare(agent.getProtection(), getProtection()) == 0 && getState() == agent.getState();
+		return getVertex() == agent.getVertex() &&
+		       Double.compare(agent.getPeril(), getPeril()) == 0 &&
+		       Double.compare(agent.getProtection(), getProtection()) == 0 &&
+		       getState() == agent.getState();
 	}
 
 	@Override

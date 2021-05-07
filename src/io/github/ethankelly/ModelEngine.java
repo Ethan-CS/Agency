@@ -1,7 +1,9 @@
 package io.github.ethankelly;
 
+import io.github.ethankelly.graphs.Graph;
 import io.github.ethankelly.graphs.GraphGenerator;
 import io.github.ethankelly.params.Defence;
+import io.github.ethankelly.params.Protection;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -67,9 +69,9 @@ public class ModelEngine {
 			System.out.println("Identified a graph requiring no further parameters.");
 			runNoExtraParamModels(Driver.GRAPH_NAME);
 		}
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Random", random);
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Mixed", mixed);
-		io.github.ethankelly.Print.printWinData(Driver.GRAPH_NAME, "Deterministic", deterministic);
+		IOUtils.printWinData(Driver.GRAPH_NAME, "Random", random);
+		IOUtils.printWinData(Driver.GRAPH_NAME, "Mixed", mixed);
+		IOUtils.printWinData(Driver.GRAPH_NAME, "Deterministic", deterministic);
 	}
 
 	static void runPrefAttachModels() throws IOException {
@@ -85,7 +87,7 @@ public class ModelEngine {
 			PrintStream winData = new PrintStream(PATH + "/" + count + "WinnerData.csv");
 			Model.runMultiGraphModel("Preferential Attachment", PATH + "/" + count, winData);
 
-			printCurrentResults("\nRunning with minimum degree = " + count);
+			IOUtils.printCurrentResults("\nRunning with minimum degree = " + count);
 			MIN_DEGREE = count;
 			count += 1;
 		}
@@ -101,7 +103,7 @@ public class ModelEngine {
 		PrintStream winData = new PrintStream(PATH + "/WinnerData.csv");
 		Model.runMultiGraphModel(graphName, PATH + "/", winData);
 
-		printCurrentResults("");
+		IOUtils.printCurrentResults("");
 	}
 
 	static void runIntParamModels(String graphName, int max, int min, int increment) throws IOException {
@@ -120,7 +122,7 @@ public class ModelEngine {
 		while (count < max) {
 			PrintStream winData = new PrintStream(PATH + "/" + count + "WinnerData.csv");
 			Model.runMultiGraphModel(graphName, PATH + "/" + count, winData);
-			printCurrentResults("\nRunning with " + paramType + " = " + count);
+			IOUtils.printCurrentResults("\nRunning with " + paramType + " = " + count);
 			if (GraphGenerator.requiresEdgesToGenerate(graphName)) NUM_EDGES = count;
 			else if (GraphGenerator.requiresKToGenerate(graphName)) K = count;
 			count += increment;
@@ -144,17 +146,59 @@ public class ModelEngine {
 
 			Model.runMultiGraphModel(graphName, PATH + "/" +
 			                                    String.format("%.2f", prob), winData);
-			printCurrentResults("\nRunning with p = " + String.format("%.2f", prob));
+			IOUtils.printCurrentResults("\nRunning with p = " + String.format("%.2f", prob));
 			prob += (Driver.MAX_PROBABILITY / Driver.P_INCREMENTS);
 		}
 	}
 
-	private static void printCurrentResults(String extraParam) {
-		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-		if (!extraParam.isEmpty()) System.out.println(extraParam);
-		System.out.println("--- Results ---" +
-		                   "\nRandom: " + Arrays.toString(winRandom) +
-		                   "\nMixed: " + Arrays.toString(winMixed) +
-		                   "\nDeterministic: " + Arrays.toString(winDeterministic));
+	// Run several models in turn, examining each of the currently available defence strategies.
+	static String[] runModels(Graph g, Protection protectionType) {
+		// Print headings for data CSV file
+		StringBuilder data = new StringBuilder();
+		data.append("OUTBREAK,STRATEGY,END TURN,SUSCEPTIBLE,INFECTED,RECOVERED,PROTECTED\n");
+		StringBuilder readable = new StringBuilder();
+		if (IOUtils.printReadable) readable.append(new Model(g, 0, protectionType));
+		for (int i = 0; i < g.getNumVertices(); i++) {
+			// Initialise models
+			Model m = new Model(g, i, protectionType);
+			// Initialise parallel models on the generated graph
+			Model[] models = new Model[Defence.values().length];
+			Arrays.setAll(models, j -> m.clone());
+			// Add agent information to the readable string value
+			if (IOUtils.printReadable)
+				readable.append("\n## Outbreak: ").append(i).append("\n").append(IOUtils.printAgents(models[0]));
+			for (int j = 0; j < Defence.values().length; j++) {
+				// Run the models
+				String[] result = models[j].runTest(Defence.getDefence(j));
+				// 0 - data, 1 - readable
+				data.append(result[0]).append("\n");
+				if (IOUtils.printReadable) readable.append(result[1]).append("\n");
+			}
+		}
+		return new String[] {String.valueOf(data), String.valueOf(readable)};
+	}
+
+	// Gets the file to print overall win data, the number of graphs that were run each time and the array of allocation
+	// file paths (strings) to output to and outputs the overall model results (winning strategies).
+	static void updateWinData(PrintStream overallWinData, int bound, String[] allocationPaths) throws IOException {
+		for (int i = 0; i < bound; i++) {
+			// Get current overall winning strategies
+			long[] winRan = Winner.getBestStrategies("%sWinner".formatted(allocationPaths[0]));
+			long[] winMix = Winner.getBestStrategies("%sWinner".formatted(allocationPaths[1]));
+			long[] winDet = Winner.getBestStrategies("%sWinner".formatted(allocationPaths[2]));
+			// Update the overall results
+			for (int j = 0; j < Defence.values().length; j++) {
+				winRandom[j] += winRan[j];
+				winMixed[j] += winMix[j];
+				winDeterministic[j] += winDet[j];
+			}
+			// Add to the list of winning results
+			random.add(winRan);
+			mixed.add(winMix);
+			deterministic.add(winDet);
+			// Print the machine readable winning strategy results to the winner data file
+			System.setOut(overallWinData);
+			System.out.println(Winner.getCsvOverallWinners(winRan, winMix, winDet));
+		}
 	}
 }

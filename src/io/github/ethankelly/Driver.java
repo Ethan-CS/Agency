@@ -9,11 +9,11 @@ public class Driver {
 	/**
 	 * Number of vertices in each generated graph.
 	 */
-	public static final int NUM_VERTICES = 50;
+	public static final int NUM_VERTICES = 10;
 	/**
 	 * The number of graphs to generate per increment (where appropriate).
 	 */
-	public static final int NUM_GRAPHS = 10;
+	public static final int NUM_GRAPHS = 5;
 	/**
 	 * Total defence that can be deployed in each defensive round.
 	 */
@@ -58,8 +58,8 @@ public class Driver {
 	 */
 	public static void main(String[] args) throws IOException {
 		// Logical test to see whether printing to readable output is feasible
-		Print.printReadable = false;
-		String[] graphs = new String[] {"Preferential attachment"};
+		IOUtils.printReadable = false;
+		String[] graphs = new String[] {"Erdos Renyi"};
 		for (String graph : graphs) {
 			GRAPH_NAME = graph;
 			ModelEngine.runModelFromType();

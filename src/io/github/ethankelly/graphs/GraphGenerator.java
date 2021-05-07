@@ -1,5 +1,7 @@
 package io.github.ethankelly.graphs;
 
+import io.github.ethankelly.Driver;
+import io.github.ethankelly.ModelEngine;
 import io.github.ethankelly.std.Out;
 import io.github.ethankelly.std.Random;
 import io.github.ethankelly.std.Set;
@@ -844,6 +846,31 @@ public class GraphGenerator {
 		Scanner s = new Scanner(System.in);
 		System.out.println("Enter number of edges:");
 		return s.nextInt(); // Return user input
+	}
+
+	// Generates a graph from the String graph type
+	public Graph fromType(String graphName) {
+		// Generate the graph corresponding to the supplied graph name
+		return switch (graphName.toLowerCase()) {
+			case "complete" -> complete(Driver.NUM_VERTICES);
+			case "tree" -> tree(Driver.NUM_VERTICES);
+			case "binary-tree", "binary tree" -> binaryTree(Driver.NUM_VERTICES);
+			case "path" -> path(Driver.NUM_VERTICES);
+			case "cycle" -> cycle(Driver.NUM_VERTICES);
+			case "star" -> star(Driver.NUM_VERTICES);
+			case "wheel" -> wheel(Driver.NUM_VERTICES);
+			case "erdős–rényi", "erdos-renyi", "erdos renyi" -> erdosRenyi(Driver.NUM_VERTICES, ModelEngine.P);
+			case "erdős–rényi bipartite", "erdos-renyi bipartite", "erdos renyi bipartite" -> bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, ModelEngine.P);
+			case "complete-bipartite", "complete bipartite" -> completeBipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2);
+			case "regular", "k-regular" -> regular(Driver.NUM_VERTICES, ModelEngine.K);
+			case "simple" -> simple(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "bipartite" -> bipartite(Driver.NUM_VERTICES_1, Driver.NUM_VERTICES_2, ModelEngine.NUM_EDGES);
+			case "eulerian-path", "eulerian path" -> eulerianPath(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "eulerian-cycle", "eulerian cycle" -> eulerianCycle(Driver.NUM_VERTICES, ModelEngine.NUM_EDGES);
+			case "preferential attachment", "barabási–albert" -> preferentialAttachment(Driver.NUM_VERTICES, Driver.INITIAL_NUM_VERTICES, Driver.OFFSET_EXP, ModelEngine.MIN_DEGREE);
+			case "watts-strogatz", "watts strogatz" -> wattsStrogatz(Driver.NUM_VERTICES, ModelEngine.WS_K, ModelEngine.P);
+			default -> throw new IllegalStateException("Unexpected value: " + graphName);
+		};
 	}
 
 	/**
