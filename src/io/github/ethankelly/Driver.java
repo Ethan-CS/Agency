@@ -58,7 +58,7 @@ public class Driver {
 	 */
 	public static void main(String[] args) throws IOException {
 		// Logical test to see whether printing to readable output is feasible
-		IOUtils.printReadable = false;
+		Print.printReadable = false;
 		String[] graphs = new String[] {"Erdos Renyi"};
 		for (String graph : graphs) {
 			GRAPH_NAME = graph;
