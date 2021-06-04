@@ -1,7 +1,6 @@
 package io.github.ethankelly;
 
 import io.github.ethankelly.graphs.Graph;
-import io.github.ethankelly.graphs.GraphGenerator;
 import io.github.ethankelly.params.Defence;
 import io.github.ethankelly.params.Protection;
 import io.github.ethankelly.params.State;
@@ -11,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -91,7 +89,7 @@ public class Model implements Cloneable, Serializable {
 		// File to print degrees of each vertex in each graph
 		try (PrintStream degrees = new PrintStream(path + "/Degrees.csv")) {
 			// Print the detailed model results (including graphs and degrees) to relevant output streams
-			printModelData(graphName, path, bound, allocationPaths, degrees);
+			IOUtils.printModelData(graphName, path, bound, allocationPaths, degrees);
 			// Print overall model results (winning strategies) and update relevant static attributes
 			ModelEngine.updateWinData(overallWinData, bound, allocationPaths);
 		} catch (IOException e) {
@@ -117,46 +115,6 @@ public class Model implements Cloneable, Serializable {
 		}
 	}
 
-	// Gets a graph name (type of graphs to generate), path to data output, number of times to loop, paths corresponding
-	// to each protection allocation and a file to output the degrees of each vertex in each graph and uses these to
-	// output model results when running multi-graph models.
-	private static void printModelData(String graphName, String path, int bound,
-	                                   String[] allocationPaths, PrintStream degrees) throws IOException {
-		for (int i = 0; i < bound; i++) {
-			// New data, readable and winning files
-			PrintStream[] data = new PrintStream[allocationPaths.length],
-					readable = new PrintStream[allocationPaths.length],
-					winner = new PrintStream[allocationPaths.length];
-			// Initialise data output files
-			IOUtils.initialisePrintArrays(allocationPaths, i, data, readable, winner);
-			// Get required graph and print to file
-			Graph g = new GraphGenerator().fromType(graphName);
-			String graphFile = path + "/Graph" + i + ".csv";
-			System.setOut(new PrintStream(graphFile));
-			System.out.println(Graph.makeCommaSeparated(g));
-			// Print degree distribution for this graph
-			System.setOut(degrees);
-			System.out.println(g.findDegreeDistribution());
-			// Run models and print to relevant output files
-			for (int j = 0; j < Protection.values().length; j++) {
-				// Run models and store data in a String array
-				String[] modelResults = ModelEngine.runModels(g, Protection.getProtection(j));
-				// Print data
-				System.setOut(data[j]);
-				System.out.println(modelResults[0]);
-				// Print readable (if required)
-				if (IOUtils.printReadable) {
-					System.setOut(readable[j]);
-					System.out.println(modelResults[1]);
-				}
-				// Print winning strategies
-				String dataFile = allocationPaths[j] + "Data" + i + ".csv";
-				System.setOut(winner[j]);
-				System.out.println(Winner.getWinners(dataFile, graphFile)[1]);
-			}
-		}
-	}
-
 	/**
 	 * Runs a test model, with a particular graph and outbreak, so that we can test and monitor the behaviours of each
 	 * method and verify that the model runs as expected by printing to a file in a human-readable way.
@@ -173,7 +131,7 @@ public class Model implements Cloneable, Serializable {
 		int outbreak = this.getInfected().get(0).getVertex();
 		data.append(outbreak).append(",");
 		// Add appropriate info to readable and data strings, depending on current method of defence
-		printWhichDefence(whichDefence, data, readable);
+		IOUtils.printWhichDefence(whichDefence, data, readable);
 
 		if (IOUtils.printReadable) readable.append(this.getSIRP());
 
@@ -183,16 +141,16 @@ public class Model implements Cloneable, Serializable {
 				if (agent.getPeril() == 0 || agent.getProtection() == 1) agent.setState(State.PROTECTED);
 			}
 			if (this.getSusceptible().isEmpty()) {
-				endModelMessage(data, readable, turn, "protect");
+				IOUtils.endModelMessage(this, data, readable, turn, "protect");
 				break;
 			} else {
 				// Print the strategy we performed, to 2 d.p. for readability
 				double[] strategy = this.runDefence(whichDefence);
-				printStrategy(readable, strategy);
+				IOUtils.printStrategy(this, readable, strategy);
 				turn++;
 			}
 			if (this.getSusceptible().isEmpty()) {
-				endModelMessage(data, readable, turn, "infect");
+				IOUtils.endModelMessage(this, data, readable, turn, "infect");
 				break;
 			} else {
 				List<Agent> toInfect = this.findNextBurning(Driver.PROB_OF_INFECTION);
@@ -328,7 +286,7 @@ public class Model implements Cloneable, Serializable {
 			case DEGREE -> findHighestDegree(getSusceptible(), true);
 			case PROTECTION -> findHighestProtection(getSusceptible());
 			case RANDOM -> findRandomAgent(getSusceptible());
-			case NO_DEFENCE -> new ArrayList<>();
+//			case NO_DEFENCE -> new ArrayList<>();
 		};
 	}
 
@@ -483,57 +441,6 @@ public class Model implements Cloneable, Serializable {
 		}
 	}
 
-	// Based on the current defence strategy, prints appropriate information to both data and readable outputs.
-	private void printWhichDefence(Defence whichDefence, StringBuilder data, StringBuilder readable) {
-		switch (whichDefence) {
-			case PROXIMITY -> {
-				if (IOUtils.printReadable) readable.append("\n#### Proximity to Infection Defence\n");
-				data.append("PROXIMITY,");
-			}
-			case DEGREE -> {
-				if (IOUtils.printReadable) readable.append("\n#### Greatest Degree Defence\n");
-				data.append("DEGREE,");
-			}
-			case PROTECTION -> {
-				if (IOUtils.printReadable) readable.append("\n#### Highest Protection Defence\n");
-				data.append("PROTECTION,");
-			}
-			case RANDOM -> {
-				if (IOUtils.printReadable) readable.append("\n#### Random Defence Strategy");
-				data.append("RANDOM,");
-			}
-			case NO_DEFENCE -> {
-				if (IOUtils.printReadable) readable.append("\n#### No Defence Implementation");
-				data.append("NO DEFENCE,");
-			}
-			default -> throw new IllegalStateException("Unexpected defence strategy: " + whichDefence);
-		}
-	}
-
-	// Prints a message to readable output (if appropriate) at the end of the model
-	private void endModelMessage(StringBuilder data, StringBuilder readable, int turn, String s) {
-		if (IOUtils.printReadable) {
-			readable.append("\n\n__Nothing more to ").append(s).append(".__\n\nEnding model with ")
-					.append(this.getProtected().size()).append(" protected and ")
-					.append(this.getInfected().size()).append(" infected vertices in ")
-					.append(turn).append(turn == 1 ? " turn.\n\n" : " turns.\n\n");
-		}
-		data.append(turn).append(",").append(this.getSusceptible().size()).append(",").append(this.getInfected().size())
-				.append(",").append(this.getRecovered().size()).append(",").append(this.getProtected().size());
-	}
-
-	// Prints the strategy to 2 d.p. that has been played in a defensive turn to readable output
-	private void printStrategy(StringBuilder readable, double[] strategy) {
-		double[] strategyToPrint = new double[strategy.length];
-		DecimalFormat df = new DecimalFormat("0.00");
-		int i = 0;
-		for (double d : strategy) strategyToPrint[i++] = Double.parseDouble(df.format(d));
-		if (IOUtils.printReadable) {
-			readable.append("\n\n_Strategy:_ ").append(Arrays.toString(strategyToPrint)).append("\n");
-			readable.append(this.getSIRP());
-		}
-	}
-
 	/**
 	 * Prints the details of the current model in a human-readable format (i.e. Markdown).
 	 *
@@ -542,38 +449,6 @@ public class Model implements Cloneable, Serializable {
 	@Override
 	public String toString() {
 		return this.getSIRP();
-	}
-
-	private StringBuilder printModelMD() {
-		Graph g = this.getGraph();
-		StringBuilder s = new StringBuilder();
-		s.append("# Readable results of SIRP defence strategies on a random graph\n");
-		// Print information about the generated graph and modelling values
-		DecimalFormat df = new DecimalFormat("0.00");
-
-		if (!g.getName().equals("")) {
-			s.append("## Generating ").append(g.getName()).append(" Graph:")
-					.append("\n\nGraph generator has generated the specified graph with the following parameters:\n")
-					.append("\n * Type of graph: ").append(g.getName());
-		} else {
-			s.append("## Reading graph from csv file").append("\n\nGraph from file has the following attributes:");
-		}
-
-		s.append("\n * Number of vertices: ").append(g.getNumVertices()).append("\n * Number of edges: ")
-				.append(g.getNumEdges()).append("\n * Probability: ").append(g.getNumEdges()).append(" / ")
-				.append("(").append(g.getNumVertices()).append(" * (").append(g.getNumVertices())
-				.append(" - 1) / 2) = ")
-				.append(Double.parseDouble(df.format(
-						(double) g.getNumEdges() / (g.getNumVertices() * (g.getNumVertices() - 1) / 2.0))));
-		if (!g.getName().equals("")) {
-			s.append("\n * Random generator seed: ").append(GraphGenerator.getSeed()).append("\n");
-		}
-		s.append("\nThe graph is represented using the following adjacency matrix:\n\n").append(this.getGraph());
-
-		s.append("\n## Model values\nThe values used in the model are:\n * Total defence quota each turn: ")
-				.append(Driver.DEFENCE_QUOTA).append("\n * Probability with which the infection propagates: ")
-				.append(Driver.PROB_OF_INFECTION);
-		return s;
 	}
 
 	@Override

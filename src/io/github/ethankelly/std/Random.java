@@ -179,8 +179,7 @@ public final class Random {
 	 * @throws IllegalArgumentException unless {@code 0} &le; {@code p} &le; {@code 1.0}.
 	 */
 	public static boolean bernoulli(double p) throws IllegalArgumentException {
-		if (!(p >= 0.0 && p <= 1.0))
-			throw new IllegalArgumentException("probability p must be between 0.0 and 1.0: " + p);
+		assert p >= 0.0 && p <= 1.0 : "probability p must be between 0.0 and 1.0: " + p;
 		return uniform() < p;
 	}
 

@@ -260,7 +260,7 @@ public class GraphGenerator {
 
 	/**
 	 * Generates and returns a random Erdős–Rényi graph on a given number of vertices, with an edge between any two
-	 * vertices existing with some given p.
+	 * vertices existing with some given probability.
 	 *
 	 * @param n the number of vertices
 	 * @param p the p of choosing an edge.
@@ -268,7 +268,7 @@ public class GraphGenerator {
 	 * @throws AssertionError if the given p is not between 0 and 1.
 	 */
 	public static Graph erdosRenyi(int n, double p) {
-		assert !(p < 0.0) && !(p > 1.0) : "Probability must be between 0 and 1";
+		assert p >= 0.0 && p <= 1.0 : "Probability must be between 0 and 1";
 		Graph g = new Graph(n, "Erdős–Rényi", new boolean[n][n]);
 		for (int v = 0; v < n; v++)
 			for (int w = v + 1; w < n; w++)

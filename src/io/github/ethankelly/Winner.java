@@ -29,11 +29,7 @@ public class Winner {
 	 * @throws IOException if the specified file does not exist or cannot be accessed.
 	 */
 	public static long[] getBestStrategies(String winFilePath) throws IOException {
-		long protection = 0;
-		long proximity = 0;
-		long degree = 0;
-		long random = 0;
-		long none = 0;
+		long[] results = new long[Defence.values().length];
 		// Make sure we only loop for as many times as we need! (Once for complete graph)
 		int bound = winFilePath.toLowerCase().contains("complete") ? 1 : Driver.NUM_GRAPHS;
 		// Loop through each graph model that was run
@@ -48,25 +44,16 @@ public class Winner {
 			for (CSVRecord record : records) {
 				String strategy = record.get("STRATEGY");
 				switch (strategy) {
-					case "PROTECTION" -> protection++;
-					case "PROXIMITY" -> proximity++;
-					case "DEGREE" -> degree++;
-					case "RANDOM" -> random++;
-					case "NO DEFENCE" -> none++;
+					case "PROTECTION" -> results[Defence.PROTECTION.getValue()]++;
+					case "PROXIMITY" -> results[Defence.PROXIMITY.getValue()]++;
+					case "DEGREE" -> results[Defence.DEGREE.getValue()]++;
+					case "RANDOM" -> results[Defence.RANDOM.getValue()]++;
+//					case "NO DEFENCE" -> results[Defence.NO_DEFENCE.getValue()]++;
 					default -> throw new IllegalStateException("Unexpected defence strategy: " + strategy);
 				}
 			}
 		}
-		// Initialise an array with size equal to the number of strategies used in the models.
-		long[] toReturn = new long[Defence.values().length];
-		// Add each result to the appropriate position in the array
-		toReturn[Defence.PROXIMITY.getValue()] = proximity;
-		toReturn[Defence.DEGREE.getValue()] = degree;
-		toReturn[Defence.PROTECTION.getValue()] = protection;
-		toReturn[Defence.RANDOM.getValue()] = random;
-		toReturn[Defence.NO_DEFENCE.getValue()] = none;
-
-		return toReturn;
+		return results;
 	}
 
 	/**

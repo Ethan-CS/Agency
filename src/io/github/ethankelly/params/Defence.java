@@ -24,11 +24,11 @@ public enum Defence {
 	/**
 	 * Random protection strategy.
 	 */
-	RANDOM(3),
+	RANDOM(3);
 	/**
 	 * No defence (infection is left to run its course).
 	 */
-	NO_DEFENCE(4);
+//	NO_DEFENCE(4);
 
 	private final int value;
 
@@ -47,7 +47,7 @@ public enum Defence {
 			case 1 -> DEGREE;
 			case 2 -> PROTECTION;
 			case 3 -> RANDOM;
-			case 4 -> NO_DEFENCE;
+//			case 4 -> NO_DEFENCE;
 			default -> throw new IllegalStateException("Unexpected value: " + i);
 		};
 	}

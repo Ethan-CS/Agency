@@ -9,11 +9,11 @@ public class Driver {
 	/**
 	 * Number of vertices in each generated graph.
 	 */
-	public static final int NUM_VERTICES = 10;
+	public static final int NUM_VERTICES = 50;
 	/**
 	 * The number of graphs to generate per increment (where appropriate).
 	 */
-	public static final int NUM_GRAPHS = 5;
+	public static final int NUM_GRAPHS = 10;
 	/**
 	 * Total defence that can be deployed in each defensive round.
 	 */
@@ -25,11 +25,11 @@ public class Driver {
 	/**
 	 * The maximum probability to generate graphs for models.
 	 */
-	public static final double MAX_PROBABILITY = 0.9;
+	public static final double MAX_PROBABILITY = 0.95;
 	/**
 	 * The number of increments in the range of probabilities to consider.
 	 */
-	public static final int P_INCREMENTS = 9;
+	public static final int P_INCREMENTS = 19;
 	/**
 	 * Partition of the vertices into two sections.
 	 */
